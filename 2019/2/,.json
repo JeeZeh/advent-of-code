@@ -1,0 +1,23 @@
+{
+    "songs": [
+        {
+            "title": "Canon",
+            "musicData": "X:1\nT:\\dlksfhgfjlsfdjlkf",
+            "notations": [
+                {
+                    "type": "chord",
+                    "choices": ["AMaj", "CMin"],
+                    "posX": 332,
+                    "posY": 254,
+                    "chosen": 0
+                },
+                {
+                    "type": "bass",
+                    "choices": ["E3", "B2"],
+                    "posX": 563,
+                    "posY": 525
+                }
+            ]
+        }
+    ]
+}
