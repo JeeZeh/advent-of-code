@@ -1,7 +1,6 @@
 from collections import defaultdict
 from time import sleep
 
-
 p = {1: 3, 2: 3, 3: 1, 4: 1, 5: 2, 6: 2, 7: 3, 8: 3, 9: 1}
 o = list(map(int, open("input.txt").readline().split(",")))
 mem = defaultdict(int)
