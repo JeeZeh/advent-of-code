@@ -12,10 +12,10 @@ steps and simulate from that point - save scumming.
 """
 
 
-def debug(mem):
+def play(moves, save):
+    mem = Intcode().init(moves, save)
     x = mem[0]
     d = [[x[i], x[i + 1], x[i + 2]] for i in range(0, len(x), 3)]
-
     balls = [t[:2] for t in d if t[2] == 4]
     pad = [t[:2] for t in d if t[2] == 3]
     score = [t for t in d if t[:2] == [-1, 0]]
@@ -23,18 +23,11 @@ def debug(mem):
     return (pad, balls, score, blocks, mem[1])
 
 
-def play(moves, save):
-    x = Intcode().init(moves, save)
-    return debug(x)
-
-
-def learn(ball, pads, calculated):
+def un_fail(ball, pads, calculated):
     moves = []
     pad = pads[-1][0]
-    try:
-        fail_point = list(map(lambda x: x[1], ball)).index(19) - 2
-    except:
-        fail_point = -0
+    fail_point = list(map(lambda x: x[1], ball)).index(19) - 2
+
     for p in ball[calculated - 1 : fail_point + 1]:
         if p[0] > pad:
             pad += 1
@@ -46,14 +39,9 @@ def learn(ball, pads, calculated):
     return moves
 
 
-result = play([0, -1, 1], None)
-while True:
-    try:
-        moves = learn(result[1], result[0], result[4][4])
-    except:
-        print(f"Final Score: {result[2][-1][-1]}")
-        break
+output = play([0, -1, 1], None)
+while output[4] is not None:
+    moves = un_fail(output[1], output[0], output[4][4])
+    output = play(moves, output[4])
 
-    result = play(moves, result[4])
-    result[2]
-
+print(f"Final Score: {output[2][-1][-1]}")
