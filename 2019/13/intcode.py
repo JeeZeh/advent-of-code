@@ -31,10 +31,8 @@ class Intcode:
                 self.mem[i] = self.o[i]
             self.ptr = 0
             self.r = 0
-        
-        self.moves += moves
 
-        
+        self.moves += moves
 
         self.ops = self.mem
         x = self.run(save)
@@ -103,13 +101,20 @@ class Intcode:
             elif code == 3:
                 if len(self.moves) > ins:
                     move = self.moves[ins]
-                    ins +=1
-                    self.write(modes[-1], params, e - 1, move) 
+                    ins += 1
+                    self.write(modes[-1], params, e - 1, move)
                     if len(self.moves) == ins:
-                        save = (self.ops.copy(), self.ptr, self.r, output.copy(), ins, self.moves.copy())
+                        save = (
+                            self.ops.copy(),
+                            self.ptr,
+                            self.r,
+                            output.copy(),
+                            ins,
+                            self.moves.copy(),
+                        )
                 else:
                     move = 0
-                    ins +=1
+                    ins += 1
                     self.write(modes[-1], params, e - 1, move)
             elif code == 4:
                 rd = self.read(modes[-1], params, e - 1)
