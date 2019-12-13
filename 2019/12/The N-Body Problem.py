@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from pprint import pprint
 import numpy as np
+import time
 
 system = OrderedDict()
 initial = OrderedDict()
@@ -41,9 +42,7 @@ def step(curr_step):
     for i in range(3):
         if not np.array(list(system.values()))[:, i].any():
             if i not in locks:
-                pprint(system)
-                print()
-                locks[i] = curr_step
+                locks[i] = curr_step + 1
 
 
 def state_equal(step):
@@ -70,12 +69,10 @@ def get_energy():
         [sum(map(abs, list(p))) * sum(map(abs, list(v))) for p, v in system.items()]
     )
 
-
-simulate(100)
-pprint(system)
-
+ns = time.time_ns()
 simulate(-1)
-pprint(system)
-pprint(locks)
+
 v = list(locks.values())
-print(np.lcm(np.lcm(v[0], v[1]), v[2]))
+lcm = np.lcm(np.lcm(v[0], v[1]), v[2], dtype=np.int64)
+print(2*lcm)
+print((time.time_ns() - ns) / 1000000000)
