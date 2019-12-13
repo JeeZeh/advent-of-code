@@ -3,44 +3,44 @@ from pprint import pprint
 import numpy as np
 import time
 
-system = OrderedDict()
-initial = OrderedDict()
+system = np.array([])
+initial = np.array([])
 init_np = None
 locks = {}
 
 
 def init():
     global system, initial, init_np, locks
-    system = OrderedDict()
+    system = np.zeros((0,2,3), dtype=np.int16)
     locks = {}
     with open("input.txt") as f:
         for line in f:
             p = [int(p[2:]) for p in line.rstrip()[1:-1].split(", ")]
-            system[tuple(p)] = [0, 0, 0]
+            system = np.vstack((system, [[p, [0, 0, 0]]]))
     initial = system.copy()
-    init_np = np.array(list(initial.keys()))
 
 
 def step(curr_step):
     global system
-    buffer = OrderedDict()
+    buffer = system.copy()
 
-    for m1, s1 in system.items():
-        for m2 in list(filter(lambda x: x != m1, system.keys())):
+    for i in range(4):
+        for j in range(4):
+            if i == j:
+                continue
+            
             for a in range(3):
-                if m1[a] < m2[a]:
-                    s1[a] += 1
-                if m1[a] > m2[a]:
-                    s1[a] -= 1
+                if system[i][0][a] < system[j][0][a]:
+                    buffer[i][1][a] += 1
+                elif system[i][0][a] > system[j][0][a]:
+                    buffer[i][1][a] -= 1
 
-        m1 = list(m1)
-        for a in range(3):
-            m1[a] += s1[a]
-        buffer[tuple(m1)] = s1
-
+        buffer[i][0] += buffer[i][1]
+       
     system = buffer
     for i in range(3):
-        if not np.array(list(system.values()))[:, i].any():
+        v = system[:,1, i]
+        if not v.any():
             if i not in locks:
                 locks[i] = curr_step + 1
 
@@ -71,7 +71,6 @@ def get_energy():
 
 ns = time.time_ns()
 simulate(-1)
-
 v = list(locks.values())
 lcm = np.lcm(np.lcm(v[0], v[1]), v[2], dtype=np.int64)
 print(2*lcm)
