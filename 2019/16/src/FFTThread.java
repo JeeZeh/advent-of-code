@@ -16,7 +16,7 @@ public class FFTThread extends Thread {
 
     @Override
     public void run() {
-        for (int i = 0; i < FlawedFrequencyTransmission.LEN; i++) {
+        for (int i = start; i < end; i++) {
             int phaseIndex = 0;
             int mult = i;
             int sum = 0;
