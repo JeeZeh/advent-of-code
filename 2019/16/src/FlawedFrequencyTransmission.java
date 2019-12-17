@@ -18,11 +18,12 @@ import static java.lang.Math.floor;
 public class FlawedFrequencyTransmission {
     final static int[] PATTERN = {0, 1, 0, -1};
     static int LEN = 0;
-    private final static int THREADS = 16;
+    private final static int THREADS = 2;
     private final static int REPEAT = 10000;
     static int[][] signals;
+    static int[] sums;
     private static ExecutorService executorService = Executors.newFixedThreadPool(THREADS);
-    private final static List<Callable<Object>> queue = new ArrayList<>();
+    private static List<Callable<Object>> queue = new ArrayList<>();
 
     public static void main(String[] args) throws IOException, InterruptedException {
         List<Integer> base = Arrays.stream(Files.readString(Paths.get("input.txt"))
@@ -30,7 +31,7 @@ public class FlawedFrequencyTransmission {
                 .map(Integer::parseInt)
                 .collect(Collectors.toCollection(ArrayList::new));
 
-        int offset = 0;
+        int offset = Integer.parseInt(base.subList(0, 7).stream().map(String::valueOf).collect(Collectors.joining("")));
 
 
         int[] input = new int[base.size()*REPEAT];
@@ -46,6 +47,7 @@ public class FlawedFrequencyTransmission {
 
         final int MAX = 100;
         signals = new int[MAX+1][LEN];
+        sums = new int[LEN+1];
 
         signals[0] = input;
 
@@ -53,6 +55,15 @@ public class FlawedFrequencyTransmission {
 
         for (int c = 0; c < MAX; c++) {
             System.out.println(c+1);
+            int ss = 0;
+            for (int i = 0; i < LEN; i++) {
+                sums[i] = ss;
+                ss += signals[c][i];
+            }
+
+            sums[LEN] = ss;
+            queue =  new ArrayList<>();
+
             // Batch sets of chars to calculate
             for (int i = 0; i < LEN; i+= batchSize) {
                 int end = i+ batchSize;
@@ -62,6 +73,25 @@ public class FlawedFrequencyTransmission {
                 queue.add(Executors.callable(new FFTThread(i, end, c)));
             }
             executorService.invokeAll(queue);
+
+            // Single Threaded
+//            for (int i = 0; i < FlawedFrequencyTransmission.LEN; i++) {
+//                int phaseIndex = 0;
+//                int mult = i;
+//                int sum = 0;
+//                for (int j = 0; j < FlawedFrequencyTransmission.LEN; j++) {
+//                    if (phaseIndex == 1 || phaseIndex == 3) {
+//                        int end = Math.min(j + mult, FlawedFrequencyTransmission.LEN) ;
+//                        int a = (FlawedFrequencyTransmission.sums[end] -
+//                                FlawedFrequencyTransmission.sums[j]);
+//                        sum += a * FlawedFrequencyTransmission.PATTERN[phaseIndex];
+//                    }
+//                    phaseIndex = (phaseIndex + 1) % 4;
+//                    j += mult - 1;
+//                    mult = i + 1;
+//                }
+//                FlawedFrequencyTransmission.signals[c + 1][i] = abs(sum) % 10;
+//            }
         }
 
         System.out.println(String.format("%dms", System.currentTimeMillis() - s));
@@ -71,7 +101,7 @@ public class FlawedFrequencyTransmission {
             last.add(signals[MAX][i]);
         }
 
-        System.out.println(last.stream().map(String::valueOf).collect(Collectors.joining("")).substring(0, 8));
+        System.out.println(last.stream().map(String::valueOf).collect(Collectors.joining("")).substring(offset, offset+8));
     }
 
 }
