@@ -18,7 +18,7 @@ import static java.lang.Math.floor;
 public class FlawedFrequencyTransmission {
     final static int[] PATTERN = {0, 1, 0, -1};
     static int LEN = 0;
-    private final static int THREADS = 8;
+    private final static int THREADS = 16;
     private final static int REPEAT = 10000;
     static int[][] signals;
     private static ExecutorService executorService = Executors.newFixedThreadPool(THREADS);
@@ -30,7 +30,7 @@ public class FlawedFrequencyTransmission {
                 .map(Integer::parseInt)
                 .collect(Collectors.toCollection(ArrayList::new));
 
-        int offset = Integer.parseInt(base.subList(0, 7).stream().map(String::valueOf).collect(Collectors.joining("")));
+        int offset = 0;
 
 
         int[] input = new int[base.size()*REPEAT];
