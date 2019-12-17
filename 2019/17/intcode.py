@@ -11,7 +11,7 @@ class Intcode:
     r = 0
     
 
-    def init(self, tape):
+    def init(self, tape, queue):
         """
         Init Intcode computer with memory from input text
 
@@ -28,7 +28,7 @@ class Intcode:
 
         self.ops = self.mem
 
-        x = self.run()
+        x = self.run(queue)
         x.send(None)
 
         return x
@@ -75,7 +75,7 @@ class Intcode:
         self.ptr += len(param) + 1
         return output
 
-    def run(self):
+    def run(self, queue):
         """
         Intcode CPU
         """
@@ -93,7 +93,7 @@ class Intcode:
             elif code == 2:
                 self.write(modes[-1], params, e - 1, data[0] * data[1])
             elif code == 3:
-                i = yield
+                i = queue.pop()
                 self.write(modes[-1], params, e - 1, i)
             elif code == 4:
                 rd = self.read(modes[-1], params, e - 1)

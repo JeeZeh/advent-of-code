@@ -44,26 +44,3 @@ load = comp.save()
 load[1][0] = 2
 
 print(grid[1][1])
-
-
-
-R = "C,B,C,A,C,A,B,A,A,B"
-A = "R4,L10,R10"
-B = "R4,L4,L4,R8,R10"
-C = "L4,L4,L10,R4"
-
-tape[0] = 2
-drive = Intcode().init(tape)
-
-for r in R:
-    print(drive.send(ord(r)))
-drive.send(10)
-for a in A:
-    print(drive.send(ord(a)))
-drive.send(10)
-for b in B:
-    print(drive.send(ord(b)))
-drive.send(10)
-for c in C:
-    print(drive.send(ord(c)))
-print(drive.send("n"))
