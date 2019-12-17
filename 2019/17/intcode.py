@@ -11,14 +11,14 @@ class Intcode:
     r = 0
     
 
-    def init(self):
+    def init(self, tape):
         """
         Init Intcode computer with memory from input text
 
         Returns initialised Intcode generator
         """
 
-        self.o = list(map(int, open("input.txt").readline().split(",")))
+        self.o = tape
         self.mem = defaultdict(int)
         self.ptr = 0
         self.r = 0
