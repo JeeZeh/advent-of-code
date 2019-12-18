@@ -1,6 +1,7 @@
 from collections import defaultdict
 from operator import add
 from pprint import pprint
+import json
 grid = defaultdict(str)
 p = {0: (1, 0), 1: (-1,0), 2:(0,-1), 3:(0, 1)}
 
@@ -14,7 +15,7 @@ for i, y in enumerate(lines):
 pos = [k for k, v in grid.items() if v == "@"][0]
 
 def explore(grid, pos, explored, locks, keys, steps, x):
-    explored.append(pos)
+    explored.add(pos)
     v = grid[pos]
     if v == "#" or v == "":
         return
@@ -22,7 +23,6 @@ def explore(grid, pos, explored, locks, keys, steps, x):
     if v != "." and v != "@":     
         if v.lower() == v:
             keys[v] = (pos, steps, x)
-            return
         else:
             locks[v] = (pos, steps, x)
             x.append(v)
@@ -34,8 +34,8 @@ def explore(grid, pos, explored, locks, keys, steps, x):
             explore(grid, new_pos, explored,locks, keys, steps + 1, x.copy())
 
 def find_reachable(pos, grid):
-    explored, locks, keys = [pos], {}, {}
-
+    explored, locks, keys = set([pos]), {}, {}
+    
     for d in p.values():
         explore(grid, tuple(map(add, pos, d)), explored, locks, keys, 1, [])
     
@@ -60,41 +60,75 @@ def try_collect(order, grid, pos):
             return -1
 
     return steps 
-        
+
+def generate_pairs():
+    pairs = defaultdict(dict)
+    _, keys, _ = find_reachable(pos, grid)
+
+    for k, v in keys.items():     
+        pairs["@"][k]   = {"dist": v[1], "req": set([x.lower() for x in v[2]])}
+        _, dests, _ = find_reachable(v[0], grid)
+        for k2, v2 in dests.items():
+            pairs[k][k2] = {"dist": v2[1], "req": set([x.lower() for x in v2[2]])}
+    return pairs
+
+
 
 locks, keys, explored = find_reachable(pos, grid)
 full = [k[0] for k in keys.items()]
 n_keys = len(full)
 
+pairs = generate_pairs()
+lowest = 100000
+perms = 0
+def get_paths(pos, keys, steps):
+    global lowest, perms
+    potential = {k: v for k, v in pairs[pos].items() if v["req"].issubset(keys) and k not in keys}
+    if len(keys) == n_keys:
+        perms += 1
+        if steps < lowest:
+                lowest = steps
+        if perms % 100000 == 0:
+            print("Permutations:", perms)
+            print("Lowest:", lowest)
+            
+            
+        return
+        
+    for dest, v in potential.items():
+        ckeys = keys.copy()
+        ckeys.add(dest)
+        get_paths(dest, ckeys, steps + v["dist"])
+    
+_, keys, _ = find_reachable(pos, grid)
+starting_keys = {k: v for k, v in keys.items() if not v[2]}
+get_paths("@", set(), 0)
+print(perms)
+
 path = {}
 lens = []
-def recurse(pos, grid, have, branch, steps):
+def recurse(pos, grid, have, steps):
     locks, keys, explored = find_reachable(pos, grid)
     possible = {k: v for k, v in keys.items() if not v[2] or all(e.lower() in have for e in v[2])}
     if not keys:
-        lens.append(steps)
-        return steps
+        lens.append((steps, have))
+        return
     elif possible:
         for k, v in possible.items():
             alt_grid = grid.copy()
-            alt_steps = steps
             pos = v[0]
             alt_grid[v[0]] = "."
-            alt_steps += v[1]
-            b = recurse(pos, alt_grid, [k] + have.copy(), {}, alt_steps)
-            branch[k] = b 
-        return branch
-    else:
-        return {}
+            recurse(pos, alt_grid, have + [k], steps + v[1])
+        return
     
     
 
-recurse(pos, grid, [], path, 0)
+# recurse(pos, grid, [], 0)
 
 
 
-pprint(path)
-pprint(min(lens))
+# pprint(path)
+# pprint(min(lens))
         
 # a = try_collect(['a', 'b', 'c', 'd', 'e', 'f'][::-1], grid.copy(), pos)
 # print(a)
