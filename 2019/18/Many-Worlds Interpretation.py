@@ -2,6 +2,7 @@ from collections import defaultdict
 from operator import add
 from pprint import pprint
 import json
+import itertools
 grid = defaultdict(str)
 p = {0: (1, 0), 1: (-1,0), 2:(0,-1), 3:(0, 1)}
 
@@ -61,6 +62,15 @@ def try_collect(order, grid, pos):
 
     return steps 
 
+b = ["d", "t", "j", "o", "n", "s", "e", "r", "x", "g", "z", "k", "l", "m", "h", "i", "w", "c", "y", "u", "v", "q", "a", "b", "p", "f"]
+ext = [ "x", "g", "z", "k", "l", "m", "h", "i", "w", "c", "y", "u", "v", "q", "a", "b", "p", "f"]
+
+
+for perm in itertools.permutations(["d", "t", "j", "o", "n", "s", "e", "r"]):
+    a = try_collect((list(perm)+ext)[::-1], grid.copy(), pos)
+    print(a)
+
+
 def generate_pairs():
     pairs = defaultdict(dict)
     _, keys, _ = find_reachable(pos, grid)
@@ -79,13 +89,16 @@ full = [k[0] for k in keys.items()]
 n_keys = len(full)
 best_states = {}
 
+with open('pairs.json', mode="w+") as f:
+    f.write(json.dumps(generate_pairs()))
+
 pairs = generate_pairs()
 lowest = 100000
 perms = 0
 def get_paths(pos, keys, steps):
-    hashed = (pos, frozenset(keys))
+    hashed = (pos, "".join(keys))
     if hashed in best_states:
-        if best_states[hashed] < steps:
+        if best_states[hashed] <= steps:
             return
     
     best_states[hashed] = steps
@@ -135,12 +148,6 @@ def recurse(pos, grid, have, steps):
 
 
 
-# pprint(path)
-# pprint(min(lens))
-        
-# a = try_collect(['a', 'b', 'c', 'd', 'e', 'f'][::-1], grid.copy(), pos)
-# print(a)
-        
 # a = try_collect(['a', 'b', 'c', 'e', 'd', 'f'][::-1], grid.copy(), pos)
 # print(a)
         

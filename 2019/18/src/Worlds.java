@@ -21,6 +21,7 @@ public class Worlds {
     static AtomicInteger lowest = new AtomicInteger(100000);
     static AtomicInteger perms = new AtomicInteger(0);
     static ConcurrentHashMap<State, Integer> bestStates = new ConcurrentHashMap<>();
+    static ConcurrentHashMap<Integer, List<String>> bestStrings = new ConcurrentHashMap<>();
     static int len;
 
     public static void main(String[] args) throws IOException {
@@ -32,25 +33,22 @@ public class Worlds {
         getPaths("@", new ArrayList<String>(), 0);
         System.out.println(len);
         System.out.println(lowest);
+        System.out.println(perms.get());
 
-
-//        Map<String, Dest> starters = pairs.get("@").entrySet().stream()
-//                                           .filter((e) -> e.getValue().req.size() == 0)
-//                                           .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-//
-//        for (Map.Entry<String, Dest> entry : starters.entrySet()) {
-//            String s = entry.getKey();
-//            Dest v = entry.getValue();
-//
-//            executorService.submit(new ThreadedPath(s, new ArrayList<>(Collections.singletonList(s)), v.dist));
-//        }
-
+        List sortedKeys=new ArrayList(bestStrings.keySet());
+        Collections.sort(sortedKeys);
+        sortedKeys.forEach(k -> {
+            System.out.println();
+            System.out.print(k);
+            System.out.print(" ");
+            System.out.print(bestStrings.get(k));
+        });
     }
 
     public static void getPaths(String c, ArrayList<String> keys, int steps) {
         final State currentState = new State(c, keys);
         if (bestStates.containsKey(currentState)) {
-            if (bestStates.get(currentState) < steps) {
+            if (bestStates.get(currentState) <= steps) {
                 return;
             }
         }
@@ -65,6 +63,7 @@ public class Worlds {
         if (keys.size() == Worlds.len) {
             Worlds.perms.incrementAndGet();
             Worlds.lowest.getAndUpdate(i -> steps < i ? steps : i );
+            bestStrings.put(steps, keys);
             if (Worlds.perms.get() % 100000 == 0) {
                 System.out.println(String.format("Permutations: %d+\nShortest: %d steps", Worlds.perms.get(), Worlds.lowest.get()));
             }
