@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,6 +20,7 @@ public class Worlds {
     static ExecutorService executorService = Executors.newFixedThreadPool(12);
     static AtomicInteger lowest = new AtomicInteger(100000);
     static AtomicInteger perms = new AtomicInteger(0);
+    static ConcurrentHashMap<State, Integer> bestStates = new ConcurrentHashMap<>();
     static int len;
 
     public static void main(String[] args) throws IOException {
@@ -46,6 +48,15 @@ public class Worlds {
     }
 
     public static void getPaths(String c, ArrayList<String> keys, int steps) {
+        final State currentState = new State(c, keys);
+        if (bestStates.containsKey(currentState)) {
+            if (bestStates.get(currentState) < steps) {
+                return;
+            }
+        }
+        bestStates.put(currentState, steps);
+
+
         Map<String, Dest> potential = Worlds.pairs.get(c).entrySet().stream()
                                                   .filter((e) -> keys.containsAll(e.getValue().req) && !keys
                                                           .contains(e.getKey()))

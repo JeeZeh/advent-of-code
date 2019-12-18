@@ -66,10 +66,10 @@ def generate_pairs():
     _, keys, _ = find_reachable(pos, grid)
 
     for k, v in keys.items():     
-        pairs["@"][k]   = {"dist": v[1], "req": set([x.lower() for x in v[2]])}
+        pairs["@"][k]   = {"dist": v[1], "req": [x.lower() for x in v[2]]}
         _, dests, _ = find_reachable(v[0], grid)
         for k2, v2 in dests.items():
-            pairs[k][k2] = {"dist": v2[1], "req": set([x.lower() for x in v2[2]])}
+            pairs[k][k2] = {"dist": v2[1], "req": [x.lower() for x in v2[2]]}
     return pairs
 
 
@@ -77,13 +77,21 @@ def generate_pairs():
 locks, keys, explored = find_reachable(pos, grid)
 full = [k[0] for k in keys.items()]
 n_keys = len(full)
+best_states = {}
 
 pairs = generate_pairs()
 lowest = 100000
 perms = 0
 def get_paths(pos, keys, steps):
+    hashed = (pos, frozenset(keys))
+    if hashed in best_states:
+        if best_states[hashed] < steps:
+            return
+    
+    best_states[hashed] = steps
+
     global lowest, perms
-    potential = {k: v for k, v in pairs[pos].items() if v["req"].issubset(keys) and k not in keys}
+    potential = {k: v for k, v in pairs[pos].items() if all(x in keys for x in v["req"]) and k not in keys}
     if len(keys) == n_keys:
         perms += 1
         if steps < lowest:
@@ -91,25 +99,25 @@ def get_paths(pos, keys, steps):
         if perms % 100000 == 0:
             print("Permutations:", perms)
             print("Lowest:", lowest)
-            
-            
+        
         return
         
     for dest, v in potential.items():
         ckeys = keys.copy()
-        ckeys.add(dest)
+        ckeys.append(dest)
         get_paths(dest, ckeys, steps + v["dist"])
     
 _, keys, _ = find_reachable(pos, grid)
 starting_keys = {k: v for k, v in keys.items() if not v[2]}
-get_paths("@", set(), 0)
-print(perms)
+get_paths("@", [], 0)
+print(lowest)
 
 path = {}
 lens = []
 def recurse(pos, grid, have, steps):
+    
     locks, keys, explored = find_reachable(pos, grid)
-    possible = {k: v for k, v in keys.items() if not v[2] or all(e.lower() in have for e in v[2])}
+    possible = [(k, v) for k, v in keys.items() if not v[2] or all(e.lower() in have for e in v[2])]
     if not keys:
         lens.append((steps, have))
         return
