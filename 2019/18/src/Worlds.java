@@ -15,62 +15,70 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 public class Worlds {
-    static Gson gson = new GsonBuilder().create();
+    private static Gson gson = new GsonBuilder().create();
     static Map<String, HashMap<String,Dest>> pairs;
     static ExecutorService executorService = Executors.newFixedThreadPool(12);
     static AtomicInteger lowest = new AtomicInteger(100000);
     static AtomicInteger perms = new AtomicInteger(0);
-    static ConcurrentHashMap<State, Integer> bestStates = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<State, Integer> bestStates = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<Integer, ArrayList<String>> bestPaths = new ConcurrentHashMap<>();
     static int len;
 
     public static void main(String[] args) throws IOException {
         String json = Files.readString(Paths.get("./pairs.json"));
-        System.out.println(json);
+
+        // These are read from JSON. Output from get_pairs() in the python file
         pairs = gson.fromJson(json, new TypeToken<Map<String, HashMap<String,Dest>>>() {}.getType());
-        System.out.println(pairs.get("@").get("g").dist);
         len = pairs.size()-1;
-        getPaths("@", new ArrayList<String>(), 0);
+        getPaths("@", new ArrayList<>(), 0);
         System.out.println(len);
         System.out.println(lowest);
+        List sortedKeys = new ArrayList(bestPaths.keySet());
+        Collections.sort(sortedKeys);
 
-
-//        Map<String, Dest> starters = pairs.get("@").entrySet().stream()
-//                                           .filter((e) -> e.getValue().req.size() == 0)
-//                                           .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-//
-//        for (Map.Entry<String, Dest> entry : starters.entrySet()) {
-//            String s = entry.getKey();
-//            Dest v = entry.getValue();
-//
-//            executorService.submit(new ThreadedPath(s, new ArrayList<>(Collections.singletonList(s)), v.dist));
-//        }
-
+        sortedKeys.forEach(e -> {
+            System.out.println();
+            System.out.print(e);
+            System.out.print(" ");
+            System.out.print(bestPaths.get(e));
+        });
     }
 
-    public static void getPaths(String c, ArrayList<String> keys, int steps) {
+    private static void getPaths(String c, ArrayList<String> keys, int steps) {
+        // Hash the current state
+        // State is the current position (current key being picked up) and set of keys collected upto this point
         final State currentState = new State(c, keys);
         if (bestStates.containsKey(currentState)) {
-            if (bestStates.get(currentState) < steps) {
+            // If the current states matches a previous state with fewer steps
+            // then cancel recursion as we have a better version in the past - I think
+            if (bestStates.get(currentState) <= steps) {
                 return;
             }
         }
+
+        // Store the current state with current steps
         bestStates.put(currentState, steps);
 
-
-        Map<String, Dest> potential = Worlds.pairs.get(c).entrySet().stream()
-                                                  .filter((e) -> keys.containsAll(e.getValue().req) && !keys
-                                                          .contains(e.getKey()))
-                                                  .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
+        // If we have all the keys, store the path and lengths, incr. permutations
         if (keys.size() == Worlds.len) {
+            bestPaths.put(steps, keys);
             Worlds.perms.incrementAndGet();
-            Worlds.lowest.getAndUpdate(i -> steps < i ? steps : i );
+            Worlds.lowest.getAndUpdate(i -> Math.min(steps, i));
             if (Worlds.perms.get() % 100000 == 0) {
                 System.out.println(String.format("Permutations: %d+\nShortest: %d steps", Worlds.perms.get(), Worlds.lowest.get()));
             }
             return;
         }
 
+        // Get all reachable keys from this key (reachable if I have the keys required to unlock)
+        // This is precomputed at runtime for each pair of keys. Paths are the shortest distance between each
+        // pair of flags ignoring doors. This assumes no loops.
+        Map<String, Dest> potential = Worlds.pairs.get(c).entrySet().stream()
+                                                  .filter((e) -> keys.containsAll(e.getValue().req) && !keys
+                                                          .contains(e.getKey()))
+                                                  .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        // For every reachable key from the current, explore recursively
         potential.entrySet().parallelStream().forEach(e -> {
             String s = e.getKey();
             Dest v = e.getValue();

@@ -85,7 +85,7 @@ perms = 0
 def get_paths(pos, keys, steps):
     hashed = (pos, frozenset(keys))
     if hashed in best_states:
-        if best_states[hashed] < steps:
+        if best_states[hashed] <= steps:
             return
     
     best_states[hashed] = steps
