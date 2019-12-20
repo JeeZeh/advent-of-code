@@ -1,66 +1,51 @@
-from collections import defaultdict
+from collections import defaultdict, deque
 from operator import add
+from time import time_ns
 from pprint import pprint
 import json
-import itertools
 grid = defaultdict(str)
-p = {0: (1, 0), 1: (-1,0), 2:(0,-1), 3:(0, 1)}
+p = {0: (1, 0), 1: (-1, 0), 2: (0, -1), 3: (0, 1)}
 
-lines = open('input.txt').readlines()
+lines = open("input.txt").readlines()
 
 for i, y in enumerate(lines):
     for j, x in enumerate(y):
         grid[(j, i)] = x.rstrip()
 
+grid_keys = {
+    v: k
+    for k, v in grid.items()
+    if v != "#" and v != "." and v != "" and v.lower() == v
+}
 
-pos = [k for k, v in grid.items() if v == "@"][0]
+start = [k for k, v in grid.items() if v == "@"][0]
 
-def explore(grid, pos, explored, locks, keys, steps, x):
-    explored.add(pos)
-    v = grid[pos]
-    if v == "#" or v == "":
-        return
-    
-    if v != "." and v != "@":     
-        if v.lower() == v:
-            keys[v] = (pos, steps, x)
-        else:
-            locks[v] = (pos, steps, x)
-            x.append(v)
-        
 
-    for d in p.values():
-        new_pos = tuple(map(add, pos, d))
-        if new_pos not in explored:
-            explore(grid, new_pos, explored,locks, keys, steps + 1, x.copy())
+def get_reachable_from(pos):
+    queue = deque([pos])
+    keys = {}
+    dist = {pos: 0}
+    req = {pos: []}
 
-def find_reachable(pos, grid):
-    explored, locks, keys = set([pos]), {}, {}
-    
-    for d in p.values():
-        explore(grid, tuple(map(add, pos, d)), explored, locks, keys, 1, [])
-    
-    return (locks, keys, explored)
+    while queue:
+        pos = queue.popleft()
+        for d in p.values():
+            n = tuple(map(add, pos, d))
+            if n in grid and grid[n] != "#" and n not in dist:
+                v = grid[n]
+                dist[n] = dist[pos] + 1
+                req[n] = req[pos].copy()
+                if v != "." and v != "@":
+                    if v.lower() == v:
+                        keys[v] = {"req": req[n], "dist": dist[n]}
+                    else:
+                        req[n].append(v.lower())
 
-def try_collect(order, grid, pos):
-    steps = 0
-    collected = []
-    while order:
-        locks, keys, explored = find_reachable(pos, grid)
-        nk = order.pop()
-        
-        if nk in keys:
-            if not keys[nk][2] or all(e in collected for e in keys[nk][2]):
-                collected.append(nk.upper())
-                steps+= keys[nk][1]
-                grid[keys[nk][0]] = "."
-                pos = keys[nk][0]
-            else:
-                return -1
-        else:
-            return -1
+                queue.append(n)
 
-    return steps 
+    return keys
+
+keys = get_reachable_from(start)
 
 b = ["d", "t", "j", "o", "n", "s", "e", "r", "x", "g", "z", "k", "l", "m", "h", "i", "w", "c", "y", "u", "v", "q", "a", "b", "p", "f"]
 ext = [ "x", "g", "z", "k", "l", "m", "h", "i", "w", "c", "y", "u", "v", "q", "a", "b", "p", "f"]
@@ -73,52 +58,56 @@ for perm in itertools.permutations(["d", "t", "j", "o", "n", "s", "e", "r"]):
 
 def generate_pairs():
     pairs = defaultdict(dict)
-    _, keys, _ = find_reachable(pos, grid)
+    pairs["@"] = keys
 
-    for k, v in keys.items():     
-        pairs["@"][k]   = {"dist": v[1], "req": [x.lower() for x in v[2]]}
-        _, dests, _ = find_reachable(v[0], grid)
+    for k, v in grid_keys.items():
+        dests = get_reachable_from(v)
         for k2, v2 in dests.items():
-            pairs[k][k2] = {"dist": v2[1], "req": [x.lower() for x in v2[2]]}
+            pairs[k][k2] = v2
+
     return pairs
 
 
 
-locks, keys, explored = find_reachable(pos, grid)
-full = [k[0] for k in keys.items()]
-n_keys = len(full)
+n_keys = len(grid_keys) - 1
 best_states = {}
+<<<<<<< HEAD
 
 with open('pairs.json', mode="w+") as f:
     f.write(json.dumps(generate_pairs()))
 
+=======
+>>>>>>> 5d3adb0b40b55289bf3af7b5a295ccb0c02e3f6d
 pairs = generate_pairs()
 lowest = 100000
 perms = 0
+
+
 def get_paths(pos, keys, steps):
     hashed = (pos, "".join(keys))
     if hashed in best_states:
         if best_states[hashed] <= steps:
             return
-    
+
     best_states[hashed] = steps
 
     global lowest, perms
-    potential = {k: v for k, v in pairs[pos].items() if all(x in keys for x in v["req"]) and k not in keys}
-    if len(keys) == n_keys:
-        perms += 1
+    potential = {
+        k: v
+        for k, v in pairs[pos].items()
+        if all(x in keys for x in v["req"]) and k not in keys
+    }
+
+    if len(keys) == n_keys:      
         if steps < lowest:
-                lowest = steps
-        if perms % 100000 == 0:
-            print("Permutations:", perms)
-            print("Lowest:", lowest)
-        
+            lowest = steps
         return
-        
+
     for dest, v in potential.items():
         ckeys = keys.copy()
         ckeys.append(dest)
         get_paths(dest, ckeys, steps + v["dist"])
+<<<<<<< HEAD
     
 _, keys, _ = find_reachable(pos, grid)
 starting_keys = {k: v for k, v in keys.items() if not v[2]}
@@ -186,5 +175,11 @@ def recurse(pos, grid, have, steps):
 #         locks, keys, explored = find_reachable(pos, grid)
 
 #     return steps
+=======
+>>>>>>> 5d3adb0b40b55289bf3af7b5a295ccb0c02e3f6d
 
 
+t = time_ns()
+get_paths("@", [], 0)
+print((time_ns() - t)/1000/1000)
+print(lowest)

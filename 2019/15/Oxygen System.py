@@ -9,7 +9,7 @@ p = {1: (0, 1), 2: (0, -1), 3: (-1, 0), 4: (1, 0)}
 explored = {(0, 0): "+"}
 loc = None
 order = []
-DRAW_RATE = 0.008
+DRAW_RATE = 0.01
 
 
 def clear():
