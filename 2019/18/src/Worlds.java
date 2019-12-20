@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unchecked")
 public class Worlds {
     private static Gson gson = new GsonBuilder().create();
-    static Map<String, HashMap<String,Dest>> pairs;
+    static Map<String, List<Dest>> pairs;
     static ExecutorService executorService = Executors.newFixedThreadPool(12);
     static AtomicInteger lowest = new AtomicInteger(100000);
     static AtomicInteger perms = new AtomicInteger(0);
@@ -28,7 +28,7 @@ public class Worlds {
         String json = Files.readString(Paths.get("./pairs.json"));
 
         // These are read from JSON. Output from get_pairs() in the python file
-        pairs = gson.fromJson(json, new TypeToken<Map<String, HashMap<String,Dest>>>() {}.getType());
+        pairs = gson.fromJson(json, new TypeToken<Map<String, List<Dest>>>() {}.getType());
         len = pairs.size()-1;
         getPaths("@", new ArrayList<>(), 0);
         System.out.println(len);
@@ -73,18 +73,16 @@ public class Worlds {
         // Get all reachable keys from this key (reachable if I have the keys required to unlock)
         // This is precomputed at runtime for each pair of keys. Paths are the shortest distance between each
         // pair of flags ignoring doors. This assumes no loops.
-        Map<String, Dest> potential = Worlds.pairs.get(c).entrySet().stream()
-                                                  .filter((e) -> keys.containsAll(e.getValue().req) && !keys
-                                                          .contains(e.getKey()))
-                                                  .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        List<Dest> potential = Worlds.pairs.get(c).stream()
+                                                  .filter((e) -> keys.containsAll(e.req) && !keys
+                                                          .contains(e.key))
+                                                  .collect(Collectors.toList());
 
         // For every reachable key from the current, explore recursively
-        potential.entrySet().parallelStream().forEach(e -> {
-            String s = e.getKey();
-            Dest v = e.getValue();
+        potential.parallelStream().forEach(e -> {
             ArrayList<String> keysCopy = (ArrayList<String>) keys.clone();
-            keysCopy.add(s);
-            getPaths(s, keysCopy, steps + v.dist);
+            keysCopy.add( e.key);
+            getPaths(e.key, keysCopy, steps + e.dist);
         });
 
     }

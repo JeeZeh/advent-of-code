@@ -62,14 +62,17 @@ def try_collect(order, grid, pos):
     return steps 
 
 def generate_pairs():
-    pairs = defaultdict(dict)
-    _, keys, _ = find_reachable(pos, grid)
+    pairs = defaultdict(list)
+    _, keys, _ = find_reachable(pos, grid.copy())
 
     for k, v in keys.items():     
-        pairs["@"][k]   = {"dist": v[1], "req": [x.lower() for x in v[2]]}
-        _, dests, _ = find_reachable(v[0], grid)
+        pairs["@"].append({"key": k,"dist": v[1], "req": [x.lower() for x in v[2]]})
+        _, dests, _ = find_reachable(v[0], grid.copy())
         for k2, v2 in dests.items():
-            pairs[k][k2] = {"dist": v2[1], "req": [x.lower() for x in v2[2]]}
+            pairs[k].append({"key": k2, "dist": v2[1], "req": [x.lower() for x in v2[2]]})
+
+    for k, v in pairs.items():
+        pairs[k] = sorted(v, key=lambda x: x["dist"])
     return pairs
 
 
@@ -80,6 +83,8 @@ n_keys = len(full)
 best_states = {}
 
 pairs = generate_pairs()
+with open('pairs.json', mode='w+') as f:
+    f.write(json.dumps(pairs))
 lowest = 100000
 perms = 0
 def get_paths(pos, keys, steps):
