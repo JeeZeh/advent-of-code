@@ -19,9 +19,7 @@ public class Worlds {
     static Map<String, HashMap<String,Dest>> pairs;
     static ExecutorService executorService = Executors.newFixedThreadPool(12);
     static AtomicInteger lowest = new AtomicInteger(100000);
-    static AtomicInteger perms = new AtomicInteger(0);
     private static ConcurrentHashMap<State, Integer> bestStates = new ConcurrentHashMap<>();
-    private static ConcurrentHashMap<Integer, ArrayList<String>> bestPaths = new ConcurrentHashMap<>();
     static int len;
 
     public static void main(String[] args) throws IOException {
@@ -31,9 +29,12 @@ public class Worlds {
         pairs = gson.fromJson(json, new TypeToken<Map<String, HashMap<String, Dest>>>() {
         }.getType());
         len = pairs.size() - 1;
+        long s = System.currentTimeMillis();
         getPaths("@", new ArrayList<>(), 0);
+        System.out.println(System.currentTimeMillis() - s);
         System.out.println(lowest);
     }
+
 
     private static void getPaths(String c, ArrayList<String> keys, int steps) {
         // Hash the current state
@@ -52,12 +53,7 @@ public class Worlds {
 
         // If we have all the keys, store the path and lengths, incr. permutations
         if (keys.size() == Worlds.len) {
-            bestPaths.put(steps, keys);
-            Worlds.perms.incrementAndGet();
             Worlds.lowest.getAndUpdate(i -> Math.min(steps, i));
-            if (Worlds.perms.get() % 100000 == 0) {
-                System.out.println(String.format("Permutations: %d+\nShortest: %d steps", Worlds.perms.get(), Worlds.lowest.get()));
-            }
             return;
         }
 

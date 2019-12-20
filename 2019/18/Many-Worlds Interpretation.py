@@ -1,5 +1,6 @@
 from collections import defaultdict, deque
 from operator import add
+from time import time_ns
 from pprint import pprint
 import json
 
@@ -45,10 +46,10 @@ def get_reachable_from(pos):
 
     return keys
 
+keys = get_reachable_from(start)
 
 def generate_pairs():
     pairs = defaultdict(dict)
-    keys = get_reachable_from(start)
     pairs["@"] = keys
 
     for k, v in grid_keys.items():
@@ -59,7 +60,7 @@ def generate_pairs():
     return pairs
 
 
-keys = get_reachable_from(start)
+
 n_keys = len(grid_keys) - 1
 best_states = {}
 pairs = generate_pairs()
@@ -81,14 +82,10 @@ def get_paths(pos, keys, steps):
         for k, v in pairs[pos].items()
         if all(x in keys for x in v["req"]) and k not in keys
     }
-    if len(keys) == n_keys:
-        perms += 1
+
+    if len(keys) == n_keys:      
         if steps < lowest:
             lowest = steps
-        if perms % 100000 == 0:
-            print("Permutations:", perms)
-            print("Lowest:", lowest)
-
         return
 
     for dest, v in potential.items():
@@ -97,5 +94,7 @@ def get_paths(pos, keys, steps):
         get_paths(dest, ckeys, steps + v["dist"])
 
 
+t = time_ns()
 get_paths("@", [], 0)
+print((time_ns() - t)/1000/1000)
 print(lowest)
