@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unchecked")
 public class Worlds {
     private static Gson gson = new GsonBuilder().create();
-    static Map<String, List<Dest>> pairs;
+    static Map<String, HashMap<String,Dest>> pairs;
     static ExecutorService executorService = Executors.newFixedThreadPool(12);
     static AtomicInteger lowest = new AtomicInteger(100000);
     static AtomicInteger perms = new AtomicInteger(0);
@@ -28,20 +28,11 @@ public class Worlds {
         String json = Files.readString(Paths.get("./pairs.json"));
 
         // These are read from JSON. Output from get_pairs() in the python file
-        pairs = gson.fromJson(json, new TypeToken<Map<String, List<Dest>>>() {}.getType());
-        len = pairs.size()-1;
+        pairs = gson.fromJson(json, new TypeToken<Map<String, HashMap<String, Dest>>>() {
+        }.getType());
+        len = pairs.size() - 1;
         getPaths("@", new ArrayList<>(), 0);
-        System.out.println(len);
         System.out.println(lowest);
-        List sortedKeys = new ArrayList(bestPaths.keySet());
-        Collections.sort(sortedKeys);
-
-        sortedKeys.forEach(e -> {
-            System.out.println();
-            System.out.print(e);
-            System.out.print(" ");
-            System.out.print(bestPaths.get(e));
-        });
     }
 
     private static void getPaths(String c, ArrayList<String> keys, int steps) {
@@ -73,16 +64,18 @@ public class Worlds {
         // Get all reachable keys from this key (reachable if I have the keys required to unlock)
         // This is precomputed at runtime for each pair of keys. Paths are the shortest distance between each
         // pair of flags ignoring doors. This assumes no loops.
-        List<Dest> potential = Worlds.pairs.get(c).stream()
-                                                  .filter((e) -> keys.containsAll(e.req) && !keys
-                                                          .contains(e.key))
-                                                  .collect(Collectors.toList());
+        Map<String, Dest> potential = Worlds.pairs.get(c).entrySet().stream()
+                                                  .filter((e) -> keys.containsAll(e.getValue().req) && !keys
+                                                          .contains(e.getKey()))
+                                                  .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         // For every reachable key from the current, explore recursively
-        potential.parallelStream().forEach(e -> {
+        potential.entrySet().parallelStream().forEach(e -> {
+            String s = e.getKey();
+            Dest v = e.getValue();
             ArrayList<String> keysCopy = (ArrayList<String>) keys.clone();
-            keysCopy.add( e.key);
-            getPaths(e.key, keysCopy, steps + e.dist);
+            keysCopy.add(s);
+            getPaths(s, keysCopy, steps + v.dist);
         });
 
     }
