@@ -11,7 +11,8 @@ def check_around(pos, grid):
     for d in p.values():
         adj = tuple(map(add, pos, d))
         if grid[adj] == ".":
-            return adj
+            dimension = 1 if d in [p[0], p[3]] else -1
+            return (adj, dimension)
 
 for j, y in enumerate(lines):
     for i, x in enumerate(y):
@@ -54,23 +55,26 @@ for d, v in doors.items():
 def get_reachable_from(pos):
     queue = deque([pos])
     destinations = {}
-    dists = {pos: 0}
+    dists = [{pos: 0}]
+    dimension = 0
 
     while queue:
         pos = queue.popleft()
         for d in p.values():
             n = tuple(map(add, pos, d))
-            hopped = False
             if n in portals:
                 n = portals[n]
-                dist[pos]
-            if n in grid and grid[n] != "#" and n not in dist:
-                v = grid[n]
-                dist[n] = dist[pos] + 1
+                dimension += n[1]
+                if n[1] > 1:
+                    dists.append({n: 0})
+                n =  n[0]
                 
+            if n in grid and grid[n] != "#" and n not in dists[dimension]:
+                v = grid[n]
+                dists[dimension][n] = dists[dimension][pos] + 1
                 
                 if len(v) == 2:
-                   destinations[v] = dist[n]
+                   destinations[v] = dists[dimension][n]
                     
                 queue.append(n)
 
