@@ -1,23 +1,31 @@
 from intcode import Intcode
 from collections import defaultdict, deque
 network = []
+computers = []
 NAT = None
 queue = defaultdict(deque)
 
 def init_NICs(tape):
     for addr in range(50):
-        NIC = Intcode()
-        NIC = NIC.init(tape)
+        computer = Intcode()
+        NIC = computer.init(tape.copy())
         NIC.send(addr)
         network.append(NIC)
+        computers.append(computer)
 
 def queue_packet(addr, data):
     queue[addr].append(data)
+
+def is_idle():
+    for i, c in enumerate(computers):
+        if not c.is_waiting() or queue[i]:
+            return False
+    print("All waiting")
+    return True 
     
 def cycle():
     NAT = None
     while True:
-        idle = True
         for addr, nic in enumerate(network):
             sending = None
             if queue[addr]:
@@ -36,13 +44,13 @@ def cycle():
                     NAT = (X, Y)
                 else:
                     queue[sending].append((X, Y))
-        if NAT:
+        if is_idle():
             X, Y = NAT 
             print(f"NAT Sending: {X}, {Y}")
             queue[0].append((X, Y))
 
 
 tape = list(map(int, open("input.txt").readline().split(",")))
-init_NICs(tape.copy())
+init_NICs(tape)
 cycle()
             

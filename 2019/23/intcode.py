@@ -9,6 +9,7 @@ class Intcode:
     ops = None
     ptr = 0
     r = 0
+    waiting = False
     queue = []
 
     
@@ -40,6 +41,9 @@ class Intcode:
 
     def save(self):
          return (self.o.copy(), self.ops.copy(), self.ptr, self.r, self.queue)
+        
+    def is_waiting(self):
+        return self.waiting
     
     def load(self, data):
         self.o = data[0]
@@ -99,11 +103,13 @@ class Intcode:
             elif code == 2:
                 self.write(modes[-1], params, e - 1, data[0] * data[1])
             elif code == 3:
+                self.waiting = True
                 if self.queue:
                     i = self.queue.pop()
                 else:
                     i = yield
                 self.write(modes[-1], params, e - 1, i)
+                self.waiting = False
             elif code == 4:
                 rd = self.read(modes[-1], params, e - 1)
                 yield rd
