@@ -1,6 +1,7 @@
 from intcode import Intcode
 from collections import defaultdict, deque
 network = []
+NAT = None
 queue = defaultdict(deque)
 
 def init_NICs(tape):
@@ -14,34 +15,34 @@ def queue_packet(addr, data):
     queue[addr].append(data)
     
 def cycle():
+    NAT = None
     while True:
         idle = True
         for addr, nic in enumerate(network):
             sending = None
             if queue[addr]:
-                idle = False
                 data = queue[addr].popleft()
                 t1 = nic.send(data[0])
                 t2 = nic.send(data[1])
                 if t2:
-                    sending = t2
+                    sending = t2 # t1 doesn't block, so t2 could receive back a sending pack
             else:
-                if not sending:
-                    sending = nic.send(-1)
+                sending = nic.send(-1)
+
             if sending:
                 X = next(nic)
                 Y = next(nic)
                 if sending == 255:
-                    queue[255].append((X, Y))
+                    NAT = (X, Y)
                 else:
-                    queue_packet(sending, (X, Y))
-        if idle:
-            X, Y = queue[255].pop()
+                    queue[sending].append((X, Y))
+        if NAT:
+            X, Y = NAT 
             print(f"NAT Sending: {X}, {Y}")
             queue[0].append((X, Y))
 
 
 tape = list(map(int, open("input.txt").readline().split(",")))
-init_NICs(tape)
+init_NICs(tape.copy())
 cycle()
             

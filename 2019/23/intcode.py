@@ -10,8 +10,6 @@ class Intcode:
     ptr = 0
     r = 0
     queue = []
-    sending = False
-    receiving = False
 
     
 
@@ -41,13 +39,14 @@ class Intcode:
         return x
 
     def save(self):
-         return (self.o.copy(), self.ops.copy(), self.ptr, self.r)
+         return (self.o.copy(), self.ops.copy(), self.ptr, self.r, self.queue)
     
     def load(self, data):
         self.o = data[0]
         self.ops = data[1]
         self.ptr = data[2]
         self.r = data[3]
+        self.queue = data[4]
 
         x = self.run()
         x.send(None)
@@ -100,18 +99,14 @@ class Intcode:
             elif code == 2:
                 self.write(modes[-1], params, e - 1, data[0] * data[1])
             elif code == 3:
-                self.receiving = True
                 if self.queue:
                     i = self.queue.pop()
                 else:
                     i = yield
                 self.write(modes[-1], params, e - 1, i)
-                self.receiving = False
             elif code == 4:
-                self.sending = True
                 rd = self.read(modes[-1], params, e - 1)
                 yield rd
-                self.sending = False
             elif code == 5:
                 if data[0] != 0:
                     self.ptr = data[1]
