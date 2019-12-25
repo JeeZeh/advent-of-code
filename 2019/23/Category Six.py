@@ -23,30 +23,40 @@ def is_idle():
     print("All waiting")
     return True 
     
+
 def cycle():
     NAT = None
+    delivered = None
     while True:
         for addr, nic in enumerate(network):
-            sending = None
-            if queue[addr]:
-                data = queue[addr].popleft()
-                t1 = nic.send(data[0])
-                t2 = nic.send(data[1])
-                if t2:
-                    sending = t2 # t1 doesn't block, so t2 could receive back a sending pack
-            else:
-                sending = nic.send(-1)
-
-            if sending:
+            if computers[addr].is_waiting():
+                if queue[addr]:
+                    data = queue[addr].popleft()
+                    if addr == 0:
+                        if delivered == data[1]:
+                            print("YIKES", delivered)
+                            return  
+                        else:
+                            delivered = data[1]
+                    nic.send(data[0])
+                    nic.send(data[1])
+                else:
+                    nic.send(-1)
+                
+            if computers[addr].is_sending():
+                dest = next(nic)
+                next(nic)
                 X = next(nic)
+                next(nic)
                 Y = next(nic)
-                if sending == 255:
+                next(nic)
+                if dest == 255:
                     NAT = (X, Y)
                 else:
-                    queue[sending].append((X, Y))
+                    queue[dest].append((X, Y))
+
         if is_idle():
             X, Y = NAT 
-            print(f"NAT Sending: {X}, {Y}")
             queue[0].append((X, Y))
 
 

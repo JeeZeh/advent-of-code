@@ -10,6 +10,7 @@ class Intcode:
     ptr = 0
     r = 0
     waiting = False
+    sending = False
     queue = []
 
     
@@ -44,6 +45,9 @@ class Intcode:
         
     def is_waiting(self):
         return self.waiting
+    
+    def is_sending(self):
+        return self.sending
     
     def load(self, data):
         self.o = data[0]
@@ -111,9 +115,11 @@ class Intcode:
                 self.write(modes[-1], params, e - 1, i)
                 self.waiting = False
             elif code == 4:
+                self.sending = True
                 rd = self.read(modes[-1], params, e - 1)
                 yield rd
-            elif code == 5:
+                self.sending = False
+            elif code == 5: 
                 if data[0] != 0:
                     self.ptr = data[1]
                 else:
