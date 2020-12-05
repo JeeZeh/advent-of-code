@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class StockingStuffer {
-    private static ExecutorService executorService = Executors.newFixedThreadPool(16);
+    private static ExecutorService executorService = Executors.newFixedThreadPool(100);
     private final static int STEP = 1000000;
     private final static int END = 1_000_000_000;
     final static ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
