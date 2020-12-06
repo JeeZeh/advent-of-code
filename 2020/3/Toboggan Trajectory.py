@@ -67,7 +67,7 @@ def cls():
 def play_path(slope, width, height):
     cls()
     right, down = slope
-    refresh = 0.05 * max(right, down)
+    refresh = 0.005 * max(right, down)
     sled_x, sled_y = 0, 0
     offset_x, offset_y = width // 2, height // 2
     max_x = wrap_y * right - width - right + 1
@@ -81,4 +81,4 @@ def play_path(slope, width, height):
         sled_y += down
 
 
-play_path((3,2), 100, 30)
+play_path((3,1), 250, 50)
