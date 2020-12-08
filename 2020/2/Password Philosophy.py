@@ -29,4 +29,4 @@ print(v1_count)
 print(v2_count)
 
 codes = [line.split() for line in open("input.txt").readlines()]
-print(sum([eval(c[0].replace("-", "<=c[2].count(c[1][0])<=")) for c in codes]))
+print(sum([eval(c[0].replace("-", "<=c[2].count(c[1][0])<=")) for c in codes])) // No
