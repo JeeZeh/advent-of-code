@@ -10,21 +10,16 @@ def get_subsum(s, slice_):
             return n, s - n
 
 
-def generate_subset_sums():
-    subsets = {}
-
+def find_subset_sum(s, data):
     for slice_length in range(2, len(data)):
         for i in range(0, len(data)):
             slice_ = data[i : i + slice_length]
-            subsets[sum(slice_)] = slice_
+            if s == sum(slice_):
+                return slice_
 
-    return subsets
-
-
-subset_sums = generate_subset_sums()
 
 for i in range(window, len(data)):
     if not get_subsum(data[i], data[i - window : i]):
         print(data[i])
-        if sol := subset_sums.get(data[i]):
+        if sol := find_subset_sum(data[i], data[:i]):
             print(min(sol) + max(sol))
