@@ -1,4 +1,5 @@
 from collections import defaultdict
+from os import stat
 
 dirs = [
     (x, y, z, w)
@@ -14,11 +15,12 @@ pocket = open("real.txt").read().splitlines()
 
 def generate_space(layer):
     space = defaultdict(int)
+
     for w in range(-1, 2):
         for z in range(-1, 2):
             for y in range(-1, len(layer) + 1):
                 for x in range(-1, len(layer[0]) + 1):
-                    space[(x, y, z, w)] = 0
+                    space[(x, y, z, w,)] = 0
 
     for y, r in enumerate(layer):
         for x, c in enumerate(r):
@@ -35,15 +37,18 @@ def cycle(space):
     eval_space = space.copy()
     for pos, active in space.items():
         x, y, z, w = pos
-        surrounding = []
+        s_count = 0
         for dx, dy, dz, dw in dirs:
-            look_at = (x + dx, y + dy, z + dz, w + dw)
-            if eval_space[look_at]:
-                surrounding.append(look_at)
+            s_count += eval_space[(x + dx, y + dy, z + dz, w + dw)]
+            if s_count > 3:
+                break
+            
+        if s_count > 3:
+            pass
 
-        if active and len(surrounding) not in (2, 3):
-            state[(x, y, z, w)] = 0
-        elif not active and len(surrounding) == 3:
+        if active and s_count != 2 and s_count != 3:
+                state[(x, y, z, w)] = 0
+        elif s_count == 3:
             state[(x, y, z, w)] = 1
 
     return eval_space | state
@@ -52,4 +57,4 @@ def cycle(space):
 for t in range(6):
     space = cycle(space)
 
-print(sum(v for k, v in space.items()))
+print(sum(space.values()))
