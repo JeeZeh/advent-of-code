@@ -16,21 +16,22 @@ def combat(p1_deck: deque, p2_deck: deque, rec=False):
 
     while p1_deck and p2_deck:
         if rec:
-            game = tuple(p1_deck)+(0,) + tuple(p2_deck)
+            game = tuple(p1_deck) + (0,) + tuple(p2_deck)
             if game in game_history:
                 return 1, p1_deck
             game_history.add(game)
 
         p1_card, p2_card = p1_deck.popleft(), p2_deck.popleft()
 
-        if rec and len(p1_deck) >= p1_card and len(p2_deck) > p2_card:
+        winner = 1 if p1_card > p2_card else 2
+
+        if rec and len(p1_deck) >= p1_card and len(p2_deck) >= p2_card:
             winner, _ = combat(
                 deque(list(p1_deck)[:p1_card]),
                 deque(list(p2_deck)[:p2_card]),
                 True
             )
-        else:
-            winner = 1 if p1_card > p2_card else 2
+        
 
         if winner == 1:
             p1_deck.extend((p1_card, p2_card))
