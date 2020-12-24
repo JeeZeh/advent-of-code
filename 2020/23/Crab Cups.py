@@ -17,7 +17,7 @@ def move(current, cups):
         cups[cups[cups[current]]]: cups[cups[cups[cups[current]]]],
     }
 
-    dest_cup = find_dest(current, cups, next_3)
+    dest_cup = find_dest(current, next_3)
 
     first_in_holding = cups[current]
     last_in_holding = cups[cups[cups[current]]]
@@ -35,7 +35,7 @@ def move(current, cups):
     return cups
 
 
-def find_dest(current, cups, holding):
+def find_dest(current, holding):
     destination = current - 1
     while True:
         if destination < mn:
