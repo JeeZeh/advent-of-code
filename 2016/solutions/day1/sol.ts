@@ -2,12 +2,6 @@ import { getInputFile } from "../../aoc-helper.ts";
 
 type Point = [number, number];
 
-let history: Set<string> = new Set();
-
-let heading: Point = [0, 1];
-let position: Point = [0, 0];
-let bunnyHq: Point;
-
 const addPoint = (p1: Point, p2: Point): Point => [
   p1[0] + p2[0],
   p1[1] + p2[1],
@@ -28,6 +22,11 @@ const rotate = (point: Point, angle: number): Point => {
 };
 
 const solve = async () => {
+  let history: Set<string> = new Set();
+  let heading: Point = [0, 1];
+  let position: Point = [0, 0];
+  let bunnyHq: Point | undefined;
+
   const lines = await getInputFile(import.meta.url, "real");
   const instructions = lines[0].split(", ");
 
@@ -41,15 +40,21 @@ const solve = async () => {
       position = addPoint(position, heading);
       const posString = position.join(",");
 
-      if (bunnyHq == undefined && history.has(posString)) {
+      if (bunnyHq == null && history.has(posString)) {
         bunnyHq = position;
       }
       history.add(posString);
     }
   }
 
-  console.log(`Distance from start: ${Math.abs(position[0]) + Math.abs(position[1])}`);
-  console.log(`Distance Easter Bunny HQ: ${Math.abs(bunnyHq[0]) + Math.abs(bunnyHq[1])}`);
+  console.log(
+    `Distance from start: ${Math.abs(position[0]) + Math.abs(position[1])}`
+  );
+  if (bunnyHq != null) {
+    console.log(
+      `Distance Easter Bunny HQ: ${Math.abs(bunnyHq[0]) + Math.abs(bunnyHq[1])}`
+    );
+  }
 };
 
 export { solve };
