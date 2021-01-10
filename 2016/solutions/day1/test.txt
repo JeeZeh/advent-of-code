@@ -1,2 +1,1 @@
-Hello, World!
-This is just a simple test that reads from a file :)
+R8, R4, R4, R8
