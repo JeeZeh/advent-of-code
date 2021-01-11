@@ -2,16 +2,6 @@ import { getInputFile } from "../../aoc-helper.ts";
 
 type Point = [number, number];
 
-const addPoint = (p1: Point, p2: Point): Point => [
-  p1[0] + p2[0],
-  p1[1] + p2[1],
-];
-
-const multPoint = (p1: Point, coeff: number): Point => [
-  p1[0] * coeff,
-  p1[1] * coeff,
-];
-
 const rotate = (point: Point, angle: number): Point => {
   angle = -(Math.PI / 180) * angle;
   let px = point[0];
@@ -21,7 +11,7 @@ const rotate = (point: Point, angle: number): Point => {
   return [Math.round(qx), Math.round(qy)];
 };
 
-const solve = async () => {
+export async function solve() {
   let history: Set<string> = new Set();
   let heading: Point = [0, 1];
   let position: Point = [0, 0];
@@ -37,7 +27,7 @@ const solve = async () => {
     heading = rotate(heading, 90 * rotationDirection);
 
     for (let i = 0; i < steps; i++) {
-      position = addPoint(position, heading);
+      position = [position[0] + heading[0], position[1] + heading[1]];
       const posString = position.join(",");
 
       if (bunnyHq == null && history.has(posString)) {
@@ -50,14 +40,13 @@ const solve = async () => {
   console.log(
     `Distance from start: ${Math.abs(position[0]) + Math.abs(position[1])}`
   );
+
   if (bunnyHq != null) {
     console.log(
       `Distance Easter Bunny HQ: ${Math.abs(bunnyHq[0]) + Math.abs(bunnyHq[1])}`
     );
   }
-};
-
-export { solve };
+}
 
 if (import.meta.main) {
   solve();
