@@ -8,7 +8,7 @@ const dirs: { [key: string]: Point } = {
   R: new Point(1, 0),
 };
 
-const traverseKeypad = (pos: Point, keypad: any[][], path: string) => {
+const traverseKeypad = (pos: Point, keypad: any[][], path: string): Point => {
   for (const d of path) {
     let newPos = pos.add(dirs[d]);
 
@@ -20,7 +20,7 @@ const traverseKeypad = (pos: Point, keypad: any[][], path: string) => {
   return pos;
 };
 
-const getCode = (start: Point, keypad: any[][], paths: string[]) => {
+const getCode = (start: Point, keypad: any[][], paths: string[]): string => {
   let code = "";
 
   for (const path of paths) {
