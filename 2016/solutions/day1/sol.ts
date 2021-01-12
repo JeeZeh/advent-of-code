@@ -1,4 +1,4 @@
-import { getInputFile } from "../../aoc-helper.ts";
+import { getInputLines } from "../../aoc-helper.ts";
 
 type Point = [number, number];
 
@@ -17,7 +17,7 @@ export async function solve() {
   let position: Point = [0, 0];
   let bunnyHq: Point | undefined;
 
-  const lines = await getInputFile(import.meta.url, "real");
+  const lines = await getInputLines(import.meta.url, "real");
   const instructions = lines[0].split(", ");
 
   for (const ins of instructions) {

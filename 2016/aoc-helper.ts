@@ -1,7 +1,7 @@
 import * as path from "https://deno.land/std@0.83.0/path/mod.ts";
 import { readLines } from "https://deno.land/std@0.83.0/io/bufio.ts";
 
-const getInputFile = async (callerUrl: string, type: string) => {
+const getInputLines = async (callerUrl: string, type: string) => {
   let callerPath = new URL("", callerUrl).pathname.split("/");
   let callerDir = callerPath.slice(1, callerPath.length - 1).join("/");
   const filename = path.join(callerDir, `${type}.txt`);
@@ -26,4 +26,4 @@ if (import.meta.main && !!Deno.args.length) {
   })
 }
 
-export { getInputFile };
+export { getInputLines };
