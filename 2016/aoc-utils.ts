@@ -21,3 +21,15 @@ export function chunkArray(arr: any[], size: number) {
     arr.slice(i * size, i * size + size)
   );
 }
+
+export function count<T>(e: T, i: Iterable<T>): number {
+  let c = 0;
+
+  for (const el of i) {
+    if (el === e) {
+      c++;
+    }
+  }
+
+  return c;
+}
