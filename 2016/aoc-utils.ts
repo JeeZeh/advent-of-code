@@ -33,3 +33,11 @@ export function count<T>(e: T, i: Iterable<T>): number {
 
   return c;
 }
+
+export function tryParseInt(toCheck: string) {
+  try {
+    return parseInt(toCheck);
+  } catch {
+    return null;
+  }
+}
