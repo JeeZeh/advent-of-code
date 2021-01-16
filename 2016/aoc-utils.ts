@@ -41,3 +41,9 @@ export function tryParseInt(toCheck: string) {
     return null;
   }
 }
+
+export function countUniqueChars(s: string): [number, string][] {
+  return Array.from(new Set<string>(s)).map(
+    (char) => [count(char, s), char] as [number, string]
+  );
+}

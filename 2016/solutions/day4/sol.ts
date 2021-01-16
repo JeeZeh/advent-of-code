@@ -1,9 +1,7 @@
 import { getInputLines } from "../../aoc-helper.ts";
-import { count } from "../../aoc-utils.ts";
+import { countUniqueChars } from "../../aoc-utils.ts";
 
-type AGH = [number, string];
 const alpha = "abcdefghijklmnopqrstuvwxyz";
-
 class Room {
   encName: string;
   sectorId: number;
@@ -60,11 +58,10 @@ const sortAlphaNum = (a: [number, string], b: [number, string]): number => {
 };
 
 const generateChecksum = (room: Room) => {
-  return Array.from(new Set<string>(room.encName.replaceAll("-", "")))
-    .map((char) => [count(char, room.encName), char] as AGH)
+  return countUniqueChars(room.encName.replaceAll("-", ""))
     .sort(sortAlphaNum)
     .reverse()
-    .map((x: AGH) => x[1])
+    .map((x) => x[1])
     .slice(0, 5)
     .join("");
 };
