@@ -2,17 +2,35 @@ import { getInputLines } from "../../aoc-helper.ts";
 import { count } from "../../aoc-utils.ts";
 
 type AGH = [number, string];
+const alpha = "abcdefghijklmnopqrstuvwxyz";
 
 class Room {
   encName: string;
   sectorId: number;
   checksum: string;
+  decName: string;
 
   constructor(encName: string, sectorId: number, checksum: string) {
     this.encName = encName;
     this.sectorId = sectorId;
     this.checksum = checksum;
+    this.decName = this.decodeName(encName, sectorId);
   }
+
+  decodeName = (encName: string, sectorId: number) => {
+    let decName = "";
+
+    for (const char of encName) {
+      if (char === "-") {
+        decName += " ";
+      } else {
+        const shift = (alpha.indexOf(char) + sectorId) % alpha.length;
+        decName += alpha.charAt(shift);
+      }
+    }
+
+    return decName;
+  };
 }
 
 const parseRoom = (room: string) => {
@@ -52,15 +70,31 @@ const generateChecksum = (room: Room) => {
 };
 
 const solve = async () => {
-  const validRooms = (await getInputLines(import.meta.url, "real"))
-    .map(parseRoom)
-    .filter((room) => room.checksum === generateChecksum(room));
+  const rooms = (await getInputLines(import.meta.url, "real")).map(parseRoom);
 
-  const sectorSums = validRooms
+  const realRooms = rooms.filter(
+    (room) => room.checksum === generateChecksum(room)
+  );
+
+  const sectorSums = realRooms
     .map((x) => x.sectorId)
     .reduce((acc, curr) => acc + curr);
 
   console.log(`Sum of real room sector IDs: ${sectorSums}`);
+
+  const roomSearchName = "northpole";
+  const northPollRoom = realRooms.find((v) =>
+    v.decName.includes(roomSearchName)
+  );
+
+  if (northPollRoom) {
+    console.log(
+      `Objects may be stored in "${northPollRoom.decName}", sector ID "${northPollRoom.sectorId}"`
+    );
+  } else {
+    console.log(`Could not locate room matching name "${roomSearchName}"`);
+  }
+
 };
 
 if (import.meta.main) {
