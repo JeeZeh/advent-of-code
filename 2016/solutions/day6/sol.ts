@@ -1,5 +1,5 @@
 import { getInputLines } from "../../aoc-helper.ts";
-import { count, countUniqueChars } from "../../aoc-utils.ts";
+import { countUniqueChars } from "../../aoc-utils.ts";
 
 const rotateColumns = (columns: string[]): string[] => {
   const rotated: string[] = [];
