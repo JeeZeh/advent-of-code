@@ -67,7 +67,9 @@ export function print2d<T>(a: T[][], mapping: Map<T, string>, pad?: number) {
       reprRow.push(mapping.get(e) ?? e);
     }
 
-    repr.push((pad != null ? stringMult(" ", pad) : "") + reprRow.join(""));
+    const rowPad = pad != null ? stringMult(" ", pad) : "";
+
+    repr.push(rowPad + reprRow.join("") + rowPad);
   }
 
   if (pad != null) {
