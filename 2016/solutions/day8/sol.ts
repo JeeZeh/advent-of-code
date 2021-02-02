@@ -1,5 +1,5 @@
 import { getInputLines } from "../../aoc-helper.ts";
-import { copy2d, count2d, create2d, print2d } from "../../aoc-utils.ts";
+import { copy2d, count2d, create2d, print2d, sleep } from "../../aoc-utils.ts";
 
 type LCD = boolean[][];
 
@@ -73,17 +73,21 @@ const solve = async () => {
     parseInstruction
   );
 
+  const mapping = new Map();
+  mapping.set(true, "#").set(false, " ");
+
   let lcd = create2d(50, 6, false);
 
   for (const [instruction, args] of instructions) {
     lcd = instruction(lcd, args);
+    print2d(lcd, mapping, 5);
+    await sleep(33);
   }
 
   console.log(`Pixels illuminated: ${count2d(true, lcd)}`);
 
   // Pretty happy with this idea :)
-  const mapping = new Map();
-  mapping.set(true, "#").set(false, " ");
+
   console.log("Code Displayed:");
   print2d(lcd, mapping, 2);
 };

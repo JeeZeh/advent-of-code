@@ -110,3 +110,10 @@ export function create2d<T>(width: number, height: number, init: T): T[][] {
 
   return array;
 }
+
+export function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export const int = parseInt;
+export const float = parseFloat;
