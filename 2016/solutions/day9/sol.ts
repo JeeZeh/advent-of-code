@@ -14,7 +14,7 @@ const solve = async () => {
       const subparts = compressedText.slice(substart, pointer).split("x");
       let [count, repeat] = [parseInt(subparts[0]), parseInt(subparts[1])];
       pointer += count;
-      decompressed += (count ) * repeat;
+      decompressed += count * repeat;
     } else {
       decompressed += 1;
     }
