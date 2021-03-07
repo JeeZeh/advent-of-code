@@ -3,36 +3,36 @@ using System.IO;
 
 namespace Day1
 {
-    public class Program
+    public static class Day1
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            string input = File.ReadAllText("Input/1.txt");
+            var input = Resources.input;
 
             PartOne(input);
             PartTwo(input);
         }
 
-        static void PartOne(string input)
+        private static void PartOne(string input)
         {
-            Console.WriteLine($"Part 1: {SeqSum(input, false)}");
+            Console.WriteLine($@"Part 1: {SeqSum(input, false)}");
         }
 
-        static void PartTwo(string input)
+        private static void PartTwo(string input)
         {
-            Console.WriteLine($"Part 2: {SeqSum(input, true)}");
+            Console.WriteLine($@"Part 2: {SeqSum(input, true)}");
         }
 
         public static int SeqSum(string seq, bool part2)
         {
-            int total = 0;
+            var total = 0;
             for (var i = 0; i < seq.Length; i++)
             {
                 var comp = (i + (part2 ? seq.Length / 2 : 1)) % seq.Length;
 
                 if (seq[i] == seq[comp])
                 {
-                    total += (int)Char.GetNumericValue(seq, i);
+                    total += (int)char.GetNumericValue(seq, i);
                 }
             }
             return total;
