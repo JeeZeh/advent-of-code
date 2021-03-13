@@ -98,11 +98,5 @@ namespace Day3
 
             return center;
         }
-
-        static int GetLevel(double pos)
-        {
-            var ceil = Math.Ceiling(Math.Sqrt(pos));
-            return (int)(ceil % 2 == 0 ? ceil : ceil - 1) / 2;
-        }
     }
 }
