@@ -63,4 +63,13 @@ namespace Common
             return this.x == o.x && this.y == o.y;
         }
     }
+
+    public static class Input
+    {
+        public static string[] Lines(int day, bool sample = false)
+        {
+            string filename = sample ? "sample" : "real";
+            return System.IO.File.ReadAllLines($@"./Inputs/Day{day}/{filename}.txt");
+        }
+    }
 }

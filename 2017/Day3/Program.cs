@@ -27,7 +27,7 @@ namespace Day3
         };
         static void Main(string[] args)
         {
-            var input = int.Parse(Resources.input);
+            var input = int.Parse(Common.Input.Lines(3)[0]);
 
             Console.WriteLine($@"Part 1: {PartOne(input)}");
             Console.WriteLine($@"Part 2: {PartTwo(input)}");
