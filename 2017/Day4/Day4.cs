@@ -18,7 +18,6 @@ namespace Day4
         static bool IsValid(string passphrase)
         {
             var words = passphrase.Split(' ');
-
             return words.Length == words.ToHashSet().Count;
         }
 
