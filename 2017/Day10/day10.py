@@ -1,4 +1,4 @@
-from collections import deque
+from math import prod
 
 hash_len = 256
 
@@ -22,46 +22,42 @@ def write_strip(string, start, strip):
     return string
 
 
-def part_one():
-    lengths = deque(map(int, open("Day10/input").read().split(",")))
+def hash(string: str, partial=False):
+    if partial:
+        lengths = list(map(int, string.split(",")))
+    else:
+        lengths = list(map(ord, string)) + [17, 31, 73, 47, 23]
 
-    string = list(range(hash_len))
-
+    output = list(range(hash_len))
     pos = 0
     skip_size = 0
-    while lengths:
-        length = lengths.popleft()
-
-        string = write_strip(string, pos, get_strip(string, pos, length))
-
-        pos = (pos + length + skip_size) % hash_len
-        skip_size += 1
-
-    print(string[0] * string[1])
-
-
-def part_two():
-    lengths = list(map(ord, open("Day10/input").read())) + [17, 31, 73, 47, 23]
-    # lengths = [49, 44, 50, 44, 51, 17, 31, 73, 47, 23]
-    string = list(range(hash_len))
-    pos = 0
-    skip_size = -1
-    for _ in range(64):
+    for _ in range(64 if not partial else 1):
         for length in lengths:
-            skip_size += 1
-            string = write_strip(string, pos, get_strip(string, pos, length))
+            output = write_strip(output, pos, get_strip(output, pos, length))
 
             pos = (pos + length + skip_size) % hash_len
+            skip_size += 1
+
+    if partial:
+        return output
 
     dense = []
     for start in range(0, hash_len, 16):
         xord = 0
-        for t in string[start : start + 16]:
+        for t in output[start : start + 16]:
             xord ^= t
 
         dense.append(xord)
 
-    print("".join(map('{:02x}'.format, dense)))
+    return "".join(map("{:02x}".format, dense))
+
+
+def part_one():
+    print(prod(hash(open("input").read(), partial=True)[:2]))
+
+
+def part_two():
+    print(hash(open("input").read()))
 
 
 part_one()
