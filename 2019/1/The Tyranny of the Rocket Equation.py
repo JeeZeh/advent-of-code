@@ -1,19 +1,18 @@
-modules = list(map(int, open('input.txt')))
+modules = list(map(int, open("input.txt")))
 
-total_fuel = 0
-for mass in modules:
-    fuel = (mass//3) - 2
-    # Sum fuel
-    total_fuel += fuel
-print(f"Part 1: {total_fuel}")
 
-total_fuel = 0
-for mass in modules:
-    fuel_mass = (mass//3) - 2
-    extra_fuel = (fuel_mass//3) - 2
-    while extra_fuel > 0:
-        fuel_mass += extra_fuel
-        extra_fuel = (extra_fuel//3) - 2
-    total_fuel += fuel_mass
+def fuel(mass, rec=False):
+    needs = (mass // 3) - 2
 
-print(f"Part 2: {total_fuel}")
+    if not rec:
+        return needs
+
+    if needs <= 0:
+        return 0
+
+    return needs + fuel(needs, True)
+
+
+print(f"Part 1: {sum(map(fuel, modules))}")
+
+print(f"Part 2: {sum(map(lambda x: fuel(x, True), modules))}")
