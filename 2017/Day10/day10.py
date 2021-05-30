@@ -22,7 +22,7 @@ def write_strip(string, start, strip):
     return string
 
 
-def hash(string: str, partial=False):
+def knot_hash(string: str, partial=False):
     if partial:
         lengths = list(map(int, string.split(",")))
     else:
@@ -59,6 +59,6 @@ def part_one():
 def part_two():
     print(hash(open("input").read()))
 
-
-part_one()
-part_two()
+if __name__ == "__main__":
+    part_one()
+    part_two()
