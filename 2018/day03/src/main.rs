@@ -1,12 +1,12 @@
-use std::{collections::HashMap, fs};
+use std::{fs, time::Instant};
 
 struct Pos {
-    x: i32,
-    y: i32,
+    x: u16,
+    y: u16,
 }
 struct Dimensions {
-    x: i32,
-    y: i32,
+    x: u16,
+    y: u16,
 }
 struct Claim {
     id: String,
@@ -15,36 +15,46 @@ struct Claim {
 }
 
 fn main() {
-    println!("Hello, world!");
+    let now = Instant::now();
     let file = fs::read_to_string("./src/input").unwrap();
     let claims: Vec<Claim> = file.lines().map(parse_claim).collect();
 
-    let mut plot: HashMap<String, i32> = HashMap::new();
+    let mut plot = vec![vec![0u32; 1000]; 1000];
+
     for claim in claims.iter() {
         for x in claim.pos.x..claim.pos.x + claim.dimensions.x {
             for y in claim.pos.y..claim.pos.y + claim.dimensions.y {
-                let pos = format!("{},{}", x, y);
-                let mut num_claims = 1;
-                if plot.contains_key(&pos) {
-                    num_claims += plot.get(&pos).unwrap();
-                }
-                plot.insert(pos, num_claims);
+                plot[usize::from(y)][usize::from(x)] += 1;
+            }
+        }
+    }
+    let at_least_two = count_squares_with_at_least_two_claims(&plot);
+    println!("Part 1: {}", at_least_two);
+
+    let not_overlapping: &Claim = claims.iter().find(|c| !claim_overlaps(&plot, c)).unwrap();
+    println!("Part 2: {}", not_overlapping.id);
+
+    println!("{}ms", now.elapsed().as_millis());
+}
+
+fn count_squares_with_at_least_two_claims(plot: &Vec<Vec<u32>>) -> u32 {
+    let mut count = 0;
+
+    for x in 0..1000 {
+        for y in 0..1000 {
+            if plot[y][x] >= 2 {
+                count += 1;
             }
         }
     }
 
-    let more_than_two_claims = plot.values().filter(|c| c >= &&2).count();
-    println!("Part 1: {}", more_than_two_claims);
-
-    let not_overlapping: &Claim = claims.iter().find(|c| !claim_overlaps(&plot, c)).unwrap();
-    println!("Part 2: {}", not_overlapping.id)
+    count
 }
 
-fn claim_overlaps(plot: &HashMap<String, i32>, claim: &Claim) -> bool {
+fn claim_overlaps(plot: &Vec<Vec<u32>>, claim: &Claim) -> bool {
     for x in claim.pos.x..claim.pos.x + claim.dimensions.x {
         for y in claim.pos.y..claim.pos.y + claim.dimensions.y {
-            let pos = format!("{},{}", x, y);
-            if plot.get(&pos).unwrap() > &1 {
+            if plot[usize::from(y)][usize::from(x)] > 1 {
                 return true;
             };
         }
@@ -58,12 +68,12 @@ fn parse_claim(line: &str) -> Claim {
     let positions = split.nth(1).unwrap(); // 141,223:
     let dimensions = split.next().unwrap(); // 19x12
 
-    let positions: Vec<i32> = positions[..positions.len() - 1]
+    let positions: Vec<u16> = positions[..positions.len() - 1]
         .split(",")
         .map(|p| p.parse().unwrap())
         .collect();
 
-    let dimensions: Vec<i32> = dimensions.split("x").map(|d| d.parse().unwrap()).collect();
+    let dimensions: Vec<u16> = dimensions.split("x").map(|d| d.parse().unwrap()).collect();
 
     Claim {
         id: String::from(id),
