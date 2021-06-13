@@ -4,49 +4,42 @@ fn main() {
     let now = Instant::now();
     let original = fs::read_to_string("./src/input").unwrap();
 
-    let mut stream = String::from(&original);
-    while collapse(&mut stream) {}
+    let stream = String::from(&original);
 
-    println!("Part 1: {}", stream.len());
+    println!("Part 1: {}", collapse(&stream));
 
-    let alphabet = (b'a'..=b'z')
-        .map(|c| {
-            c as char
-        })          
-        .collect::<Vec<_>>();
+    let alphabet: Vec<char> = (b'a'..=b'z').map(|c| c as char).collect();
 
     let mut lengths: Vec<usize> = Vec::new();
 
     for char in alphabet {
-        let mut stream: String = String::from(&original).chars().filter(
-            |c| c != &char && c != &char.to_ascii_uppercase()
-        ).collect();
-        
-        while collapse(&mut stream) {}
-        &lengths.push(stream.len());
+        let stream: String = String::from(&original)
+            .chars()
+            .filter(|c| c != &char && c != &char.to_ascii_uppercase())
+            .collect();
+
+        &lengths.push(collapse(&stream));
     }
 
-    println!("{:?}", lengths.iter().min().unwrap());
+    println!("Part 2: {:?}", lengths.iter().min().unwrap());
 
     println!("{}ms", now.elapsed().as_millis());
 }
 
-fn collapse(seq: &mut String) -> bool {
-    let mut new_string = String::new();
+fn collapse(seq: &String) -> usize {
+    let mut new_string: Vec<char> = Vec::new();
 
-    let mut stream = seq.chars().peekable();
+    let mut stream = seq.chars();
 
-    while let Some(chr) = stream.next() {
-        let next = *stream.peek().unwrap_or(&'0');
-        if (chr as i32 - next as i32).abs() == 32 {
-            stream.next();
-            continue;
-        }
-        new_string.push(chr);
+    new_string.push(stream.next().unwrap());
+
+    for c in stream {
+        if new_string.len() > 0 && (*new_string.last().unwrap() as i32 - c as i32).abs() == 32 {
+            new_string.pop();
+        } else {
+            &new_string.push(c);
+        };
     }
 
-    let old_len = seq.len();
-
-    seq.replace_range(0..seq.len(), &new_string[..]);
-    old_len != seq.len()
+    new_string.len()
 }
