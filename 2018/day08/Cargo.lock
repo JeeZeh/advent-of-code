@@ -3,3 +3,12 @@
 [[package]]
 name = "day08"
 version = "0.1.0"
+dependencies = [
+ "fn-cache",
+]
+
+[[package]]
+name = "fn-cache"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "158af47525ef6744968178f72dd4a47999faa971adb23db9a1ff2668f8722046"
