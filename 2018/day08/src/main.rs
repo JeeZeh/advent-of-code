@@ -40,15 +40,15 @@ fn part_one(node: &Node) -> i32 {
 }
 
 fn part_two(node: &Node) -> i32 {
-    // What is the value of the root node?
+    // What is the value of a node?
     match node.children.len() {
-        0 => node.metadata.iter().sum::<i32>(),
-        t => node
-            .metadata
-            .iter()
-            .map(|m| m - 1)
-            .filter(|m| *m < t as i32)
-            .map(|idx| part_two(&node.children[idx as usize]))
+        0 => node.metadata.iter().sum::<i32>(), // If no children, sum of its metadata
+        t => node // Otherwise, each metadata entry
+            .metadata // refers to a child whose value
+            .iter() // should be calculated and summed.
+            .map(|m| m - 1) // Index of child = (metadata - 1)
+            .filter(|m| *m < t as i32) // Only valid indexes allowed
+            .map(|idx| part_two(&node.children[idx as usize])) // Get that child's value
             .sum::<i32>(),
     }
 }
