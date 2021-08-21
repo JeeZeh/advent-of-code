@@ -1,7 +1,6 @@
 type Grid<T> = Vec<Vec<T>>;
 
 struct FuelRack {
-    serial_number: i32,
     fuel: Grid<Cell>,
     size: usize,
 }
@@ -20,11 +19,7 @@ impl FuelRack {
             fuel.push(row);
         }
 
-        FuelRack {
-            serial_number: serial_number,
-            fuel,
-            size,
-        }
+        FuelRack { fuel, size }
     }
 
     fn power_square(&self, start_x: usize, start_y: usize, square_size: usize) -> i32 {
@@ -57,9 +52,6 @@ impl FuelRack {
 }
 
 struct Cell {
-    x_pos: i32,
-    y_pos: i32,
-    rack_id: i32,
     power: i32,
 }
 
@@ -68,12 +60,7 @@ impl Cell {
         let rack_id = x as i32 + 10;
         let power = (((rack_id * y as i32 + grid_serial_number) * rack_id) % 1000) / 100 - 5;
 
-        Cell {
-            x_pos: x as i32,
-            y_pos: y as i32,
-            rack_id,
-            power,
-        }
+        Cell { power }
     }
 }
 
