@@ -19,8 +19,6 @@ impl Conv {
 }
 
 fn main() {
-    println!("Hello, world!");
-
     let (initial_state, convolutions) =
         parse_input(fs::read_to_string("./src/input").unwrap().as_str());
 
@@ -30,6 +28,7 @@ fn main() {
 
     let mut state = Vec::with_capacity(size);
 
+    // Copy initial into padded array
     for i in 0..size {
         if i < offset || i >= offset + initial_state.len() {
             state.push(false);
