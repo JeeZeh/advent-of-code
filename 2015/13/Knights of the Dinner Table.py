@@ -1,5 +1,5 @@
 from collections import defaultdict
-from itertools import islice, permutations
+from itertools import permutations
 from typing import Tuple
 
 
