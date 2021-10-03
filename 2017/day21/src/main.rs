@@ -27,6 +27,8 @@ fn main() {
     )
 }
 
+// ==== Helpers ====
+
 fn read_rules(test: bool) -> HashMap<String, Tile> {
     let input = std::fs::read_to_string(if test { "./src/test" } else { "./src/input" });
     let mut rules: HashMap<String, Tile> = HashMap::new();
@@ -37,6 +39,17 @@ fn read_rules(test: bool) -> HashMap<String, Tile> {
 
     return rules;
 }
+
+fn parse_rule(line: &str) -> (Tile, Tile) {
+    let mut parts = line.split(" => ");
+
+    let rule = parts.next().unwrap();
+    let output = parts.next().unwrap();
+
+    (Tile::from_pattern(rule), Tile::from_pattern(output))
+}
+
+// ==== Structs ====
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Tile {
@@ -217,14 +230,7 @@ impl Tile {
     }
 }
 
-fn parse_rule(line: &str) -> (Tile, Tile) {
-    let mut parts = line.split(" => ");
-
-    let rule = parts.next().unwrap();
-    let output = parts.next().unwrap();
-
-    (Tile::from_pattern(rule), Tile::from_pattern(output))
-}
+// ==== Tests ====
 
 #[cfg(test)]
 mod tests {
