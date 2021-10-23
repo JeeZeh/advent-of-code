@@ -48,6 +48,7 @@ def largest_replacement(replacements, molecule) -> Tuple[Replacement, Match]:
     searches = [m for m in searches if m[1] is not None]
     return (None, None) if not searches else max(searches, key=lambda m: len(m[0].produce))
 
+
 # Start with the end molecule and try to 'dissolve' it down to 'e'
 # rather than trying to generate the molecule by starting from 'e'
 reduction = molecule
@@ -60,5 +61,5 @@ while reduction != "e":
     start, end = match.span()
     reduction = reduction[:start] + replacement.match + reduction[end:]
     steps += 1
-    
+
 print("Part 2:", steps)
