@@ -1,8 +1,6 @@
-from collections import deque
 from copy import copy
 from dataclasses import dataclass
-from typing import List, Literal, Set, Tuple, Union
-from textwrap import dedent
+from typing import List, Literal, Tuple, Union
 
 
 @dataclass
@@ -65,30 +63,31 @@ spells: List[Tuple[str, Spell]] = [
     ("m", Spell(53, [Effect("damage", 4, 0)], True)),
 ]
 
-
-@dataclass
-class Game:
-    player: Stats
-    boss: Stats
-    tried_spells: Set[str]
-    effects: List[Effect]
-    player_attacks: bool
-    total_mana_spent: int
-    history: deque
-
-    def __str__(self):
-        return dedent(
-            f"""
-            Player: {self.player}
-            Boss: {self.boss}
-            Tried: {self.tried_spells}
-            Effects: {self.effects}
-            Mana Spent: {self.total_mana_spent}
-            """
-        )
-
-
 best_game = 2000
+
+
+def apply_effects(player_hp, player_armour, player_mana, boss_hp, effects):
+    new_effects = []
+    for e in effects:
+        new_effect, player_hp, player_armour, player_mana, boss_hp = e.apply(
+            player_hp, player_armour, player_mana, boss_hp
+        )
+        if new_effect.duration > 0:
+            new_effects.append(new_effect)
+
+    return player_hp, player_armour, player_mana, boss_hp, new_effects
+
+
+def check_win(boss_hp, total_mana_spent) -> bool:
+    global best_game
+    if boss_hp <= 0:
+        if total_mana_spent < best_game:
+            best_game = total_mana_spent
+        # print("Player wins:", total_mana_spent, path)
+        # This path is complete, backtrack
+        return True
+
+    return False
 
 
 def try_round(
@@ -103,8 +102,7 @@ def try_round(
     path: str,
     hard=False,
 ):
-    global best_game
-
+    ### CAST SPELL (previous player turn) ###
     total_mana_spent += spell.cost
     player_mana -= spell.cost
 
@@ -115,32 +113,18 @@ def try_round(
             )
 
         # Game won because of instant effect
-        if boss_hp <= 0:
-            if total_mana_spent < best_game:
-                best_game = total_mana_spent
-            # This path is complete, backtrack
-            # print("Player wins:", total_mana_spent, path)
+        if check_win(boss_hp, total_mana_spent):
             return
     else:
         effects += spell.effects
 
     ### BOSS TURN ###
-    new_effects = []
-    for e in effects:
-        new_effect, player_hp, player_armour, player_mana, boss_hp = e.apply(
-            player_hp, player_armour, player_mana, boss_hp
-        )
-        if new_effect.duration > 0:
-            new_effects.append(new_effect)
-
-    effects = new_effects
+    player_hp, player_armour, player_mana, boss_hp, effects = apply_effects(
+        player_hp, player_armour, player_mana, boss_hp, effects
+    )
 
     # Game won because of instant effect
-    if boss_hp <= 0:
-        if total_mana_spent < best_game:
-            best_game = total_mana_spent
-        # This path is complete, backtrack
-        # print("Player wins:", total_mana_spent, path)
+    if check_win(boss_hp, total_mana_spent):
         return
 
     player_hp -= max(1, boss_damage - player_armour)
@@ -156,22 +140,12 @@ def try_round(
         if player_hp <= 0:
             return
 
-    new_effects = []
-    for e in effects:
-        new_effect, player_hp, player_armour, player_mana, boss_hp = e.apply(
-            player_hp, player_armour, player_mana, boss_hp
-        )
-        if new_effect.duration > 0:
-            new_effects.append(new_effect)
-
-    effects = new_effects
+    player_hp, player_armour, player_mana, boss_hp, effects = apply_effects(
+        player_hp, player_armour, player_mana, boss_hp, effects
+    )
 
     # Game ended because of passive effect (negative effects only apply to boss)
-    if boss_hp <= 0:
-        if total_mana_spent < best_game:
-            best_game = total_mana_spent
-        # print("Player wins:", total_mana_spent, path)
-        # This path is complete, backtrack
+    if check_win(boss_hp, total_mana_spent):
         return
 
     # Choose spell
