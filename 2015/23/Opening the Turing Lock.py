@@ -79,4 +79,4 @@ part_two = run(
     },
     read_instructions(),
 )
-print("Part 1:", part_two["b"])
+print("Part 2:", part_two["b"])
