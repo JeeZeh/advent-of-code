@@ -51,7 +51,7 @@ class Effect:
 @dataclass
 class Spell:
     cost: int
-    effects: list[Effect]
+    effects: List[Effect]
     instant: bool
 
 
