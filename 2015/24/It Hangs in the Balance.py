@@ -51,7 +51,6 @@ def part_one():
                         break
 
     print("Part 1:", lowest_entanglement)
-    return lowest_entanglement, smallest_a
 
 
 def part_two():
@@ -102,7 +101,6 @@ def part_two():
                             break
 
     print("Part 2:", lowest_entanglement)
-    return lowest_entanglement, smallest_a
 
 
 part_one()

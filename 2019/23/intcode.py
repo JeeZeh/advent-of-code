@@ -1,9 +1,13 @@
 from collections import defaultdict
+from enum import Enum
 
-
+class IntcodeState(Enum):
+    STOPPED: 0
+    WAITING_FOR_INPUT: 1
+    WAITING_FOR_OUTPUT: 2
 class Intcode:
 
-    p = {1: 3, 2: 3, 3: 1, 4: 1, 5: 2, 6: 2, 7: 3, 8: 3, 9: 1}
+    operand_count = {1: 3, 2: 3, 3: 1, 4: 1, 5: 2, 6: 2, 7: 3, 8: 3, 9: 1}
     o = None
     mem = None
     ops = None
@@ -11,7 +15,8 @@ class Intcode:
     r = 0
     waiting = False
     sending = False
-    queue = []
+    input_buffer = []
+    output_buffer = []
 
     
 
@@ -33,7 +38,7 @@ class Intcode:
         self.ops = self.mem
 
         if queue:
-            self.queue = queue
+            self.input_buffer = queue
 
         x = self.run()
         x.send(None)
@@ -41,7 +46,7 @@ class Intcode:
         return x
 
     def save(self):
-         return (self.o.copy(), self.ops.copy(), self.ptr, self.r, self.queue)
+         return (self.o.copy(), self.ops.copy(), self.ptr, self.r, self.input_buffer,self.output_buffer)
         
     def is_waiting(self):
         return self.waiting
@@ -54,7 +59,8 @@ class Intcode:
         self.ops = data[1]
         self.ptr = data[2]
         self.r = data[3]
-        self.queue = data[4]
+        self.input_buffer = data[4]
+        self.output_buffer = data[5]
 
         x = self.run()
         x.send(None)
@@ -94,10 +100,10 @@ class Intcode:
         Intcode CPU
         """
 
-        while self.ops[self.ptr] != 99:
+        while self.ops[self.ptr] != 99 or not self.is_waiting or not self.output_buffer:
             op = f"{self.ops[self.ptr]:05}"
             code = int(op[-2:])
-            e = self.p[code]
+            e = self.operand_count[code]
             modes = list(map(int, list(op[:-2][::-1][:e])))
             params = [self.ops[self.ptr + i] for i in range(1, e + 1)]
             data = [self.ops[self.get_pos(modes[i], params, i)] for i in range(e)]
@@ -107,18 +113,16 @@ class Intcode:
             elif code == 2:
                 self.write(modes[-1], params, e - 1, data[0] * data[1])
             elif code == 3:
-                self.waiting = True
-                if self.queue:
-                    i = self.queue.pop()
+                if self.input_buffer:
+                    i = self.input_buffer.pop()
+                    self.write(modes[-1], params, e - 1, i)
+                    self.waiting = False
                 else:
-                    i = yield
-                self.write(modes[-1], params, e - 1, i)
-                self.waiting = False
+                    self.is_waiting = True
             elif code == 4:
                 self.sending = True
                 rd = self.read(modes[-1], params, e - 1)
-                yield rd
-                self.sending = False
+                self.output_buffer.append(rd)
             elif code == 5: 
                 if data[0] != 0:
                     self.ptr = data[1]
@@ -137,3 +141,9 @@ class Intcode:
                 self.r += data[0]
                 self.ptr += 2
                 
+        if self.ops[self.ptr] != 99:
+            return IntcodeState.STOPPED
+        if self.is_waiting:
+            return IntcodeState.WAITING_FOR_INPUT
+        if self.output_buffer:
+            return IntcodeState.WAITING_FOR_OUTPUT
