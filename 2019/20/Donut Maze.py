@@ -65,9 +65,10 @@ def get_reachable_from(pos):
             if n in portals:
                 n = portals[n]
                 dimension += n[1]
+                dists.append({})
                 if n[1] > 1:
                     dists.append({n: 0})
-                n =  n[0]
+                n = n[0]
                 
             if n in grid and grid[n] != "#" and n not in dists[dimension]:
                 v = grid[n]
