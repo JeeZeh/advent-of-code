@@ -1,8 +1,5 @@
 from sympy import simplify
 
-deck = [c for c in range(10007)]
-
-
 def deal(deck):
     deck = deck[::-1]
     return deck
