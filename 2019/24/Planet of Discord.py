@@ -66,9 +66,11 @@ def tick():
     # By looking around the grid, we've automatically expanded it inwards and
     # outwards. However, these newly evaluated positions should have actually been evaluated
     # as part of the first loop above.
-    new_positions = set(grid.keys()) - set(begin_state.keys())
+    # We can now evaluate them separately before processing all of the updates.
 
+    new_positions = set(grid.keys()) - set(begin_state.keys())
     for pos in new_positions:
+        # While evaluating the newly created positions, don't grow the grid
         adjs = get_surrounding(pos, no_expand=True)
         if pos.pos == (2, 2):
             continue
