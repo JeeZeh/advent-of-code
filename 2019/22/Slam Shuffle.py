@@ -1,9 +1,4 @@
 from sympy import simplify
-from sympy.core.expr import Expr
-from sympy.core.function import expand
-from sympy.ntheory import modular
-from sympy.polys.polytools import cancel, factor
-from sympy.simplify.powsimp import powsimp
 
 deck = [c for c in range(10007)]
 
@@ -80,7 +75,7 @@ def generate_shuffle_string(decksize):
     # return f"({equation}) % {decksize}"
 
 
-def mod_atoms(expression: Expr, mod):
+def mod_atoms(expression, mod):
     expression_string = str(expression)
 
     for atom in expression.atoms():
@@ -124,4 +119,4 @@ def get_card_at_p_after_n_shuffles(p, n, decksize):
 
 
 print("Part 1:", position_of_card(2019, list(range(10007)), 1))
-print("Part 2:",get_card_at_p_after_n_shuffles(2020, 101741582076661, 119315717514047))
+print("Part 2:", get_card_at_p_after_n_shuffles(2020, 101741582076661, 119315717514047))
