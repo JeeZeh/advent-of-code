@@ -1,4 +1,4 @@
-use std::{fs, thread::park};
+use std::fs;
 
 enum Direction {
     Up,
@@ -16,7 +16,7 @@ fn main() {
         .collect();
 
     println!("Part 1: {}", part_one(&input));
-    println!("Part 1: {}", part_two(&input));
+    println!("Part 2: {}", part_two(&input));
 }
 
 fn parse_input(line: &str) -> Inst {
