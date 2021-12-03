@@ -1,25 +1,15 @@
-use std::fs;
-
 enum Direction {
     Up,
     Down,
     Forward,
 }
 
-struct Inst(Direction, i32);
-
-fn main() {
-    let input: Vec<Inst> = fs::read_to_string("./src/input")
-        .unwrap()
-        .lines()
-        .map(parse_input)
-        .collect();
-
-    println!("Part 1: {}", part_one(&input));
-    println!("Part 2: {}", part_two(&input));
+pub fn solve(input: Vec<String>) -> (i32, i32) {
+    let instructions: Vec<(Direction, i32)> = input.iter().map(parse_input).collect();
+    (part_one(&instructions), part_two(&instructions))
 }
 
-fn parse_input(line: &str) -> Inst {
+fn parse_input(line: &String) -> (Direction, i32) {
     let mut parts = line.split(" ");
 
     let direction = match parts.next().unwrap() {
@@ -30,36 +20,36 @@ fn parse_input(line: &str) -> Inst {
     };
     let value = parts.next().unwrap().parse().unwrap();
 
-    Inst(direction, value)
+    (direction, value)
 }
 
-fn part_one(instructions: &[Inst]) -> i32 {
+fn part_one(instructions: &[(Direction, i32)]) -> i32 {
     let mut x = 0;
     let mut y = 0;
 
-    for inst in instructions {
-        match inst.0 {
-            Direction::Down => y += inst.1,
-            Direction::Up => y -= inst.1,
-            Direction::Forward => x += inst.1,
+    for (direction, value) in instructions {
+        match direction {
+            Direction::Down => y += value,
+            Direction::Up => y -= value,
+            Direction::Forward => x += value,
         }
     }
 
     x * y
 }
 
-fn part_two(instructions: &[Inst]) -> i32 {
+fn part_two(instructions: &[(Direction, i32)]) -> i32 {
     let mut x = 0;
     let mut y = 0;
     let mut aim = 0;
 
-    for inst in instructions {
-        match inst.0 {
-            Direction::Down => aim += inst.1,
-            Direction::Up => aim -= inst.1,
+    for (direction, value) in instructions {
+        match direction {
+            Direction::Down => aim += value,
+            Direction::Up => aim -= value,
             Direction::Forward => {
-                x += inst.1;
-                y += aim * inst.1;
+                x += value;
+                y += aim * value;
             }
         }
     }
