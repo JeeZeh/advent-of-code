@@ -5,19 +5,17 @@ pub fn solve(lines: Vec<String>) -> (usize, usize) {
         .map(|line| u32::from_str_radix(line, 2).unwrap())
         .collect();
 
-    // println!("{:?}", &lines);
-    (part_one(&bins, bit_len), 0)
+    (part_one(&bins, bit_len), part_two(&bins, bit_len))
 }
 
 fn part_one(bins: &Vec<u32>, bit_len: usize) -> usize {
     let mut gamma = 0;
     let mut epsilon = 0;
 
-    let most_common = get_most_common_bit_per_idx(&bins, bit_len);
-    for bit in most_common {
+    for bit in (0..bit_len).rev() {
         gamma <<= 1;
         epsilon <<= 1;
-        if bit {
+        if most_common_bit_at_idx(&bins, bit) {
             gamma += 1;
         } else {
             epsilon += 1;
@@ -28,39 +26,32 @@ fn part_one(bins: &Vec<u32>, bit_len: usize) -> usize {
 }
 
 fn part_two(bins: &Vec<u32>, bit_len: usize) -> usize {
-    let mut gamma = 0;
-    let mut epsilon = 0;
+    let mut oxygen = bins.clone();
+    let mut co2 = bins.clone();
 
-    let oxygen = bins.clone();
-    let co2 = bins.clone();
-
-    let most_common = get_most_common_bit_per_idx(&bins, bit_len);
-    for bit in most_common {
-        gamma <<= 1;
-        epsilon <<= 1;
-        if bit {
-            gamma += 1;
-        } else {
-            epsilon += 1;
+    for bit_idx in (0..bit_len).rev() {
+        if oxygen.len() > 1 {
+            let common = most_common_bit_at_idx(&oxygen, bit_idx);
+            oxygen.retain(|bin| get_bit(*bin, bit_idx) == common);
+        }
+        if co2.len() > 1 {
+            let common = most_common_bit_at_idx(&co2, bit_idx);
+            co2.retain(|bin| get_bit(*bin, bit_idx) != common);
         }
     }
 
-    gamma * epsilon
+    (co2[0] * oxygen[0]) as usize
 }
 
 fn get_bit(input: u32, n: usize) -> bool {
     input & (1 << n) != 0
 }
 
-fn get_most_common_bit_per_idx(bits_strings: &Vec<u32>, bit_len: usize) -> Vec<bool> {
-    let mut ones: Vec<usize> = vec![0; bit_len];
+fn most_common_bit_at_idx(bits_strings: &Vec<u32>, idx: usize) -> bool {
+    let mut ones = 0;
     for bit_string in bits_strings {
-        for i in 0..bit_len {
-            ones[i] += get_bit(*bit_string, bit_len - i - 1) as usize;
-        }
+        ones += get_bit(*bit_string, idx) as usize;
     }
 
-    ones.iter()
-        .map(|count| *count > bits_strings.len() - count)
-        .collect()
+    ones >= bits_strings.len() - ones
 }
