@@ -5,7 +5,7 @@ pub fn solve(lines: Vec<String>) -> (usize, usize) {
         .map(|line| u32::from_str_radix(line, 2).unwrap())
         .collect();
 
-    println!("{:?}", &lines);
+    // println!("{:?}", &lines);
     (part_one(&bins, bit_len), 0)
 }
 
@@ -24,7 +24,7 @@ fn part_one(bins: &Vec<u32>, bit_len: usize) -> usize {
         }
     }
 
-    dbg!(gamma) * dbg!(epsilon)
+    gamma * epsilon
 }
 
 fn part_two(bins: &Vec<u32>, bit_len: usize) -> usize {
@@ -45,7 +45,7 @@ fn part_two(bins: &Vec<u32>, bit_len: usize) -> usize {
         }
     }
 
-    dbg!(gamma) * dbg!(epsilon)
+    gamma * epsilon
 }
 
 fn get_bit(input: u32, n: usize) -> bool {

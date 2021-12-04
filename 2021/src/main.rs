@@ -3,6 +3,7 @@ mod aocutil;
 mod day01;
 mod day02;
 mod day03;
+mod day04;
 
 use aoc::*;
 use clap::Parser;
@@ -27,7 +28,7 @@ pub fn main() {
         }
         .show();
     } else {
-        for i in 1..=2 {
+        for i in 1..=4 {
             println!("------------");
             println!("Day {}", i);
             println!("------------");
@@ -41,6 +42,7 @@ fn run_rust(day: u32) -> Box<dyn AocOutput> {
         1 => run(day, day01::solve),
         2 => run(day, day02::solve),
         3 => run(day, day03::solve),
+        4 => run(day, day04::solve),
         _ => panic!("Day not yet implemented"),
     }
 }
