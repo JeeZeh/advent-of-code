@@ -5,39 +5,74 @@ mod day02;
 mod day03;
 mod day04;
 
-use aoc::*;
-use clap::Parser;
+use std::time::Duration;
 
-#[derive(Parser)]
-struct Opts {
-    /// The day to run, if unspecified all days will be run
-    day: Option<u32>,
-    /// Language mode. Tries to run the given day in the language specified, if present. Defaults to Rust
-    #[clap(default_value = "rs")]
-    language: String,
-}
+use aoc::*;
+use clap::{App, Arg};
 
 pub fn main() {
-    let opts: Opts = Opts::parse();
+    let matches = App::new("AoC Runner")
+        .version("2021")
+        .author("Jesse Ashmore")
+        .about("Advent of Code solution runner")
+        .arg(
+            Arg::new("day")
+                .required(false)
+                .takes_value(true)
+                .about("Which solution to run, runs all solutions if ommited"),
+        )
+        .arg(
+            Arg::new("language")
+                .about("Target language for solution(s)")
+                .short('l')
+                .required(false)
+                .default_value("rs"),
+        )
+        .arg(
+            Arg::new("time")
+                .about("Output solution(s) run time")
+                .short('t')
+                .long("time")
+                .required(false)
+                .takes_value(false),
+        )
+        .get_matches();
 
-    if opts.day.is_some() {
-        match opts.language.as_str() {
-            "rs" => run_rust(opts.day.unwrap()),
+    let time = matches.is_present("time");
+
+    if let Some(day) = matches.value_of("day") {
+        let (output, dur) = match matches.value_of("language").unwrap() {
+            "rs" => run_rust(day.parse().unwrap()),
             // "py" => run_python(opts.day),
             _ => panic!("Language not supported"),
+        };
+        output.show();
+        if time {
+            println!("Time: {:.2?}", dur);
         }
-        .show();
-    } else {
-        for i in 1..=4 {
-            println!("------------");
-            println!("Day {}", i);
-            println!("------------");
-            run_rust(i).show();
+        return;
+    }
+
+    let mut total = Duration::new(0, 0);
+    for i in 1..=4 {
+        println!("------------");
+        println!("Day {}", i);
+        println!("------------");
+        let (output, duration) = run_rust(i);
+        output.show();
+        if time {
+            println!("Time: {:.2?}", duration);
+            total += duration;
         }
+    }
+
+    if time {
+        println!("------------");
+        println!("Total Execution Time: {:.2?}", total);
     }
 }
 
-fn run_rust(day: u32) -> Box<dyn AocOutput> {
+fn run_rust(day: u32) -> (Box<dyn AocOutput>, Duration) {
     match day {
         1 => run(day, day01::solve),
         2 => run(day, day02::solve),

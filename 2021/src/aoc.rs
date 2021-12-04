@@ -6,6 +6,7 @@ pub use itertools::Itertools;
 use std::fmt::{Debug, Display};
 use std::fs;
 use std::str::FromStr;
+use std::time::{Duration, Instant};
 
 pub trait AocInput {
     fn make(input: String) -> Self;
@@ -53,11 +54,16 @@ impl<A: Display, B: Display> AocOutput for (A, B) {
     }
 }
 
-pub fn run<T, R>(day: u32, solution: impl Fn(T) -> R) -> Box<R>
+pub fn run<T, R: 'static>(day: u32, solution: impl Fn(T) -> R) -> (Box<dyn AocOutput>, Duration)
 where
     T: AocInput,
     R: AocOutput,
 {
-    let input = fs::read_to_string(format!("inputs/day{day:02}.txt")).expect("input file");
-    Box::new(solution(T::make(input)))
+    let raw_input = fs::read_to_string(format!("inputs/day{day:02}.txt")).expect("input file");
+    let prepared_input = T::make(raw_input);
+
+    let now = Instant::now();
+    let output = Box::new(solution(prepared_input));
+
+    (output, now.elapsed())
 }
