@@ -1,6 +1,8 @@
 mod aoc;
+mod aocutil;
 mod day01;
 mod day02;
+mod day03;
 
 use aoc::*;
 use clap::Parser;
@@ -38,6 +40,7 @@ fn run_rust(day: u32) -> Box<dyn AocOutput> {
     match day {
         1 => run(day, day01::solve),
         2 => run(day, day02::solve),
+        3 => run(day, day03::solve),
         _ => panic!("Day not yet implemented"),
     }
 }
