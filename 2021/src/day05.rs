@@ -43,7 +43,8 @@ pub fn solve(lines: Vec<String>) -> (usize, usize) {
 
     let (vert_or_horiz, diag) = vents.iter().partition(|l| l.x1 == l.x2 || l.y1 == l.y2);
 
-    let mut overlaps: Vec<Vec<u8>> = vec![vec![0; 1000]; 1000];
+    let mut overlaps = box [[0; 1000]; 1000];
+    
 
     add_overlaps(&vert_or_horiz, &mut overlaps);
     let part_one = overlaps.iter().flatten().filter(|v| **v > 1).count();
@@ -54,7 +55,7 @@ pub fn solve(lines: Vec<String>) -> (usize, usize) {
     (part_one, part_two)
 }
 
-fn add_overlaps(vents: &Vec<&Line>, overlaps: &mut Vec<Vec<u8>>) {
+fn add_overlaps(vents: &Vec<&Line>, overlaps: &mut Box<[[u8; 1000]; 1000]>) {
     for vent in vents {
         for (x, y) in vent.get_points_iter() {
             overlaps[y as usize][x as usize] += 1;
