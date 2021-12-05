@@ -1,4 +1,6 @@
-use std::{collections::HashMap, num::ParseIntError, str::FromStr, string::ParseError};
+use std::{
+    collections::HashMap, f64::EPSILON, num::ParseIntError, str::FromStr, string::ParseError,
+};
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 struct Point {
@@ -18,8 +20,8 @@ impl FromStr for Point {
 }
 
 impl Point {
-    fn euclid_distance(&self, other: &Self) -> f32 {
-        (((self.x - other.x).pow(2) + (self.y - other.y).pow(2)) as f32).sqrt()
+    fn euclid_distance(&self, other: &Self) -> f64 {
+        (((self.x - other.x).pow(2) + (self.y - other.y).pow(2)) as f64).sqrt()
     }
 }
 
@@ -27,7 +29,7 @@ impl Point {
 struct Line {
     a: Point,
     b: Point,
-    length: f32,
+    length: f64,
 }
 
 impl FromStr for Line {
@@ -44,12 +46,14 @@ impl FromStr for Line {
 
 impl Line {
     fn intersects(&self, point: &Point) -> bool {
-        // distance(A, C) + distance(B, C) == distance(A, B);
-        self.a.euclid_distance(&point) + self.b.euclid_distance(&point) == self.length
+        let diff = self.a.euclid_distance(&point) + self.b.euclid_distance(&point) - self.length;
+        -0.000005 < diff && diff < 0.000005 // Horrible precision errors
     }
 }
 
 pub fn solve(lines: Vec<String>) -> (usize, usize) {
+    test_point_intersection();
+
     let vents: Vec<Line> = lines.iter().map(|l| Line::from_str(l).unwrap()).collect();
 
     (part_one(&vents), part_two(&vents))
@@ -70,6 +74,20 @@ fn part_one(vents: &Vec<Line>) -> usize {
 fn part_two(vents: &Vec<Line>) -> usize {
     let overlaps = get_overlaps(&vents);
 
+    // let mut output = String::new();
+    // for y in 0..10 {
+    //     let mut row = String::new();
+    //     for x in 0..10 {
+    //         if let Some(val) = overlaps.get(&Point { x, y }) {
+    //             row.push_str(format!("{}", val).as_str());
+    //         } else {
+    //             row.push('.');
+    //         }
+    //     }
+    //     output.push_str(row.as_str());
+    //     output.push('\n');
+    // }
+    // println!("{}", output);
     overlaps.iter().filter(|(_, v)| **v > 1).count()
 }
 
@@ -119,4 +137,17 @@ fn get_vent_range(vents: &Vec<Line>) -> ((usize, usize), (usize, usize)) {
             *ys.iter().max().unwrap() as usize,
         ),
     )
+}
+
+fn test_point_intersection() {
+    let line = Line::from_str("0,0 -> 500,500").unwrap();
+    let back_line = Line::from_str("500,500 -> 0,0").unwrap();
+    let short = Line::from_str("100,100 -> 101,101").unwrap();
+    let weird = Line::from_str("433,296 -> 148,581").unwrap();
+
+    assert!(line.intersects(&Point { x: 250, y: 250 }));
+    assert!(back_line.intersects(&Point { x: 250, y: 250 }));
+    assert!(short.intersects(&Point { x: 100, y: 100 }));
+    assert!(short.intersects(&Point { x: 101, y: 101 }));
+    assert!(weird.intersects(&Point { x: 283, y: 446 }));
 }
