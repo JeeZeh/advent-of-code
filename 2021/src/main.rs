@@ -1,3 +1,5 @@
+#![feature(box_syntax)]
+
 mod aoc;
 mod aocutil;
 mod day01;
