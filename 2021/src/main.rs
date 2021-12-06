@@ -1,4 +1,5 @@
 #![feature(box_syntax)]
+#![allow(dead_code)]
 
 mod aoc;
 mod aocutil;
