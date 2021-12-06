@@ -43,8 +43,8 @@ fn part_two(bins: &Vec<u32>, bit_len: usize) -> usize {
     (co2[0] * oxygen[0]) as usize
 }
 
-fn get_bit(input: u32, n: usize) -> bool {
-    input & (1 << n) != 0
+fn get_bit(input: u32, idx: usize) -> bool {
+    input & (1 << idx) != 0
 }
 
 fn most_common_bit_at_idx(bits_strings: &Vec<u32>, idx: usize) -> bool {
