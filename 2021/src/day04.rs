@@ -53,7 +53,7 @@ impl Board {
 }
 
 pub fn solve(input: String) -> (u32, u32) {
-    let parts: Vec<&str> = input.split("\r\n\r\n").collect();
+    let parts: Vec<&str> = input.split("\n\n").collect();
     let numbers_order: Vec<u32> = parts[0].split(",").map(|c| c.parse().unwrap()).collect();
     let mut boards: Vec<Board> = parts[1..].iter().map(|s| Board::parse_board(*s)).collect();
 
