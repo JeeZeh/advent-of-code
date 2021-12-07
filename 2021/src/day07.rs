@@ -38,11 +38,12 @@ fn build_crab_bins(crabs: &Vec<i32>) -> HashMap<i32, i32> {
     bins
 }
 
+// Optimal position for Part 2 is the median
 fn get_median(bins: &HashMap<i32, i32>) -> i32 {
     *bins.iter().max_by(|a, b| a.1.cmp(b.1)).unwrap().0
 }
 
-// Optimal position for Part 2 is literally just the mean...
+// Optimal position for Part 2 is the mean
 // https://www.reddit.com/r/adventofcode/comments/rawxad/2021_day_7_part_2_i_wrote_a_paper_on_todays/
 fn get_mean(crabs: &Vec<i32>) -> i32 {
     let mean = crabs.iter().sum::<i32>() / crabs.len() as i32;
