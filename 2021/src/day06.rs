@@ -5,15 +5,13 @@ pub fn solve(line: String) -> (u64, u64) {
         .map(|c| c.parse::<usize>().unwrap())
         .for_each(|n| fish[n] += 1);
 
-    do_step(&mut fish, 80);
-    let part_one = fish.iter().sum();
-    do_step(&mut fish, 256 - 80);
-    let part_two = fish.iter().sum();
-
-    (part_one, part_two)
+    (
+        do_step(&mut fish, 80).iter().sum(),
+        do_step(&mut fish, 256 - 80).iter().sum(),
+    )
 }
 
-fn do_step(fish: &mut [u64; 9], n: usize) {
+fn do_step(fish: &mut [u64; 9], n: usize) -> &mut [u64; 9] {
     // This works by holding the count of each fish at a given
     // internal counter in an array of 'bins' where fish[1] is the number
     // of fish with an internal counter of 1
@@ -24,10 +22,9 @@ fn do_step(fish: &mut [u64; 9], n: usize) {
     // The fish now at counter 8 represent both the new fish (they're left at 8) and their
     // parents which should actually reset to counter 6, so they're copied to index 6 of the array.
     for _ in 0..n {
-        let to_add = fish[0];
         fish.rotate_left(1);
         fish[6] += fish[8];
-        fish[8] = to_add;
     }
-}
 
+    fish
+}
