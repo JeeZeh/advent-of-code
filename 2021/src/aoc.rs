@@ -54,6 +54,14 @@ impl<A: Display, B: Display> AocOutput for (A, B) {
     }
 }
 
+pub fn numbers<T>(line: &str, sep: char) -> impl Iterator<Item = T> + '_
+where
+    T: FromStr,
+    <T as FromStr>::Err: Debug,
+{
+    line.split(sep).map(|x| x.parse::<T>().unwrap())
+}
+
 pub fn run<T, R: 'static>(day: u32, solution: impl Fn(T) -> R) -> (Box<dyn AocOutput>, Duration)
 where
     T: AocInput,

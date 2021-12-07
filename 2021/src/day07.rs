@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 
+use crate::aoc::numbers;
+
 type FuelFn = dyn Fn(i32, i32) -> i32;
 
 pub fn solve(line: String) -> (i32, i32) {
-    let crab_positions: Vec<i32> = line.split(",").map(|p| p.parse().unwrap()).collect();
+    let crab_positions: Vec<i32> = numbers(line.as_str(), ',').collect();
     let bins = build_crab_bins(&crab_positions);
 
     (
-        get_fuel_for_pos(&bins, get_median(&bins), &linear),
+        get_fuel_for_pos(&bins, get_median(&crab_positions), &linear),
         get_fuel_for_pos(&bins, get_mean(&crab_positions), &divergent),
     )
 }
@@ -39,8 +41,8 @@ fn build_crab_bins(crabs: &Vec<i32>) -> HashMap<i32, i32> {
 }
 
 // Optimal position for Part 2 is the median
-fn get_median(bins: &HashMap<i32, i32>) -> i32 {
-    *bins.iter().max_by(|a, b| a.1.cmp(b.1)).unwrap().0
+fn get_median(crabs: &Vec<i32>) -> i32 {
+    *crabs.clone().select_nth_unstable(crabs.len() / 2).1
 }
 
 // Optimal position for Part 2 is the mean
