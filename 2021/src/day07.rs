@@ -1,34 +1,29 @@
 use std::collections::HashMap;
 
+type FuelFn = dyn Fn(i32, i32) -> i32;
+
 pub fn solve(line: String) -> (i32, i32) {
     let crab_positions: Vec<i32> = line.split(",").map(|p| p.parse().unwrap()).collect();
     let bins = build_crab_bins(&crab_positions);
 
-    let part_one_fuel: i32 = bins
-        .keys()
-        .map(|pos| get_fuel_for_pos(&bins, *pos, false))
-        .min()
-        .unwrap();
-
-    let part_two_optimal_position = get_mean(&crab_positions);
-
     (
-        part_one_fuel,
-        get_fuel_for_pos(&bins, part_two_optimal_position, true),
+        get_fuel_for_pos(&bins, get_median(&bins), &linear),
+        get_fuel_for_pos(&bins, get_mean(&crab_positions), &divergent),
     )
 }
 
-fn get_fuel_for_pos(crab_bins: &HashMap<i32, i32>, pos: i32, sequence: bool) -> i32 {
+fn divergent(dist: i32, count: i32) -> i32 {
+    (dist * (dist + 1) / 2) * count
+}
+
+fn linear(dist: i32, count: i32) -> i32 {
+    dist * count
+}
+
+fn get_fuel_for_pos(crab_bins: &HashMap<i32, i32>, pos: i32, fuel_fn: &FuelFn) -> i32 {
     crab_bins
         .iter()
-        .map(|(p2, count)| ((pos - p2).abs(), count))
-        .map(|(dist, count)| {
-            if sequence {
-                (dist * (dist + 1) / 2) * count
-            } else {
-                dist
-            }
-        })
+        .map(|(p2, count)| fuel_fn((pos - p2).abs(), *count))
         .sum()
 }
 
@@ -41,6 +36,10 @@ fn build_crab_bins(crabs: &Vec<i32>) -> HashMap<i32, i32> {
     }
 
     bins
+}
+
+fn get_median(bins: &HashMap<i32, i32>) -> i32 {
+    *bins.iter().max_by(|a, b| a.1.cmp(b.1)).unwrap().0
 }
 
 // Optimal position for Part 2 is literally just the mean...
