@@ -42,13 +42,22 @@ pub fn main() {
                 .required(false)
                 .takes_value(false),
         )
+        .arg(
+            Arg::new("sample")
+                .about("Runs the sample input for the solution(s)")
+                .short('s')
+                .long("sample")
+                .required(false)
+                .takes_value(false),
+        )
         .get_matches();
 
     let time = matches.is_present("time");
+    let sample_test = matches.is_present("sample");
 
     if let Some(day) = matches.value_of("day") {
         let (output, dur) = match matches.value_of("language").unwrap() {
-            "rs" => run_rust(day.parse().unwrap()),
+            "rs" => run_rust(day.parse().unwrap(), sample_test),
             // "py" => run_python(opts.day),
             _ => panic!("Language not supported"),
         };
@@ -64,7 +73,7 @@ pub fn main() {
         println!("------------");
         println!("Day {}", i);
         println!("------------");
-        let (output, duration) = run_rust(i);
+        let (output, duration) = run_rust(i, sample_test);
         output.show();
         if time {
             println!("Time: {:.2?}", duration);
@@ -78,15 +87,15 @@ pub fn main() {
     }
 }
 
-fn run_rust(day: u32) -> (Box<dyn AocOutput>, Duration) {
+fn run_rust(day: u32, sample: bool) -> (Box<dyn AocOutput>, Duration) {
     match day {
-        1 => run(day, day01::solve),
-        2 => run(day, day02::solve),
-        3 => run(day, day03::solve),
-        4 => run(day, day04::solve),
-        5 => run(day, day05::solve),
-        6 => run(day, day06::solve),
-        7 => run(day, day07::solve),
+        1 => run(day, day01::solve, sample),
+        2 => run(day, day02::solve, sample),
+        3 => run(day, day03::solve, sample),
+        4 => run(day, day04::solve, sample),
+        5 => run(day, day05::solve, sample),
+        6 => run(day, day06::solve, sample),
+        7 => run(day, day07::solve, sample),
         _ => panic!("Day not yet implemented"),
     }
 }

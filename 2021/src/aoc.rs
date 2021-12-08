@@ -1,8 +1,6 @@
 /**
  * Author: mgoszcz2@
  */
-pub use itertools::Itertools;
-
 use std::fmt::{Debug, Display};
 use std::fs;
 use std::str::FromStr;
@@ -35,18 +33,6 @@ where
     }
 }
 
-impl AocOutput for () {
-    fn show(&self) {
-        println!("Forgot to return output?");
-    }
-}
-
-impl<A: Display> AocOutput for (A,) {
-    fn show(&self) {
-        println!("Part 1: {}", self.0);
-    }
-}
-
 impl<A: Display, B: Display> AocOutput for (A, B) {
     fn show(&self) {
         println!("Part 1: {}", self.0);
@@ -62,12 +48,18 @@ where
     line.split(sep).map(|x| x.parse::<T>().unwrap())
 }
 
-pub fn run<T, R: 'static>(day: u32, solution: impl Fn(T) -> R) -> (Box<dyn AocOutput>, Duration)
+pub fn run<T, R: 'static>(
+    day: u32,
+    solution: impl Fn(T) -> R,
+    sample: bool,
+) -> (Box<dyn AocOutput>, Duration)
 where
     T: AocInput,
     R: AocOutput,
 {
-    let raw_input = fs::read_to_string(format!("inputs/day{day:02}.txt")).expect("input file");
+    let input_prefix = if sample { "inputs/test" } else { "inputs" };
+    let raw_input =
+        fs::read_to_string(format!("{input_prefix}/day{day:02}.txt")).expect("input file");
     let prepared_input = T::make(raw_input);
 
     let now = Instant::now();
