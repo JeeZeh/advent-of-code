@@ -1,7 +1,8 @@
 use std::{
     borrow::Borrow,
     collections::{HashMap, HashSet},
-    str::FromStr, ops::Sub,
+    ops::Sub,
+    str::FromStr,
 };
 
 pub fn solve(lines: Vec<String>) -> (usize, usize) {
@@ -27,7 +28,7 @@ fn solve_line(signals: &[String], outputs: &[String]) -> Vec<usize> {
     dbg!(&possible_segment_wires);
 
     // Reverse sort to start with the largest
-    signals.sort_by(|a, b| b.len().cmp(&a.len()));
+    signals.sort_by(|a, b| a.len().cmp(&b.len()));
 
     for bad_signal in signals {
         for match_ in number_segments
@@ -35,35 +36,52 @@ fn solve_line(signals: &[String], outputs: &[String]) -> Vec<usize> {
             .filter(|s| s.len() == bad_signal.len())
         {
             for section in match_ {
-                possible_segment_wires
-                    .entry(*section)
-                    .or_insert(HashSet::from_iter(bad_signal.chars()));
-            }
-
-            for mismatch in number_segments[8].sub(&HashSet::from_iter(bad_signal.chars())) {
-                possible_segment_wires.entry(*mismatch)
-            };
-
-            for mismatch in number_segments
-                .iter()
-                .filter(|s| s.len() > bad_signal.len())
-            {
-                for section in mismatch {
-                    possible_segment_wires.entry(*section).and_modify(|e| {
-                        bad_signal.chars().for_each(|c| {
-                            if *section == c {
-                                e.remove(&c);
-                            }
-                        });
-                    });
+                if !possible_segment_wires.contains_key(section) {
+                    possible_segment_wires.insert(*section, HashSet::from_iter(bad_signal.chars()));
                 }
             }
         }
     }
 
-    dbg!(possible_segment_wires);
+    dbg!(&possible_segment_wires);
+    // dbg!(filtered_segment_wires);
+    while possible_segment_wires
+        .values()
+        .map(|v| v.len())
+        .sum::<usize>()
+        > 9
+    {
+        let mut choices: Vec<(char, usize)> = possible_segment_wires
+            .iter()
+            .map(|(k, v)| (*k, v.len()))
+            .collect();
+        choices.sort_by(|a, b| a.1.cmp(&b.1));
+
+        for (wire, _) in choices {
+            possible_segment_wires = filter_out_choices(wire, &mut possible_segment_wires);
+        }
+        dbg!(&possible_segment_wires);
+    }
 
     output_digits
+}
+
+fn filter_out_choices(
+    wire: char,
+    possible_choices: &mut HashMap<char, HashSet<char>>,
+) -> HashMap<char, HashSet<char>> {
+    let mut filtered_segment_wires: HashMap<char, HashSet<char>> = possible_choices.clone();
+    let choices = possible_choices.get(&wire).unwrap();
+
+    for (other_wire, other_choices) in possible_choices.iter() {
+        if wire == *other_wire || choices == other_choices {
+            continue;
+        }
+        let diff = other_choices - choices;
+        filtered_segment_wires.insert(*other_wire, diff);
+    }
+
+    filtered_segment_wires
 }
 
 fn build_possible_segments_map() -> HashMap<char, Vec<char>> {
