@@ -8,6 +8,7 @@ use itertools::Itertools;
 pub fn solve(lines: Vec<String>) -> (usize, usize) {
     let parsed: Vec<(Vec<String>, Vec<String>)> = lines.iter().map(|l| parse_input(l)).collect();
     let mut digits: Vec<usize> = Vec::new();
+
     for (inputs, outputs) in parsed {
         digits.append(&mut solve_line(&inputs, &outputs))
     }
@@ -44,20 +45,18 @@ fn solve_line(signals: &[String], outputs: &[String]) -> Vec<usize> {
 
     // Build a mapping of correct segments to choices of messed up segments
     for bad_segment in &signals {
+        let segs = HashSet::from_iter(bad_segment.chars());
         for match_ in number_segments
             .iter()
             .filter(|s| s.len() == bad_segment.len())
         {
             for section in match_ {
-                possible_segment_wires.insert(*section, HashSet::from_iter(bad_segment.chars()));
+                possible_segment_wires.insert(*section, segs.clone());
+
+                // Can't figure out how to not do this for each char
                 possible_segment_wires = filter_out_choices(*section, &mut possible_segment_wires);
             }
         }
-    }
-
-    // Do one more pass over our segments to make sure we're down to just 2 choices at most per segment
-    for wire in &number_segments[8] {
-        possible_segment_wires = filter_out_choices(*wire, &mut possible_segment_wires);
     }
 
     // The digit segments we've yet to identify
@@ -126,7 +125,7 @@ fn find_digit_mapping(
     // in the segment signal by filtering for counts of 2
     let known_chars: String = options
         .iter()
-        .filter(|(c, v)| **v == 2)
+        .filter(|(_, v)| **v == 2)
         .map(|(c, _)| *c)
         .sorted()
         .collect();
