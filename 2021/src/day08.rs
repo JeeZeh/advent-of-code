@@ -1,16 +1,31 @@
 use std::{
-    borrow::Borrow,
     collections::{HashMap, HashSet},
-    ops::Sub,
     str::FromStr,
 };
 
+use itertools::Itertools;
+
 pub fn solve(lines: Vec<String>) -> (usize, usize) {
-    let parsed: Vec<(Vec<String>, Vec<String>)> = lines.iter().map(|l| parse(l)).collect();
+    let parsed: Vec<(Vec<String>, Vec<String>)> = lines.iter().map(|l| parse_input(l)).collect();
+    let mut digits: Vec<usize> = Vec::new();
+    for (inputs, outputs) in parsed {
+        digits.append(&mut solve_line(&inputs, &outputs))
+    }
 
-    solve_line(&parsed[0].0, &parsed[0].1);
+    let part_one = digits.iter().filter(|d| [1, 4, 7, 8].contains(d)).count();
+    let part_two = digits
+        .windows(4)
+        .map(|window| {
+            window
+                .iter()
+                .map(|d| format!("{}", d))
+                .collect::<String>()
+                .parse::<usize>()
+                .unwrap()
+        })
+        .sum();
 
-    (0, 0)
+    (part_one, part_two)
 }
 
 fn solve_line(signals: &[String], outputs: &[String]) -> Vec<usize> {
@@ -25,47 +40,115 @@ fn solve_line(signals: &[String], outputs: &[String]) -> Vec<usize> {
     .map(|s| HashSet::from_iter(s.chars()))
     .collect();
 
-    dbg!(&possible_segment_wires);
+    signals.sort_by(|a, b| b.len().cmp(&a.len()));
 
-    // Reverse sort to start with the largest
-    signals.sort_by(|a, b| a.len().cmp(&b.len()));
-
-    for bad_signal in signals {
+    // Build a mapping of correct segments to choices of messed up segments
+    for bad_segment in &signals {
         for match_ in number_segments
             .iter()
-            .filter(|s| s.len() == bad_signal.len())
+            .filter(|s| s.len() == bad_segment.len())
         {
             for section in match_ {
-                if !possible_segment_wires.contains_key(section) {
-                    possible_segment_wires.insert(*section, HashSet::from_iter(bad_signal.chars()));
-                }
+                possible_segment_wires.insert(*section, HashSet::from_iter(bad_segment.chars()));
+                possible_segment_wires = filter_out_choices(*section, &mut possible_segment_wires);
             }
         }
     }
 
-    dbg!(&possible_segment_wires);
-    // dbg!(filtered_segment_wires);
-    while possible_segment_wires
-        .values()
-        .map(|v| v.len())
-        .sum::<usize>()
-        > 9
-    {
-        let mut choices: Vec<(char, usize)> = possible_segment_wires
-            .iter()
-            .map(|(k, v)| (*k, v.len()))
-            .collect();
-        choices.sort_by(|a, b| a.1.cmp(&b.1));
+    // Do one more pass over our segments to make sure we're down to just 2 choices at most per segment
+    for wire in &number_segments[8] {
+        possible_segment_wires = filter_out_choices(*wire, &mut possible_segment_wires);
+    }
 
-        for (wire, _) in choices {
-            possible_segment_wires = filter_out_choices(wire, &mut possible_segment_wires);
+    // The digit segments we've yet to identify
+    let mut to_identify: Vec<String> = signals
+        .iter()
+        .map(|s| s.chars().sorted().collect())
+        .collect();
+
+    // The digit segments we've found so far
+    let mut known: HashMap<String, usize> = HashMap::new();
+
+    // This is the only "brute force" section, though it's not random.
+    // Here we try to find a mapping for all digits. We try every digit repeatedly until
+    // we've found them all, which is guaranteed though may take a couple of passes:
+    // E.g. It may be the case that we can not identify '5' since whatever substring
+    // 'find_digit_mapping' is working with is shared with another digit, e.g. '6'
+    // Eventually, we will correctly identify '6', and so '5' can be found on the next pass.
+    while known.len() < 9 {
+        for d in 0..10 {
+            if let Some(found) =
+                find_digit_mapping(&number_segments[d], &possible_segment_wires, &to_identify)
+            {
+                known.insert(found.clone(), d);
+                to_identify.retain(|s| s != &found);
+            }
         }
-        dbg!(&possible_segment_wires);
+    }
+
+    // Finally, convert the 4 output signals we received to their actual digits
+    // by using the mappings we've identified
+    for output in outputs {
+        let digit_string: String = output.chars().sorted().collect();
+        output_digits.push(*known.get(&digit_string).unwrap());
     }
 
     output_digits
 }
 
+fn find_digit_mapping(
+    digit_segments: &HashSet<char>,
+    possible_segment_wires: &HashMap<char, HashSet<char>>,
+    signals_to_identify: &Vec<String>,
+) -> Option<String> {
+    let mut options: HashMap<char, usize> = HashMap::new();
+
+    // Collect the number of times each possible char appears when trying
+    // to construct the given digit_segments
+    // If for a given segment, there is a choice of multiple chars, keep track
+    // of these choices
+    // If the same choice appears 2 times over the whole digit (its a choice for 2 segments)
+    // it means it *must* appear in the digit somewhere (either of the two)
+    for seg in digit_segments {
+        let choices = possible_segment_wires.get(&seg).unwrap();
+        if choices.len() == 1 {
+            let definite = **choices.iter().collect::<Vec<&char>>().first().unwrap();
+            options.insert(definite, 2); // Hard code it as 2 since we know it appears for sure
+        } else {
+            for choice in choices {
+                let entry = options.entry(*choice).or_insert(0);
+                *entry += 1;
+            }
+        }
+    }
+
+    // With the choices collected, we can determine which chars must appear
+    // in the segment signal by filtering for counts of 2
+    let known_chars: String = options
+        .iter()
+        .filter(|(c, v)| **v == 2)
+        .map(|(c, _)| *c)
+        .sorted()
+        .collect();
+
+    // Try and find a matching signal with our known substring and length
+    let signal_match: Vec<&String> = signals_to_identify
+        .iter()
+        .filter(|s| s.len() == digit_segments.len() && known_chars.chars().all(|c| s.contains(c)))
+        .collect();
+
+    // If we find one, great.
+    if signal_match.len() == 1 {
+        Some(signal_match[0].clone())
+    } else {
+        None
+    }
+}
+
+/**
+ * For a given wire, tries to reduce the set of possibilities by eliminating
+ * its mappings from any other wire's mappings
+ */
 fn filter_out_choices(
     wire: char,
     possible_choices: &mut HashMap<char, HashSet<char>>,
@@ -74,26 +157,22 @@ fn filter_out_choices(
     let choices = possible_choices.get(&wire).unwrap();
 
     for (other_wire, other_choices) in possible_choices.iter() {
-        if wire == *other_wire || choices == other_choices {
+        if wire == *other_wire || choices == other_choices || choices.len() >= other_choices.len() {
             continue;
         }
-        let diff = other_choices - choices;
-        filtered_segment_wires.insert(*other_wire, diff);
+        let intersection: HashSet<char> = choices
+            .intersection(other_choices)
+            .into_iter()
+            .cloned()
+            .collect();
+
+        filtered_segment_wires.insert(*other_wire, other_choices - &intersection);
     }
 
     filtered_segment_wires
 }
 
-fn build_possible_segments_map() -> HashMap<char, Vec<char>> {
-    let mut possible_segment_wires: HashMap<char, Vec<char>> = HashMap::new();
-    let segments = Vec::from_iter("abcdefg".chars());
-    for char in &segments {
-        possible_segment_wires.insert(*char, segments.clone());
-    }
-    possible_segment_wires
-}
-
-fn parse(line: &str) -> (Vec<String>, Vec<String>) {
+fn parse_input(line: &str) -> (Vec<String>, Vec<String>) {
     let mut parts = line.split(" | ");
 
     let signals = parts
