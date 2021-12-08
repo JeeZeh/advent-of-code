@@ -29,7 +29,7 @@ fn get_fuel_for_pos(crab_bins: &HashMap<i32, i32>, pos: i32, fuel_fn: &FuelFn) -
         .sum()
 }
 
-fn build_crab_bins(crabs: &Vec<i32>) -> HashMap<i32, i32> {
+fn build_crab_bins(crabs: &[i32]) -> HashMap<i32, i32> {
     let mut bins = HashMap::new();
 
     for crab in crabs {
@@ -41,13 +41,12 @@ fn build_crab_bins(crabs: &Vec<i32>) -> HashMap<i32, i32> {
 }
 
 // Optimal position for Part 2 is the median
-fn get_median(crabs: &Vec<i32>) -> i32 {
-    *crabs.clone().select_nth_unstable(crabs.len() / 2).1
+fn get_median(crabs: &[i32]) -> i32 {
+    *crabs.to_owned().select_nth_unstable(crabs.len() / 2).1
 }
 
 // Optimal position for Part 2 is the mean
 // https://www.reddit.com/r/adventofcode/comments/rawxad/2021_day_7_part_2_i_wrote_a_paper_on_todays/
-fn get_mean(crabs: &Vec<i32>) -> i32 {
-    let mean = crabs.iter().sum::<i32>() / crabs.len() as i32;
-    mean
+fn get_mean(crabs: &[i32]) -> i32 {
+    crabs.iter().sum::<i32>() / crabs.len() as i32
 }

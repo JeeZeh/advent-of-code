@@ -30,14 +30,13 @@ impl Board {
 
     fn mark_number(&mut self, number: u32) -> bool {
         let loc = self.locations.get(&number);
-        if loc.is_some() {
-            let (x, y) = loc.unwrap();
+        if let Some((x, y)) = loc {
             self.grid[*y][*x] = true;
             return self.grid[*y].iter().all(|v| *v)
                 || self.grid.iter().map(|row| row[*x]).all(|v| v);
         }
 
-        return false;
+        false
     }
 
     fn score(&self, last_call: u32) -> u32 {
@@ -54,13 +53,13 @@ impl Board {
 
 pub fn solve(input: String) -> (u32, u32) {
     let parts: Vec<&str> = input.split("\n\n").collect();
-    let numbers_order: Vec<u32> = parts[0].split(",").map(|c| c.parse().unwrap()).collect();
+    let numbers_order: Vec<u32> = parts[0].split(',').map(|c| c.parse().unwrap()).collect();
     let mut boards: Vec<Board> = parts[1..].iter().map(|s| Board::parse_board(*s)).collect();
 
     play_bingo(&mut boards, &numbers_order)
 }
 
-fn play_bingo(boards: &mut Vec<Board>, numbers: &Vec<u32>) -> (u32, u32) {
+fn play_bingo(boards: &mut Vec<Board>, numbers: &[u32]) -> (u32, u32) {
     let mut finished: HashSet<usize> = HashSet::new();
     let mut winning_boards: Vec<u32> = Vec::new();
     let total_boards = boards.len();

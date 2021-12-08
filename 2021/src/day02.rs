@@ -5,12 +5,13 @@ enum Direction {
 }
 
 pub fn solve(input: Vec<String>) -> (i32, i32) {
-    let instructions: Vec<(Direction, i32)> = input.iter().map(parse_input).collect();
+    let instructions: Vec<(Direction, i32)> =
+        input.iter().map(|s| parse_input(s.as_str())).collect();
     (part_one(&instructions), part_two(&instructions))
 }
 
-fn parse_input(line: &String) -> (Direction, i32) {
-    let mut parts = line.split(" ");
+fn parse_input(line: &str) -> (Direction, i32) {
+    let mut parts = line.split(' ');
 
     let direction = match parts.next().unwrap() {
         "forward" => Direction::Forward,

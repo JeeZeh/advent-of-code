@@ -13,7 +13,7 @@
 pub fn solve(line: String) -> (u64, u64) {
     let mut fish: [u64; 9] = [0; 9];
 
-    line.split(",")
+    line.split(',')
         .map(|c| c.parse::<usize>().unwrap())
         .for_each(|n| fish[n] += 1);
 

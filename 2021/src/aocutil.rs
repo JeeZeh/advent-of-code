@@ -1,4 +1,4 @@
-pub fn rot90<T: Copy>(vec: &Vec<Vec<T>>) -> Vec<Vec<T>> {
+pub fn rot90<T: Copy>(vec: &[Vec<T>]) -> Vec<Vec<T>> {
     let new_col_len = vec.len();
     let new_row_len = vec.first().unwrap().len();
     let mut new_vec: Vec<Vec<T>> = Vec::with_capacity(new_row_len);

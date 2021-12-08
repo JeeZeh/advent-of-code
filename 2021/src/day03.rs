@@ -8,14 +8,14 @@ pub fn solve(lines: Vec<String>) -> (usize, usize) {
     (part_one(&bins, bit_len), part_two(&bins, bit_len))
 }
 
-fn part_one(bins: &Vec<u32>, bit_len: usize) -> usize {
+fn part_one(bins: &[u32], bit_len: usize) -> usize {
     let mut gamma = 0;
     let mut epsilon = 0;
 
     for bit in (0..bit_len).rev() {
         gamma <<= 1;
         epsilon <<= 1;
-        if most_common_bit_at_idx(&bins, bit) {
+        if most_common_bit_at_idx(bins, bit) {
             gamma += 1;
         } else {
             epsilon += 1;
@@ -25,9 +25,9 @@ fn part_one(bins: &Vec<u32>, bit_len: usize) -> usize {
     gamma * epsilon
 }
 
-fn part_two(bins: &Vec<u32>, bit_len: usize) -> usize {
-    let mut oxygen = bins.clone();
-    let mut co2 = bins.clone();
+fn part_two(bins: &[u32], bit_len: usize) -> usize {
+    let mut oxygen = bins.to_owned();
+    let mut co2 = bins.to_owned();
 
     for bit_idx in (0..bit_len).rev() {
         if oxygen.len() > 1 {
@@ -47,7 +47,7 @@ fn get_bit(input: u32, idx: usize) -> bool {
     input & (1 << idx) != 0
 }
 
-fn most_common_bit_at_idx(bits_strings: &Vec<u32>, idx: usize) -> bool {
+fn most_common_bit_at_idx(bits_strings: &[u32], idx: usize) -> bool {
     let mut ones = 0;
     for bit_string in bits_strings {
         ones += get_bit(*bit_string, idx) as usize;
