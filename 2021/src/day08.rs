@@ -9,8 +9,26 @@ pub fn solve(lines: Vec<String>) -> (usize, usize) {
     let parsed: Vec<(Vec<String>, Vec<String>)> = lines.iter().map(|l| parse_input(l)).collect();
     let mut digits: Vec<usize> = Vec::new();
 
+    let number_segments: Vec<HashSet<char>> = [
+        "abcefg", "cf", "acdeg", "acdfg", "bcdf", "abdfg", "abdefg", "acf", "abcdefg", "abcdfg",
+    ]
+    .iter()
+    .map(|s| HashSet::from_iter(s.chars()))
+    .collect();
+
+    let mut real_length_map: HashMap<usize, HashSet<char>> = HashMap::new();
+    for s in &number_segments {
+        let entry = real_length_map.entry(s.len()).or_insert_with(HashSet::new);
+        entry.extend(s);
+    }
+
     for (inputs, outputs) in parsed {
-        digits.append(&mut solve_line(&inputs, &outputs))
+        digits.append(&mut solve_line(
+            &inputs,
+            &outputs,
+            &number_segments,
+            &real_length_map,
+        ))
     }
 
     let part_one = digits.iter().filter(|d| [1, 4, 7, 8].contains(d)).count();
@@ -29,29 +47,29 @@ pub fn solve(lines: Vec<String>) -> (usize, usize) {
     (part_one, part_two)
 }
 
-fn solve_line(signals: &[String], outputs: &[String]) -> Vec<usize> {
-    let mut signals = signals.to_owned();
+fn solve_line(
+    signals: &[String],
+    outputs: &[String],
+    number_segments: &[HashSet<char>],
+    real_length_map: &HashMap<usize, HashSet<char>>,
+) -> Vec<usize> {
     let mut output_digits = Vec::new();
     let mut possible_segment_wires: HashMap<char, HashSet<char>> = HashMap::new();
 
-    let number_segments: Vec<HashSet<char>> = [
-        "abcefg", "cf", "acdeg", "acdfg", "bcdf", "abdfg", "abdefg", "acf", "abcdefg", "abcdfg",
-    ]
-    .iter()
-    .map(|s| HashSet::from_iter(s.chars()))
-    .collect();
+    let mut cipher_length_map: HashMap<usize, HashSet<char>> = HashMap::new();
 
-    signals.sort_by(|a, b| b.len().cmp(&a.len()));
+    for s in signals {
+        let entry = cipher_length_map
+            .entry(s.len())
+            .or_insert_with(HashSet::new);
+        entry.extend(s.chars());
+    }
 
     // Build a mapping of correct segments to choices of messed up segments
-    for bad_segment in &signals {
-        let segs = HashSet::from_iter(bad_segment.chars());
-        for match_ in number_segments
-            .iter()
-            .filter(|s| s.len() == bad_segment.len())
-        {
-            for section in match_ {
-                possible_segment_wires.insert(*section, segs.clone());
+    for size in (0..=9).rev() {
+        if let Some(seg_size_choices) = cipher_length_map.get(&size) {
+            for section in real_length_map.get(&size).unwrap() {
+                possible_segment_wires.insert(*section, seg_size_choices.clone());
 
                 // Can't figure out how to not do this for each char
                 possible_segment_wires = filter_out_choices(*section, &mut possible_segment_wires);
@@ -75,7 +93,7 @@ fn solve_line(signals: &[String], outputs: &[String]) -> Vec<usize> {
     // 'find_digit_mapping' is working with is shared with another digit, e.g. '6'
     // Eventually, we will correctly identify '6', and so '5' can be found on the next pass.
     while known.len() < 9 {
-        for d in 0..10 {
+        for d in [1, 3, 7, 4, 8, 5, 0, 2, 9, 6] {
             if let Some(found) =
                 find_digit_mapping(&number_segments[d], &possible_segment_wires, &to_identify)
             {
@@ -98,8 +116,12 @@ fn solve_line(signals: &[String], outputs: &[String]) -> Vec<usize> {
 fn find_digit_mapping(
     digit_segments: &HashSet<char>,
     possible_segment_wires: &HashMap<char, HashSet<char>>,
-    signals_to_identify: &Vec<String>,
+    signals_to_identify: &[String],
 ) -> Option<String> {
+    if signals_to_identify.len() == 1 {
+        return Some(signals_to_identify[0].clone());
+    }
+
     let mut options: HashMap<char, usize> = HashMap::new();
 
     // Collect the number of times each possible char appears when trying
@@ -109,7 +131,7 @@ fn find_digit_mapping(
     // If the same choice appears 2 times over the whole digit (its a choice for 2 segments)
     // it means it *must* appear in the digit somewhere (either of the two)
     for seg in digit_segments {
-        let choices = possible_segment_wires.get(&seg).unwrap();
+        let choices = possible_segment_wires.get(seg).unwrap();
         if choices.len() == 1 {
             let definite = **choices.iter().collect::<Vec<&char>>().first().unwrap();
             options.insert(definite, 2); // Hard code it as 2 since we know it appears for sure
