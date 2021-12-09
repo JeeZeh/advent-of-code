@@ -37,7 +37,7 @@ pub fn solve(lines: Vec<String>) -> (usize, usize) {
         .map(|window| {
             window
                 .iter()
-                .map(|d| format!("{}", d))
+                .map(usize::to_string)
                 .collect::<String>()
                 .parse::<usize>()
                 .unwrap()
@@ -65,7 +65,7 @@ fn solve_line(
         entry.extend(s.chars());
     }
 
-    // Build a mapping of correct segments to choices of messed up segments
+    // Build a map of all potential scrambled segment per unscrambled segment
     for size in (0..=9).rev() {
         if let Some(seg_size_choices) = cipher_length_map.get(&size) {
             for section in real_length_map.get(&size).unwrap() {
