@@ -12,20 +12,15 @@ pub fn solve(lines: Vec<String>) -> (usize, usize) {
 
     let mut low_points: Vec<(usize, usize)> = Vec::new();
 
+    let mut basins: Vec<i32> = Vec::new();
+    let mut seen: HashSet<(usize, usize)> = HashSet::new();
     for y in 0..max_y {
         for x in 0..max_x {
             if is_local_minimum(x, y, &grid, bounds) {
                 low_points.push((x, y));
+                basins.push(floodfill(x, y, &grid, &mut seen, bounds));
             }
         }
-    }
-
-    let mut seen: HashSet<(usize, usize)> = HashSet::new();
-
-    let mut basins: Vec<i32> = Vec::new();
-
-    for (x, y) in &low_points {
-        basins.push(floodfill(*x, *y, &grid, &mut seen, bounds));
     }
 
     basins.sort_by(|a, b| b.cmp(a));
@@ -49,22 +44,14 @@ fn floodfill(
     seen: &mut HashSet<(usize, usize)>,
     bounds: (i32, i32),
 ) -> i32 {
-    let to_check: [(i32, i32); 4] = [
-        (x as i32 + 1, y as i32),
-        (x as i32, y as i32 + 1),
-        (x as i32 - 1, y as i32),
-        (x as i32, y as i32 - 1),
-    ];
-    let current = grid[y][x];
-
-    if current == 9 || seen.contains(&(x, y)) {
+    if grid[y][x] == 9 || seen.contains(&(x, y)) {
         return 0;
     }
 
     seen.insert((x, y));
     let mut size = 1;
 
-    for (check_x, check_y) in to_check {
+    for (check_x, check_y) in check_around(x, y) {
         if check_x < 0 || check_x > bounds.0 || check_y < 0 || check_y > bounds.1 {
             continue;
         }
@@ -75,14 +62,8 @@ fn floodfill(
 }
 
 fn is_local_minimum(x: usize, y: usize, grid: &[Vec<u8>], bounds: (i32, i32)) -> bool {
-    let to_check: [(i32, i32); 4] = [
-        (x as i32 + 1, y as i32),
-        (x as i32, y as i32 + 1),
-        (x as i32 - 1, y as i32),
-        (x as i32, y as i32 - 1),
-    ];
     let centre = grid[y][x];
-    for (check_x, check_y) in to_check {
+    for (check_x, check_y) in check_around(x, y) {
         if check_x < 0 || check_x > bounds.0 || check_y < 0 || check_y > bounds.1 {
             continue;
         }
@@ -92,4 +73,13 @@ fn is_local_minimum(x: usize, y: usize, grid: &[Vec<u8>], bounds: (i32, i32)) ->
         }
     }
     return true;
+}
+
+fn check_around(x: usize, y: usize) -> [(i32, i32); 4] {
+    [
+        (x as i32 + 1, y as i32),
+        (x as i32, y as i32 + 1),
+        (x as i32 - 1, y as i32),
+        (x as i32, y as i32 - 1),
+    ]
 }
