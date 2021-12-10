@@ -8,16 +8,14 @@ pub fn solve(lines: Vec<String>) -> (usize, usize) {
     let max_x: usize = grid[0].len();
     let mut seen = vec![vec![false; max_x]; max_y];
 
-    let bounds = (max_x as i32 - 1, max_y as i32 - 1);
-
     let mut low_points: Vec<(usize, usize)> = Vec::new();
 
     let mut basins: Vec<i32> = Vec::new();
     for y in 0..max_y {
         for x in 0..max_x {
-            if is_local_minimum(x, y, &grid, bounds) {
+            if is_local_minimum(x, y, &grid) {
                 low_points.push((x, y));
-                basins.push(floodfill(x, y, &grid, &mut seen, bounds));
+                basins.push(floodfill(x, y, &grid, &mut seen));
             }
         }
     }
@@ -33,39 +31,36 @@ pub fn solve(lines: Vec<String>) -> (usize, usize) {
     )
 }
 
-fn floodfill(
-    x: usize,
-    y: usize,
-    grid: &[Vec<u8>],
-    seen: &mut [Vec<bool>],
-    bounds: (i32, i32),
-) -> i32 {
-    if grid[y][x] == 9 || seen[y][x] {
+fn floodfill(x: usize, y: usize, grid: &[Vec<u8>], seen: &mut [Vec<bool>]) -> i32 {
+    if grid.get(y).and_then(|f| f.get(x)).unwrap_or_else(|| &9) == &9 || seen[y][x] {
         return 0;
     }
 
     seen[y][x] = true;
     let mut size = 1;
 
-    for (check_x, check_y) in check_around(x, y, bounds) {
-        size += floodfill(check_x as usize, check_y as usize, grid, seen, bounds);
+    for (check_x, check_y) in check_around(x, y) {
+        size += floodfill(check_x as usize, check_y as usize, grid, seen);
     }
 
     size
 }
 
-fn is_local_minimum(x: usize, y: usize, grid: &[Vec<u8>], bounds: (i32, i32)) -> bool {
-    let centre = grid[y][x];
-    for (check_x, check_y) in check_around(x, y, bounds) {
-        let to_compare = grid[check_y as usize][check_x as usize];
-        if to_compare <= centre {
+fn is_local_minimum(x: usize, y: usize, grid: &[Vec<u8>]) -> bool {
+    for (check_x, check_y) in check_around(x, y) {
+        let to_compare = grid
+            .get(check_y as usize)
+            .and_then(|f| f.get(check_x as usize))
+            .unwrap_or_else(|| &9);
+
+        if to_compare <= &grid[y][x] {
             return false;
         }
     }
     return true;
 }
 
-fn check_around(x: usize, y: usize, bounds: (i32, i32)) -> impl Iterator<Item = (i32, i32)> {
+fn check_around(x: usize, y: usize) -> impl Iterator<Item = (i32, i32)> {
     [
         (x as i32 + 1, y as i32),
         (x as i32, y as i32 + 1),
@@ -73,5 +68,4 @@ fn check_around(x: usize, y: usize, bounds: (i32, i32)) -> impl Iterator<Item = 
         (x as i32, y as i32 - 1),
     ]
     .into_iter()
-    .filter(move |(x, y)| !(*x < 0 || *x > bounds.0 || *y < 0 || *y > bounds.1))
 }
