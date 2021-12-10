@@ -1,5 +1,6 @@
 #![feature(box_syntax)]
 #![allow(dead_code)]
+#![feature(option_result_contains)]
 
 mod aoc;
 mod aocutil;
@@ -12,6 +13,7 @@ mod day06;
 mod day07;
 mod day08;
 mod day09;
+mod day10;
 
 use std::time::Duration;
 
@@ -71,7 +73,7 @@ pub fn main() {
     }
 
     let mut total = Duration::new(0, 0);
-    for i in 1..=9 {
+    for i in 1..=10 {
         println!("------------");
         println!("Day {}", i);
         println!("------------");
@@ -100,6 +102,7 @@ fn run_rust(day: u32, sample: bool) -> (Box<dyn AocOutput>, Duration) {
         7 => run(day, day07::solve, sample),
         8 => run(day, day08::solve, sample),
         9 => run(day, day09::solve, sample),
+        10 => run(day, day10::solve, sample),
         _ => panic!("Day not yet implemented"),
     }
 }
