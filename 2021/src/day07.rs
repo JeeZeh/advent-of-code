@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::aoc::numbers;
+use crate::aocutil::numbers;
 
 type FuelFn = dyn Fn(i32, i32) -> i32;
 

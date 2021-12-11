@@ -2,7 +2,6 @@
 #![allow(dead_code)]
 #![feature(option_result_contains)]
 
-mod aoc;
 mod aocutil;
 mod day01;
 mod day02;
@@ -17,7 +16,7 @@ mod day10;
 
 use std::time::Duration;
 
-use aoc::*;
+use aocutil::*;
 use clap::{App, Arg};
 
 pub fn main() {
