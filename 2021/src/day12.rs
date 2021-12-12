@@ -13,7 +13,7 @@ pub fn solve(lines: Vec<String>) -> (u32, u32) {
 }
 
 fn explore_rec(
-    connections: &Vec<Vec<i32>>,
+    connections: &Vec<Vec<(i32, u64)>>,
     seen: u64,
     current: i32,
     visited_twice: bool,
@@ -24,15 +24,14 @@ fn explore_rec(
     if current == -3 {
         paths += &1;
     } else {
-        for connects in &connections[current.abs() as usize] {
-            let to_comp = connects.abs() as u64;
-            let visited_before = seen % to_comp == 0;
+        for (connects, abs) in &connections[current.abs() as usize] {
+            let visited_before = seen % abs == 0;
             if !visited_before
                 || allowed_two_visits && (!visited_twice && *connects != -2 && *connects != -3)
             {
                 paths += explore_rec(
                     connections,
-                    if *connects < 0 { seen * to_comp } else { seen },
+                    if *connects < 0 { seen * abs } else { seen },
                     *connects,
                     visited_before || visited_twice,
                     allowed_two_visits,
@@ -44,7 +43,7 @@ fn explore_rec(
     return paths;
 }
 
-fn parse_connections(lines: &[String]) -> Vec<Vec<i32>> {
+fn parse_connections(lines: &[String]) -> Vec<Vec<(i32, u64)>> {
     let mut ids: HashMap<String, i32> = HashMap::new();
     ids.insert(String::from("start"), -2);
     ids.insert(String::from("end"), -3);
@@ -75,15 +74,21 @@ fn parse_connections(lines: &[String]) -> Vec<Vec<i32>> {
 
     let size = ids.values().map(|id| id.abs()).max().unwrap() + 1;
 
-    let mut connections: Vec<Vec<i32>> = vec![Vec::new(); dbg!(size) as usize];
+    let mut connections: Vec<Vec<(i32, u64)>> = vec![Vec::new(); dbg!(size) as usize];
 
     for line in lines {
         let mut parts = line.split('-');
         let from = ids.get(parts.next().unwrap()).unwrap();
         let to = ids.get(parts.next().unwrap()).unwrap();
 
-        connections.get_mut(from.abs() as usize).unwrap().push(*to);
-        connections.get_mut(to.abs() as usize).unwrap().push(*from);
+        connections
+            .get_mut(from.abs() as usize)
+            .unwrap()
+            .push((*to, to.abs() as u64));
+        connections
+            .get_mut(to.abs() as usize)
+            .unwrap()
+            .push((*from, from.abs() as u64));
     }
 
     connections
