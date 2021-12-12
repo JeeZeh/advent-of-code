@@ -7,8 +7,8 @@ pub fn solve(lines: Vec<String>) -> (u32, u32) {
     let connections = parse_connections(&lines);
 
     (
-        explore_rec(&connections, 2, -2, false, false),
-        explore_rec(&connections, 2, -2, false, true),
+        explore_rec(&connections, 2, -2, false, false, &mut HashMap::new()),
+        explore_rec(&connections, 2, -2, false, true, &mut HashMap::new()),
     )
 }
 
@@ -18,7 +18,12 @@ fn explore_rec(
     current: i32,
     visited_twice: bool,
     allowed_two_visits: bool,
+    cache: &mut HashMap<(i32, u64), u32>,
 ) -> u32 {
+    if let Some(cached_paths) = cache.get(&(current, seen)) {
+        return *cached_paths;
+    }
+
     let mut paths = 0;
 
     if current == -3 {
@@ -35,10 +40,13 @@ fn explore_rec(
                     *connects,
                     visited_before || visited_twice,
                     allowed_two_visits,
+                    cache,
                 );
             }
         }
     }
+
+    cache.insert((current, seen), paths);
 
     return paths;
 }
