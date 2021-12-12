@@ -74,7 +74,7 @@ fn parse_connections(lines: &[String]) -> Vec<Vec<(i32, u64)>> {
 
     let size = ids.values().map(|id| id.abs()).max().unwrap() + 1;
 
-    let mut connections: Vec<Vec<(i32, u64)>> = vec![Vec::new(); dbg!(size) as usize];
+    let mut connections: Vec<Vec<(i32, u64)>> = vec![Vec::new(); size as usize];
 
     for line in lines {
         let mut parts = line.split('-');
