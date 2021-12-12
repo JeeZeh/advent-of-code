@@ -1,7 +1,11 @@
 use crate::aocutil::Grid;
 
 pub fn solve(lines: Vec<String>) -> (u32, u32) {
-    let mut grid = load_grid(&lines);
+    let mut grid = lines
+        .iter()
+        .map(|l| l.chars().map(|c| c.to_digit(10).unwrap()).collect())
+        .collect();
+
     let mut flash_count = 0;
 
     for _ in 0..100 {
@@ -17,19 +21,7 @@ pub fn solve(lines: Vec<String>) -> (u32, u32) {
     (flash_count, steps_to_0 + 1)
 }
 
-fn load_grid(lines: &[String]) -> [[u32; 10]; 10] {
-    let mut grid: [[u32; 10]; 10] = [[0; 10]; 10];
-
-    for (y, line) in lines.iter().enumerate() {
-        for (x, char) in line.chars().enumerate() {
-            grid[y][x] = char.to_digit(10).unwrap();
-        }
-    }
-
-    grid
-}
-
-pub fn step(grid: &mut [[u32; 10]; 10]) -> u32 {
+pub fn step(grid: &mut Vec<Vec<u32>>) -> u32 {
     let mut flashed = [[false; 10]; 10];
     for y in 0..grid.height() {
         for x in 0..grid.width() {
@@ -42,7 +34,7 @@ pub fn step(grid: &mut [[u32; 10]; 10]) -> u32 {
     flashed.iter().flatten().filter(|b| **b).count() as u32
 }
 
-pub fn charge(x: usize, y: usize, grid: &mut [[u32; 10]; 10], flashed: &mut [[bool; 10]; 10]) {
+pub fn charge(x: usize, y: usize, grid: &mut Vec<Vec<u32>>, flashed: &mut [[bool; 10]; 10]) {
     if let Some(entry) = grid.getyx_mut(y, x) {
         if !flashed[y][x] {
             *entry += 1;
