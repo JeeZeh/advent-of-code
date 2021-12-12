@@ -56,6 +56,9 @@ fn parse_connections(lines: &[String]) -> Vec<Vec<(i32, u64)>> {
     ids.insert(String::from("start"), -2);
     ids.insert(String::from("end"), -3);
 
+    // Represent each cave as a prime number, with small caves being negative primes
+    // This lets me quickly check if a cave has been visited as primes a*b*c can be
+    // checked for 'visited' by checking % (a, b or c).
     let unique_caves: Vec<String> = lines
         .iter()
         .map(|l| l.split('-').map(String::from).collect::<Vec<String>>())
