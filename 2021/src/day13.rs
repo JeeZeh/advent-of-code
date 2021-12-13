@@ -34,7 +34,7 @@ pub fn solve(lines: String) -> (u32, String) {
             "\n{}",
             grid.rows()
                 .into_iter()
-                .map(|row| row.iter().map(|v| if *v >= 1 { "#" } else { "." }).join(""))
+                .map(|row| row.iter().map(|v| if *v >= 1 { "#" } else { " " }).join(""))
                 .join("\n")
         ),
     )
