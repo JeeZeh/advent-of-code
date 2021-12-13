@@ -64,6 +64,11 @@ impl AocInput for Vec<String> {
 pub trait AocOutput {
     fn show(&self);
 }
+
+impl AocOutput for () {
+    fn show(&self) {}
+}
+
 impl<A: Display, B: Display> AocOutput for (A, B) {
     fn show(&self) {
         println!("Part 1: {}", self.0);
