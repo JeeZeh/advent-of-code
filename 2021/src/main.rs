@@ -76,15 +76,17 @@ pub fn main() {
 
     let mut total = Duration::new(0, 0);
     for i in 1..=13 {
-        println!("------------");
-        println!("Day {}", i);
-        println!("------------");
         let (output, duration) = run_rust(i, sample_test);
-        output.show();
+        println!("------------");
         if time {
-            println!("Time: {:.2?}", duration);
+            println!("Day {} — {:.2?}", i, duration);
             total += duration;
+        } else {
+            println!("Day {}", i);
         }
+        println!("------------");
+        output.show();
+        println!();
     }
 
     if time {
