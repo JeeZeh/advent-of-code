@@ -40,6 +40,11 @@ pub fn solve(lines: String) -> (u32, String) {
     )
 }
 
+/**
+ * Folds by creating 2 slices, the retained slice (left or top side), and the fold slice of the grid.
+ * To perform the fold, the fold slice is flipped and then added to the retain.
+ * The addition of the two slices creates a new, smaller array ready for another fold.
+ */
 fn do_fold(grid: &mut Array2<u8>, fold: &Fold) -> Array2<u8> {
     let fold_slice;
     let retain_slice;
@@ -83,6 +88,12 @@ fn parse_coord(line: &str) -> (usize, usize) {
     )
 }
 
+/**
+ * Grid is a 2D array of 0s, stored as u8.
+ * You might think bools would be faster, but this is actually
+ * slower when performing the fold (a | b) vs. (a + b). Seems there's
+ * some magic going on with addition.
+ */
 fn generate_grid(lines: Lines) -> Array2<u8> {
     let coords: Vec<(usize, usize)> = lines.map(parse_coord).collect();
     let max_x = coords.iter().map(|c| c.0).max().unwrap();
