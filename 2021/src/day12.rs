@@ -3,12 +3,29 @@ use std::collections::{HashMap, VecDeque};
 
 use itertools::Itertools;
 
+const START: i32 = -2;
+const END: i32 = -3;
+
 pub fn solve(lines: Vec<String>) -> (u32, u32) {
     let connections = parse_connections(&lines);
 
     (
-        explore_rec(&connections, 2, -2, false, false, &mut HashMap::new()),
-        explore_rec(&connections, 2, -2, false, true, &mut HashMap::new()),
+        explore_rec(
+            &connections,
+            START.abs() as u64,
+            START,
+            false,
+            false,
+            &mut HashMap::new(),
+        ),
+        explore_rec(
+            &connections,
+            START.abs() as u64,
+            START,
+            false,
+            true,
+            &mut HashMap::new(),
+        ),
     )
 }
 
@@ -26,13 +43,13 @@ fn explore_rec(
 
     let mut paths = 0;
 
-    if current == -3 {
+    if current == END {
         paths += &1;
     } else {
         for (connects, abs) in &connections[current.abs() as usize] {
             let visited_before = seen % abs == 0;
             if !visited_before
-                || allowed_two_visits && (!visited_twice && *connects != -2 && *connects != -3)
+                || allowed_two_visits && (!visited_twice && *connects != START && *connects != END)
             {
                 paths += explore_rec(
                     connections,
@@ -53,8 +70,8 @@ fn explore_rec(
 
 fn parse_connections(lines: &[String]) -> Vec<Vec<(i32, u64)>> {
     let mut ids: HashMap<String, i32> = HashMap::new();
-    ids.insert(String::from("start"), -2);
-    ids.insert(String::from("end"), -3);
+    ids.insert(String::from("start"), START);
+    ids.insert(String::from("end"), END);
 
     // Represent each cave as a prime number, with small caves being negative primes
     // This lets me quickly check if a cave has been visited as primes a*b*c can be
@@ -92,14 +109,8 @@ fn parse_connections(lines: &[String]) -> Vec<Vec<(i32, u64)>> {
         let from = ids.get(parts.next().unwrap()).unwrap();
         let to = ids.get(parts.next().unwrap()).unwrap();
 
-        connections
-            .get_mut(from.abs() as usize)
-            .unwrap()
-            .push((*to, to.abs() as u64));
-        connections
-            .get_mut(to.abs() as usize)
-            .unwrap()
-            .push((*from, from.abs() as u64));
+        connections[from.abs() as usize].push((*to, to.abs() as u64));
+        connections[to.abs() as usize].push((*from, from.abs() as u64));
     }
 
     connections
