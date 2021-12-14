@@ -1,9 +1,7 @@
 use std::str::Lines;
 
 use itertools::Itertools;
-use ndarray::{s, Array2, Axis};
-
-use crate::aocutil::Grid;
+use ndarray::{s, Array2};
 
 #[derive(PartialEq, Debug)]
 enum FoldAxis {
@@ -21,11 +19,11 @@ pub fn solve(lines: String) -> (u32, String) {
     let mut grid: Array2<u8> = generate_grid(parts.next().unwrap().lines());
     let folds = parts.next().unwrap().lines().map(parse_fold).collect_vec();
 
-    grid = do_fold(&mut grid, &folds[0]);
+    grid = do_fold(&grid, &folds[0]);
     let part_one = grid.iter().map(|v| 1.min(*v) as u32).sum::<u32>();
 
     for fold in &folds[1..] {
-        grid = do_fold(&mut grid, fold);
+        grid = do_fold(&grid, fold);
     }
 
     (
@@ -45,7 +43,7 @@ pub fn solve(lines: String) -> (u32, String) {
  * To perform the fold, the fold slice is flipped and then added to the retain.
  * The addition of the two slices creates a new, smaller array ready for another fold.
  */
-fn do_fold(grid: &mut Array2<u8>, fold: &Fold) -> Array2<u8> {
+fn do_fold(grid: &Array2<u8>, fold: &Fold) -> Array2<u8> {
     let fold_slice;
     let retain_slice;
 
