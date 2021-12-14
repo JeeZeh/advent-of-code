@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 
-pub fn solve(lines: String) -> (i64, i64) {
+pub fn solve(lines: String) -> (u64, u64) {
     let mut parts = lines.split("\n\n");
 
     // Parse polymer into count of pairs
-    let mut pairs: HashMap<(char, char), i64> = HashMap::new();
+    let mut pairs: HashMap<(char, char), u64> = HashMap::new();
     let polymer = parts.next().unwrap().chars().collect_vec();
     for chars in polymer.windows(2) {
         let pair = (chars[0], chars[1]);
@@ -15,7 +15,7 @@ pub fn solve(lines: String) -> (i64, i64) {
     }
 
     // Init count map
-    let mut count: HashMap<char, i64> = HashMap::new();
+    let mut count: HashMap<char, u64> = HashMap::new();
     for char in polymer {
         *count.entry(char).or_insert(0) += 1;
     }
@@ -28,15 +28,13 @@ pub fn solve(lines: String) -> (i64, i64) {
     for _ in 0..10 {
         pairs = step(&pairs, &templates, &mut count);
     }
-    let part_one = count.iter().max_by(|a, b| a.1.cmp(&b.1)).unwrap().1
-        - count.iter().min_by(|a, b| a.1.cmp(&b.1)).unwrap().1;
+    let part_one = count.values().max().unwrap() - count.values().min().unwrap();
 
     // Part 2
     for _ in 10..40 {
         pairs = step(&pairs, &templates, &mut count);
     }
-    let part_two = count.iter().max_by(|a, b| a.1.cmp(&b.1)).unwrap().1
-        - count.iter().min_by(|a, b| a.1.cmp(&b.1)).unwrap().1;
+    let part_two = count.values().max().unwrap() - count.values().min().unwrap();
 
     (part_one, part_two)
 }
@@ -48,10 +46,10 @@ pub fn solve(lines: String) -> (i64, i64) {
  * of AB in the process.
  */
 fn step(
-    pairs: &HashMap<(char, char), i64>,
+    pairs: &HashMap<(char, char), u64>,
     templates: &HashMap<(char, char), char>,
-    counts: &mut HashMap<char, i64>,
-) -> HashMap<(char, char), i64> {
+    counts: &mut HashMap<char, u64>,
+) -> HashMap<(char, char), u64> {
     let mut new_pairs = HashMap::new();
 
     for (pair, count) in pairs {
