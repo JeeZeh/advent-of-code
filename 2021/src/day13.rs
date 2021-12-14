@@ -1,64 +1,62 @@
-use std::str::Lines;
+use std::collections::HashSet;
 
 use itertools::Itertools;
-use ndarray::{s, Array2};
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq)]
 enum FoldAxis {
     Y,
     X,
 }
-#[derive(Debug)]
-struct Fold {
-    axis: FoldAxis,
-    on: usize,
-}
 
-pub fn solve(lines: String) -> (u32, String) {
+pub fn solve(lines: String) -> (usize, String) {
     let mut parts = lines.split("\n\n");
-    let mut grid: Array2<u8> = generate_grid(parts.next().unwrap().lines());
+    let mut grid: HashSet<(u16, u16)> = parts.next().unwrap().lines().map(parse_coord).collect();
     let folds = parts.next().unwrap().lines().map(parse_fold).collect_vec();
 
-    grid = do_fold(&grid, &folds[0]);
-    let part_one = grid.iter().map(|v| 1.min(*v) as u32).sum::<u32>();
+    grid = fold_points(&grid, &folds[0..1]);
+    let part_one = grid.iter().count();
 
-    for fold in &folds[1..] {
-        grid = do_fold(&grid, fold);
-    }
+    grid = fold_points(&grid, &folds[1..]);
 
-    (
-        part_one,
-        format!(
-            "\n{}",
-            grid.rows()
-                .into_iter()
-                .map(|row| row.iter().map(|v| if *v >= 1 { "#" } else { " " }).join(""))
-                .join("\n")
-        ),
+    (part_one, display_grid(&grid))
+}
+
+fn display_grid(grid: &HashSet<(u16, u16)>) -> String {
+    let max_x = grid.iter().map(|(x, _)| *x).max().unwrap() as usize;
+    let max_y = grid.iter().map(|(_, y)| *y).max().unwrap() as usize;
+
+    format!(
+        "\n{}",
+        (0..=max_y)
+            .map(|y| (0..=max_x)
+                .map(|x| if grid.contains(&(x as u16, y as u16)) {
+                    '#'
+                } else {
+                    ' '
+                })
+                .join(""))
+            .join("\n")
     )
 }
 
 /**
- * Folds by creating 2 slices, the retained slice (left or top side), and the fold slice of the grid.
- * To perform the fold, the fold slice is flipped and then added to the retain.
- * The addition of the two slices creates a new, smaller array ready for another fold.
+ * Credit to @mgoszcz2 for implementing this... though the idea to process
+ * all folds in one go was mine :)
  */
-fn do_fold(grid: &Array2<u8>, fold: &Fold) -> Array2<u8> {
-    let fold_slice;
-    let retain_slice;
-
-    if fold.axis == FoldAxis::X {
-        retain_slice = s![.., 0..fold.on];
-        fold_slice = s![.., fold.on + 1..; -1];
-    } else {
-        retain_slice = s![0..fold.on, ..];
-        fold_slice = s![fold.on + 1..; -1, ..];
+fn fold_points(grid: &HashSet<(u16, u16)>, folds: &[(FoldAxis, u16)]) -> HashSet<(u16, u16)> {
+    use FoldAxis::*;
+    let mut next = HashSet::new();
+    for (mut x, mut y) in grid {
+        for (axis, on) in folds {
+            x = if x < *on || *axis == Y { x } else { on * 2 - x };
+            y = if y < *on || *axis == X { y } else { on * 2 - y };
+        }
+        next.insert((x, y));
     }
-
-    grid.slice(retain_slice).to_owned() + grid.slice(fold_slice)
+    next
 }
 
-fn parse_fold(line: &str) -> Fold {
+fn parse_fold(line: &str) -> (FoldAxis, u16) {
     let (axis, index) = line
         .split(' ')
         .last()
@@ -67,45 +65,21 @@ fn parse_fold(line: &str) -> Fold {
         .collect_tuple()
         .unwrap();
 
-    Fold {
-        axis: if axis == "x" {
+    (
+        if axis == "x" {
             FoldAxis::X
         } else {
             FoldAxis::Y
         },
-        on: index.parse().unwrap(),
-    }
+        index.parse().unwrap(),
+    )
 }
 
-fn parse_coord(line: &str) -> (usize, usize) {
+fn parse_coord(line: &str) -> (u16, u16) {
     let mut parts = line.split(',');
 
     (
         parts.next().unwrap().parse().unwrap(),
         parts.next().unwrap().parse().unwrap(),
     )
-}
-
-/**
- * Grid is a 2D array of 0s, stored as u8.
- * You might think bools would be faster, but this is actually
- * slower when performing the fold (a | b) vs. (a + b). Seems there's
- * some magic going on with addition.
- */
-fn generate_grid(lines: Lines) -> Array2<u8> {
-    let coords: Vec<(usize, usize)> = lines.map(parse_coord).collect();
-    let max_x = coords.iter().map(|c| c.0).max().unwrap();
-    let max_y = coords.iter().map(|c| c.1).max().unwrap();
-
-    // Make sure the array is odd-sized
-    let mut grid = Array2::<u8>::zeros((
-        if max_y % 2 == 1 { max_y + 2 } else { max_y + 1 },
-        if max_x % 2 == 1 { max_x + 2 } else { max_x + 1 },
-    ));
-
-    for (x, y) in coords {
-        grid[[y, x]] = 1;
-    }
-
-    grid
 }
