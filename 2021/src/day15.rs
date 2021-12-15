@@ -5,7 +5,7 @@ use std::{
 
 use crate::aocutil::Grid;
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 struct Pos(usize, usize);
 
 impl Pos {
@@ -14,7 +14,7 @@ impl Pos {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 struct State {
     cost: usize,
     position: Pos,
@@ -48,9 +48,17 @@ struct Edge {
     cost: usize,
 }
 
-fn shortest_path(grid: &Vec<Vec<Edge>>, start: Pos, goal: Pos) -> Option<usize> {
+fn shortest_path_expansive(
+    grid: &Vec<Vec<Edge>>,
+    start: Pos,
+    goal: Pos,
+    repeat: usize,
+) -> Option<usize> {
     // dist[node] = current shortest distance from `start` to `node`
-    let mut dist = vec![vec![usize::MAX; grid.width()]; grid.height()];
+    let mut dist = vec![vec![usize::MAX; grid.width() * repeat]; grid.height() * repeat];
+
+    let wrap = grid.width();
+    dbg!(&goal);
 
     let mut heap = BinaryHeap::new();
 
@@ -76,10 +84,20 @@ fn shortest_path(grid: &Vec<Vec<Edge>>, start: Pos, goal: Pos) -> Option<usize> 
         // For each node we can reach, see if we can find a way with
         // a lower cost going through this node
         for (dx, dy) in neighbours(position.0, position.1) {
-            if let Some(edge) = grid.getyx(dy as usize, dx as usize) {
+            let (level_x, level_y) = (dx / wrap, dy / wrap);
+            if level_x >= repeat || level_y >= repeat {
+                continue;
+            }
+
+            if let Some(edge) = grid.getyx(dy % wrap, dx % wrap) {
+                let mut expanded_cost = edge.cost + level_x + level_y;
+                if expanded_cost > 9 {
+                    expanded_cost = (expanded_cost % 10) + 1
+                }
+                // dbg!(dx, dy, level_x, level_y, expanded_cost);
                 let next = State {
-                    cost: cost + edge.cost,
-                    position: edge.node,
+                    cost: cost + expanded_cost,
+                    position: Pos(edge.node.0 + wrap * level_x, edge.node.1 + wrap * level_y),
                 };
 
                 // If so, add it to the frontier and continue
@@ -98,7 +116,7 @@ fn shortest_path(grid: &Vec<Vec<Edge>>, start: Pos, goal: Pos) -> Option<usize> 
 
 /// ------ https://doc.rust-lang.org/std/collections/binary_heap/index.html ------ ///
 
-pub fn solve(grid: Vec<Vec<u8>>) -> (usize, u64) {
+pub fn solve(grid: Vec<Vec<u8>>) -> (usize, usize) {
     let grid: Vec<Vec<Edge>> = grid
         .iter()
         .enumerate()
@@ -113,17 +131,25 @@ pub fn solve(grid: Vec<Vec<u8>>) -> (usize, u64) {
         })
         .collect();
 
-    let part_one = shortest_path(&grid, Pos(0, 0), Pos(grid.width() - 1, grid.height() - 1));
+    let repeat = 1;
+    let part_one = shortest_path_expansive(
+        &grid,
+        Pos(0, 0),
+        Pos(grid.width() * repeat - 1, grid.height() * repeat - 1),
+        repeat,
+    );
 
-    (part_one.unwrap(), 0)
+    let repeat = 5;
+    let part_two = shortest_path_expansive(
+        &grid,
+        Pos(0, 0),
+        Pos(grid.width() * repeat - 1, grid.height() * repeat - 1),
+        repeat,
+    );
+
+    (part_one.unwrap(), part_two.unwrap())
 }
 
-fn neighbours(x: usize, y: usize) -> impl Iterator<Item = (i32, i32)> {
-    [
-        (x as i32 + 1, y as i32),
-        (x as i32, y as i32 + 1),
-        (x as i32 - 1, y as i32),
-        (x as i32, y as i32 - 1),
-    ]
-    .into_iter()
+fn neighbours(x: usize, y: usize) -> impl Iterator<Item = (usize, usize)> {
+    [(x + 1, y), (x, y + 1)].into_iter()
 }
