@@ -1,7 +1,4 @@
-use std::{
-    cmp::Ordering,
-    collections::{BinaryHeap, HashMap},
-};
+use std::{cmp::Ordering, collections::BinaryHeap};
 
 use crate::aocutil::Grid;
 
@@ -151,5 +148,11 @@ pub fn solve(grid: Vec<Vec<u8>>) -> (usize, usize) {
 }
 
 fn neighbours(x: usize, y: usize) -> impl Iterator<Item = (usize, usize)> {
-    [(x + 1, y), (x, y + 1)].into_iter()
+    [
+        (x + 1, y),
+        (x, y + 1),
+        ((x as i32 - 1) as usize, y),
+        (x, (y as i32 - 1) as usize),
+    ]
+    .into_iter()
 }
