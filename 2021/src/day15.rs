@@ -45,17 +45,11 @@ struct Edge {
     cost: usize,
 }
 
-fn shortest_path_expansive(
-    grid: &Vec<Vec<Edge>>,
-    start: Pos,
-    goal: Pos,
-    repeat: usize,
-) -> Option<usize> {
+fn shortest_path_expansive(grid: &Vec<Vec<Edge>>, start: Pos, goal: Pos, repeat: usize) -> usize {
     // dist[node] = current shortest distance from `start` to `node`
     let mut dist = vec![vec![usize::MAX; grid.width() * repeat]; grid.height() * repeat];
 
     let wrap = grid.width();
-    dbg!(&goal);
 
     let mut heap = BinaryHeap::new();
 
@@ -70,7 +64,7 @@ fn shortest_path_expansive(
     while let Some(State { cost, position }) = heap.pop() {
         // Alternatively we could have continued to find all shortest paths
         if position == goal {
-            return Some(cost);
+            return cost;
         }
 
         // Important as we may have already found a better way
@@ -87,13 +81,8 @@ fn shortest_path_expansive(
             }
 
             if let Some(edge) = grid.getyx(dy % wrap, dx % wrap) {
-                let mut expanded_cost = edge.cost + level_x + level_y;
-                if expanded_cost > 9 {
-                    expanded_cost = (expanded_cost % 10) + 1
-                }
-                // dbg!(dx, dy, level_x, level_y, expanded_cost);
                 let next = State {
-                    cost: cost + expanded_cost,
+                    cost: cost + (edge.cost + level_x + level_y - 1 % 9) + 1,
                     position: Pos(edge.node.0 + wrap * level_x, edge.node.1 + wrap * level_y),
                 };
 
@@ -107,8 +96,7 @@ fn shortest_path_expansive(
         }
     }
 
-    // Goal not reachable
-    None
+    panic!("Goal not reachable")
 }
 
 /// ------ https://doc.rust-lang.org/std/collections/binary_heap/index.html ------ ///
@@ -144,7 +132,7 @@ pub fn solve(grid: Vec<Vec<u8>>) -> (usize, usize) {
         repeat,
     );
 
-    (part_one.unwrap(), part_two.unwrap())
+    (part_one, part_two)
 }
 
 fn neighbours(x: usize, y: usize) -> impl Iterator<Item = (usize, usize)> {
