@@ -48,10 +48,8 @@ struct Edge {
 fn shortest_path_expansive(grid: &Vec<Vec<Edge>>, start: Pos, goal: Pos, repeat: usize) -> usize {
     // dist[node] = current shortest distance from `start` to `node`
     let mut dist = vec![vec![usize::MAX; grid.width() * repeat]; grid.height() * repeat];
-
-    let wrap = grid.width();
-
     let mut heap = BinaryHeap::new();
+    let wrap = grid.width();
 
     // We're at `start`, with a zero cost
     dist[start.1][start.0] = 0;
@@ -89,7 +87,6 @@ fn shortest_path_expansive(grid: &Vec<Vec<Edge>>, start: Pos, goal: Pos, repeat:
                 // If so, add it to the frontier and continue
                 if next.cost < dist[next.position.1][next.position.0] {
                     heap.push(next);
-                    // Relaxation, we have now found a better way
                     dist[next.position.1][next.position.0] = next.cost;
                 }
             }
