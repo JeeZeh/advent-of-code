@@ -1,8 +1,8 @@
 pub fn solve(data: String) -> (u64, u64) {
     // Convert hex to binary (4 bits)
-    let bits: Vec<u8> = data
+    let bits: Vec<u16> = data
         .chars()
-        .map(|c| c.to_digit(16).unwrap() as u8)
+        .map(|c| c.to_digit(16).unwrap() as u16)
         .collect();
     let (version, type_id) = get_header(&bits);
 
@@ -23,10 +23,11 @@ fn drop_nth_bit(number: u8, n: usize) -> u8 {
 fn extract_literal(bits: &[u8]) -> u16 {
     // 1101 0010 1111 1110 0010 1000
     // VVVT TTAA AAAB BBBB CCCC C
-    let a = ((bits[1] & 1) << 3) + (bits[2] >> 1);
-    let b = bits[2];
-    let c = ((bits[3] & 1) << 3) + (bits[4] >> 1);
+    let a: u16 = ((bits[1] & 1) << 3) + (bits[2] >> 1);
+    let b: u16 = bits[3];
+    let c: u16 = (bits[4] << 1) + (bits[5] & 8);
 
+    (((a as u16 << 4) + b) << 4) + c
 }
 
 /// 6 bit header, 3 bits for packet version, 3 for packet type
