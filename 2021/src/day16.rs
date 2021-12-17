@@ -1,5 +1,4 @@
 pub fn solve(data: String) -> (u64, u64) {
-    // Convert hex to binary (4 bits)
     let bits = get_bits(&data.as_str());
 
     let mut ptr = 0;
@@ -10,7 +9,6 @@ pub fn solve(data: String) -> (u64, u64) {
 }
 
 fn part_one(bits: &[u64]) -> (u64, u64) {
-    // what do you get if you add up the version numbers in all packets?
     let mut ptr = 0;
     let mut sum_versions = 0;
 
@@ -21,9 +19,6 @@ fn part_one(bits: &[u64]) -> (u64, u64) {
 }
 
 fn recurse_packets(bits: &[u64], ptr: &mut usize, sum_versions: &mut u64) -> u64 {
-    if *ptr >= 4 * (bits.len()) {
-        return 0;
-    }
     let (version, type_id) = get_header(bits, ptr);
     *sum_versions += version;
 
@@ -31,23 +26,29 @@ fn recurse_packets(bits: &[u64], ptr: &mut usize, sum_versions: &mut u64) -> u64
         return extract_literal(bits, ptr);
     }
 
-    let num_packets;
+    let len;
+    let len_type = get_absolute_bit(bits, *ptr);
+    *ptr += 1;
 
-    if get_absolute_bit(bits, *ptr) == 1 {
-        *ptr += 1;
-        num_packets = get_n_bits(bits, 11, ptr);
+    if len_type == 1 {
+        len = get_n_bits(bits, 11, ptr);
     } else {
-        *ptr += 1;
-        num_packets = get_n_bits(bits, 15, ptr);
+        len = get_n_bits(bits, 15, ptr);
     }
 
     let mut values = Vec::new();
 
-    for _ in 0..num_packets {
-        values.push(recurse_packets(bits, ptr, sum_versions));
+    if len_type == 1 {
+        for _ in 0..len {
+            values.push(recurse_packets(bits, ptr, sum_versions));
+        }
+    } else {
+        let end = *ptr + len as usize;
+        while *ptr < end {
+            values.push(recurse_packets(bits, ptr, sum_versions));
+        }
     }
 
-    // dbg!(&values);
     return match type_id {
         0 => values.iter().sum(),
         1 => values.iter().product(),
