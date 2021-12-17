@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use std::{
     collections::{HashMap, HashSet},
     str::FromStr,
@@ -7,7 +8,6 @@ use itertools::Itertools;
 
 pub fn solve(lines: Vec<String>) -> (usize, usize) {
     let parsed: Vec<(Vec<String>, Vec<String>)> = lines.iter().map(|l| parse_input(l)).collect();
-    let mut digits: Vec<usize> = Vec::new();
 
     let number_segments: Vec<HashSet<char>> = [
         "abcefg", "cf", "acdeg", "acdfg", "bcdf", "abdfg", "abdefg", "acf", "abcdefg", "abcdfg",
@@ -22,14 +22,11 @@ pub fn solve(lines: Vec<String>) -> (usize, usize) {
         entry.extend(s);
     }
 
-    for (inputs, outputs) in parsed {
-        digits.append(&mut solve_line(
-            &inputs,
-            &outputs,
-            &number_segments,
-            &real_length_map,
-        ))
-    }
+    let digits: Vec<usize> = parsed
+        .par_iter()
+        .map(|(inputs, outputs)| solve_line(&inputs, &outputs, &number_segments, &real_length_map))
+        .flatten()
+        .collect();
 
     let part_one = digits.iter().filter(|d| [1, 4, 7, 8].contains(d)).count();
     let part_two = digits
