@@ -37,28 +37,29 @@ pub fn solve(string: String) -> (i32, i32) {
 }
 
 fn find_all_vels(target_x: &Range<i32>, target_y: &Range<i32>) -> (i32, i32) {
+    let mut all_vels = 0;
+
     let min_x = (-1 + (1.00 + 8.00 * target_x.start as f32).sqrt() as i32) / 2;
 
-    let vel_count: i32 = (min_x..target_x.end)
-        .map(|vx| {
-            let vy_range = if vx > target_x.start {
-                // Use this bound if we're immediately landing in the target (y vel must be inside the target)
-                target_y.start..target_y.end
-            } else {
-                // I'm sure you can bound this more, given the number of steps it takes to reach the target
-                // in the x direction you should be able to determine at least the minimum bound
-                target_y.start..target_y.start.abs()
-            };
-            vy_range
-                .map(|vy| fire(vx, vy, target_x, target_y))
-                .filter(|b| *b)
-                .count() as i32
-        })
-        .sum();
+    for vx in min_x..target_x.end {
+        let vy_range = if vx > target_x.start {
+            // Use this bound if we're immediately landing in the target (y vel must be inside the target)
+            target_y.start..target_y.end
+        } else {
+            // I'm sure you can bound this more, given the number of steps it takes to reach the target
+            // in the x direction you should be able to determine at least the minimum bound
+            target_y.start..target_y.start.abs()
+        };
+        for vy in vy_range {
+            if fire(vx, vy, target_x, target_y) {
+                all_vels += 1;
+            }
+        }
+    }
 
     (
         target_y.start.abs() * (target_y.start.abs() - 1) / 2,
-        vel_count,
+        all_vels,
     )
 }
 
