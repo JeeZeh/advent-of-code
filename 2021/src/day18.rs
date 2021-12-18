@@ -17,55 +17,97 @@ impl Pair {
             parent: None,
         }
     }
+
+    fn get(idx: usize, memory: &[Option<Pair>]) -> Self {
+        memory[idx].unwrap()
+    }
+
+    fn get_left(&self, memory: &[Option<Pair>]) -> Option<Self> {
+        if let Some(left) = self.left {
+            return memory[left];
+        }
+
+        None
+    }
+    fn get_right(&self, memory: &[Option<Pair>]) -> Option<Self> {
+        if let Some(right) = self.right {
+            return memory[right];
+        }
+
+        None
+    }
 }
 
 pub fn solve(lines: Vec<String>) -> (i32, i32) {
-    let mut pairs = Vec::new();
+    let mut memory = Vec::new();
+
+    let mut pairs: Vec<usize> = Vec::new();
     for line in lines {
-        parse_pairs(&mut pairs, &line.chars().collect_vec(), &mut 0);
+        let new_pair = parse_pairs(&mut memory, &line.chars().collect_vec(), &mut 0);
+        pairs.push(new_pair);
     }
+
+    let first = memory[pairs[0]].unwrap();
+    dbg!(&first);
+
+    dbg!(&first
+        .get_left(&memory)
+        .unwrap()
+        .get_right(&memory)
+        .unwrap()
+        .get_left(&memory)
+        .unwrap()
+        .get_left(&memory)
+        .unwrap()
+        .value
+        .unwrap());
 
     (0, 0)
 }
 
-fn parse_pairs(pairs: &mut Vec<Option<Pair>>, chars: &[char], ptr: &mut usize) -> usize {
-    // [[1,2],3]
-    let mut pair: Pair = Pair {
-        left: None,
-        right: None,
+fn parse_pair(
+    delim: char,
+    memory: &mut Vec<Option<Pair>>,
+    chars: &[char],
+    ptr: &mut usize,
+) -> Option<usize> {
+    let left;
+    if chars[*ptr] == '[' {
+        *ptr += 1;
+        left = Some(parse_pairs(memory, chars, ptr));
+        *ptr += 1;
+    } else {
+        let delim_idx = chars.find_next(delim, *ptr).unwrap();
+        let lit = String::from_iter(&chars[*ptr..delim_idx]).parse().unwrap();
+        memory.push(Some(Pair::with_value(lit)));
+        left = Some(memory.len() - 1);
+        *ptr = delim_idx + 1;
+    }
+
+    left
+}
+
+fn parse_pairs(memory: &mut Vec<Option<Pair>>, chars: &[char], ptr: &mut usize) -> usize {
+    let left = parse_pair(',', memory, chars, ptr);
+
+    if *ptr > chars.len() {
+        return left.unwrap();
+    }
+
+    let right = parse_pair(']', memory, chars, ptr);
+
+    let pair: Pair = Pair {
+        left: left,
+        right: right,
         value: None,
         parent: None,
     };
 
-    pairs.push(Some(pair));
-    let this = pairs.len() - 1;
+    let this = memory.len();
+    memory.push(Some(pair));
 
-    if chars[*ptr] == '[' {
-        *ptr += 1;
-        pair.left = Some(parse_pairs(pairs, chars, ptr));
-    } else {
-        let comma_idx = chars.find_next(',', *ptr).unwrap();
-        let lit = dbg!(String::from_iter(&chars[*ptr..comma_idx]))
-            .parse()
-            .unwrap();
-        pairs.push(Some(Pair::with_value(lit)));
-        pair.left = Some(pairs.len() - 1);
-        *ptr = comma_idx + 1;
-    }
-
-    if chars[*ptr] == '[' {
-        *ptr += 1;
-        pair.right = Some(parse_pairs(pairs, chars, ptr));
-    } else {
-        let end_idx = chars.find_next(']', *ptr).unwrap();
-        let lit = dbg!(String::from_iter(&chars[*ptr..end_idx])).parse().unwrap();
-        pairs.push(Some(Pair::with_value(lit)));
-        pair.right = Some(pairs.len() - 1);
-        *ptr = end_idx + 1;
-    }
-
-    pairs[pair.left.unwrap()].unwrap().parent = Some(this);
-    pairs[pair.right.unwrap()].unwrap().parent = Some(this);
+    memory[left.unwrap()].unwrap().parent = Some(this);
+    memory[right.unwrap()].unwrap().parent = Some(this);
 
     this
 }
