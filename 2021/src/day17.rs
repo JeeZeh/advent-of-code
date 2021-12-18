@@ -51,7 +51,7 @@ fn find_all_vels(target_x: &Range<i32>, target_y: &Range<i32>) -> (i32, i32) {
             target_y.start..target_y.start.abs()
         };
         for vy in vy_range {
-            if fire(vx, vy, target_x, target_y) {
+            if lands_in_target(vx, vy, target_x, target_y) {
                 all_vels += 1;
             }
         }
@@ -63,13 +63,10 @@ fn find_all_vels(target_x: &Range<i32>, target_y: &Range<i32>) -> (i32, i32) {
     )
 }
 
-fn fire(vel_x: i32, vel_y: i32, target_x: &Range<i32>, target_y: &Range<i32>) -> bool {
+fn lands_in_target(vel_x: i32, vel_y: i32, target_x: &Range<i32>, target_y: &Range<i32>) -> bool {
     let mut drone = Drone::with_vel(vel_x, vel_y);
 
-    while !(drone.pos_x < target_x.start && drone.vel_x == 0)
-        && !(drone.pos_y < target_y.start)
-        && !(drone.pos_x > target_x.end)
-    {
+    while !(drone.pos_y < target_y.start) && !(drone.pos_x > target_x.end) {
         if target_x.contains(&drone.pos_x) && target_y.contains(&drone.pos_y) {
             return true;
         }
