@@ -54,27 +54,9 @@ fn recurse_packets(bits: &[u64], ptr: &mut usize, sum_versions: &mut u64) -> u64
         1 => values.iter().product(),
         2 => *values.iter().min().unwrap(),
         3 => *values.iter().max().unwrap(),
-        5 => {
-            if values[0] > values[1] {
-                1
-            } else {
-                0
-            }
-        }
-        6 => {
-            if values[0] < values[1] {
-                1
-            } else {
-                0
-            }
-        }
-        7 => {
-            if values[0] == values[1] {
-                1
-            } else {
-                0
-            }
-        }
+        5 => (values[0] > values[1]) as u64,
+        6 => (values[0] < values[1]) as u64,
+        7 => (values[0] == values[1]) as u64,
         _ => panic!("Unknon type ID"),
     };
 }
