@@ -109,10 +109,15 @@ impl Scanner {
         loop {
             let mut matching_beacons = Vec::new();
 
-            for a in &self.beacons {
+            for (i, a) in self.beacons.iter().enumerate() {
+                // break early if we've no chance of finding at least 12 beacons
+                if MIN_BEACON_OVERLAPS + i > self.beacons.len() + matching_beacons.len() {
+                    break;
+                }
                 for b in &other_reoriented.beacons {
                     if a.is_same(b) {
                         matching_beacons.push((a.position, b.position));
+                        break;
                     }
                 }
             }
@@ -146,12 +151,12 @@ impl Scanner {
 
                     // Update relative vectors
                     for to_update in copy.beacons.iter_mut() {
-                        let rel_b = migrated_beacon
-                            .position
-                            .relative_vector(&to_update.position);
                         let rel_a = to_update
                             .position
                             .relative_vector(&migrated_beacon.position);
+                        let rel_b = migrated_beacon
+                            .position
+                            .relative_vector(&to_update.position);
                         to_update.relative_vectors.insert(rel_a);
                         migrated_beacon.relative_vectors.insert(rel_b);
                     }
