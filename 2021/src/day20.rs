@@ -41,46 +41,16 @@ fn get_idx(center: (i32, i32), image: &Vec<Vec<bool>>, out_of_bounds: bool) -> u
     // Out of bounds means how we should interpret the infinite space beyond the grid
     // This is a little hardcoded, since it just so happens that all the pixels outside
     // the main image alternate between on and off each step
-    let (x, y) = center;
-    let (top_row, middle_row, bottom_row) = ((y - 1) as usize, y as usize, (y + 1) as usize);
-    let (left_col, middle_col, right_col) = ((x - 1) as usize, x as usize, (x + 1) as usize);
-    let top = [
-        image
-            .getyx(top_row, left_col)
-            .unwrap_or_else(|| &out_of_bounds),
-        image
-            .getyx(top_row, middle_col)
-            .unwrap_or_else(|| &out_of_bounds),
-        image
-            .getyx(top_row, right_col)
-            .unwrap_or_else(|| &out_of_bounds),
-    ];
-    let mid = [
-        image
-            .getyx(middle_row, left_col)
-            .unwrap_or_else(|| &out_of_bounds),
-        image
-            .getyx(middle_row, middle_col)
-            .unwrap_or_else(|| &out_of_bounds),
-        image
-            .getyx(middle_row, right_col)
-            .unwrap_or_else(|| &out_of_bounds),
-    ];
-    let bot = [
-        image
-            .getyx(bottom_row, left_col)
-            .unwrap_or_else(|| &out_of_bounds),
-        image
-            .getyx(bottom_row, middle_col)
-            .unwrap_or_else(|| &out_of_bounds),
-        image
-            .getyx(bottom_row, right_col)
-            .unwrap_or_else(|| &out_of_bounds),
-    ];
-    [top, mid, bot]
-        .concat()
-        .iter()
-        .fold(0, |acc, &b| (acc << 1) | *b as usize)
+    let mut idx: usize = 0;
+    for dy in -1..=1 {
+        for dx in -1..=1 {
+            idx = (idx << 1)
+                | *image
+                    .getyx((center.1 + dy) as usize, (center.0 + dx) as usize)
+                    .unwrap_or_else(|| &out_of_bounds) as usize;
+        }
+    }
+    idx
 }
 
 fn parse_input(lines: String) -> (Vec<bool>, Vec<Vec<bool>>) {
