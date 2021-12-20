@@ -50,29 +50,20 @@ impl Point {
     fn relative_vector(&self, other: &Self) -> Point {
         Point(other.0 - self.0, other.1 - self.1, other.2 - self.2)
     }
+
+    fn manhattan(&self, other: &Self) -> usize {
+        ((self.0 - other.0).abs() + (self.1 - other.1).abs() + (self.2 - other.2).abs()) as usize
+    }
 }
 
 #[derive(Debug, Clone)]
 struct Scanner {
     beacons: Vec<Beacon>,
     orientation: usize,
+    merged: Vec<Point>,
 }
 
 impl Scanner {
-    // fn update_relative_vectors(&mut self) {
-    //     for beacon in self.beacons.iter_mut() {
-    //         beacon.relative_vectors = HashSet::new();
-    //     }
-
-    //     for (i, a) in self.beacons.iter_mut().enumerate() {
-    //         for b in self.beacons {
-    //             a.relative_vectors
-    //                 .insert(a.position.relative_vector(&b.position));
-
-    //         }
-    //     }
-    // }
-
     // Great SO answer for generating orientations https://stackoverflow.com/a/16467849
     fn next_orientation(&self) -> Option<Scanner> {
         if self.orientation == 23 {
@@ -82,7 +73,7 @@ impl Scanner {
         let op: fn(&Point) -> Point;
 
         // Edge case to first perform RTR before the operation
-        if self.orientation == 12 {
+        if self.orientation == 11 {
             op = Point::special_rtr_roll
         } else {
             op = match self.orientation % 4 {
@@ -109,6 +100,7 @@ impl Scanner {
         Some(Scanner {
             beacons: new_beacons,
             orientation: (self.orientation + 1) % 24,
+            merged: self.merged.clone(),
         })
     }
 
@@ -143,14 +135,6 @@ impl Scanner {
             let mut copy = self.clone();
             let (sample_a, sample_b) = matching_beacons[0];
             let translation = sample_a.relative_vector(&sample_b);
-
-            // dbg!(
-            //     sample_a,
-            //     sample_b,
-            //     translation,
-            //     &translation.relative_vector(&sample_b)
-            // );
-
             let matched_from_other: HashSet<Point> = matching_beacons.iter().map(|p| p.1).collect();
 
             for beacon in &other_orientation.beacons {
@@ -174,23 +158,38 @@ impl Scanner {
 
                     copy.beacons.push(migrated_beacon);
                 }
+
+                copy.merged.push(translation);
             }
             return Some(copy);
         }
 
         None
     }
+
+    fn largest_manhattan(&self) -> usize {
+        let mut max = 0;
+        for (i, a) in self.merged.iter().enumerate() {
+            for b in self.merged[i + 1..].iter() {
+                let man = a.manhattan(&b);
+                if man > max {
+                    max = man;
+                }
+            }
+        }
+        return max;
+    }
 }
 
-pub fn solve(lines: String) -> (usize, i32) {
+pub fn solve(lines: String) -> (usize, usize) {
     let mut scanners: Vec<Scanner> = lines.split("\n\n").map(parse_scanner).collect();
 
     while scanners.len() > 1 {
-        println!("{} remaining...", scanners.len() - 1);
+        // println!("{} remaining...", scanners.len() - 1);
         scanners = find_match(&scanners);
     }
 
-    (scanners[0].beacons.len(), 0)
+    (scanners[0].beacons.len(), scanners[0].largest_manhattan())
 }
 
 fn find_match(scanners: &Vec<Scanner>) -> Vec<Scanner> {
@@ -198,7 +197,7 @@ fn find_match(scanners: &Vec<Scanner>) -> Vec<Scanner> {
     let mut composite_scanner = scanners[0].clone();
     remaining.push(scanners[0].clone());
 
-    for (i, other) in scanners[1..].iter().enumerate() {
+    for other in scanners[1..].iter() {
         if let Some(combined) = composite_scanner.try_combine(&other) {
             // println!("Successfully combined with {}", i + 1);
             composite_scanner = combined;
@@ -237,5 +236,6 @@ fn parse_scanner(lines: &str) -> Scanner {
     Scanner {
         beacons,
         orientation: 0,
+        merged: Vec::new(),
     }
 }
