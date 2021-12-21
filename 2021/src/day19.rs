@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use itertools::{zip, Itertools};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 const MIN_BEACON_INTERSECTS: usize = 11;
 const MIN_BEACON_OVERLAPS: usize = 12;
@@ -51,6 +52,10 @@ impl Point {
         Point(other.0 - self.0, other.1 - self.1, other.2 - self.2)
     }
 
+    fn distance(&self, other: &Self) -> i32 {
+        (other.0 - self.0).pow(2) + (other.1 - self.1).pow(2) + (other.2 - self.2).pow(2)
+    }
+
     fn manhattan(&self, other: &Self) -> usize {
         ((self.0 - other.0).abs() + (self.1 - other.1).abs() + (self.2 - other.2).abs()) as usize
     }
@@ -61,9 +66,31 @@ struct Scanner {
     beacons: Vec<Beacon>,
     orientation: usize,
     merged: Vec<Point>,
+    fingerprint: HashSet<i32>,
 }
 
 impl Scanner {
+    fn update_fingerprints(&mut self) {
+        let mut new_fps = HashSet::new();
+
+        let mut points_relative_vectors: Vec<HashSet<Point>> =
+            vec![HashSet::new(); self.beacons.len()];
+
+        for (i, a) in self.beacons.iter().enumerate() {
+            for (j, b) in self.beacons[i + 1..].iter().enumerate() {
+                new_fps.insert(a.position.distance(&b.position));
+                points_relative_vectors[i].insert(a.position.relative_vector(&b.position));
+                points_relative_vectors[i + 1 + j].insert(b.position.relative_vector(&a.position));
+            }
+        }
+
+        for i in 0..points_relative_vectors.len() {
+            self.beacons[i].relative_vectors = points_relative_vectors[i].clone();
+        }
+
+        self.fingerprint = new_fps;
+    }
+
     // Great SO answer for generating orientations https://stackoverflow.com/a/16467849
     fn next_orientation(&self) -> Option<Scanner> {
         if self.orientation == 23 {
@@ -101,26 +128,23 @@ impl Scanner {
             beacons: new_beacons,
             orientation: (self.orientation + 1) % 24,
             merged: self.merged.clone(),
+            fingerprint: self.fingerprint.clone(),
         })
     }
 
     fn try_match(&self, other: &Self) -> Option<(Vec<(Point, Point)>, Scanner)> {
         let mut other_reoriented = other.clone();
         loop {
-            let mut matching_beacons = Vec::new();
-
-            for (i, a) in self.beacons.iter().enumerate() {
-                // break early if we've no chance of finding at least 12 beacons
-                if MIN_BEACON_OVERLAPS + i > self.beacons.len() + matching_beacons.len() {
-                    break;
-                }
-                for b in &other_reoriented.beacons {
-                    if a.is_same(b) {
-                        matching_beacons.push((a.position, b.position));
-                        break;
-                    }
-                }
-            }
+            let matching_beacons: Vec<(Point, Point)> = self
+                .beacons
+                .par_iter()
+                .filter_map(
+                    |a| match other_reoriented.beacons.iter().find(|b| a.is_same(*b)) {
+                        Some(found) => Some((a.position, found.position)),
+                        None => None,
+                    },
+                )
+                .collect();
 
             if matching_beacons.len() >= MIN_BEACON_OVERLAPS {
                 return Some((matching_beacons, other_reoriented));
@@ -135,8 +159,15 @@ impl Scanner {
         None
     }
 
-    fn try_combine(&self, other: &Self) -> Option<Self> {
+    fn try_combine(&mut self, other: &mut Self) -> Option<Self> {
+        other.update_fingerprints();
+
+        if self.fingerprint.intersection(&other.fingerprint).count() < MIN_BEACON_OVERLAPS * 3 {
+            return None;
+        }
+
         if let Some((matching_beacons, other_orientation)) = self.try_match(other) {
+            // dbg!(&self.fingerprint.intersection(&other.fingerprint).count());
             let mut copy = self.clone();
             let (sample_a, sample_b) = matching_beacons[0];
             let translation = sample_a.relative_vector(&sample_b);
@@ -159,6 +190,8 @@ impl Scanner {
                             .relative_vector(&to_update.position);
                         to_update.relative_vectors.insert(rel_a);
                         migrated_beacon.relative_vectors.insert(rel_b);
+                        copy.fingerprint
+                            .insert(to_update.position.distance(&migrated_beacon.position));
                     }
 
                     copy.beacons.push(migrated_beacon);
@@ -191,19 +224,19 @@ pub fn solve(lines: String) -> (usize, usize) {
 
     while scanners.len() > 1 {
         // println!("{} remaining...", scanners.len() - 1);
-        scanners = find_match(&scanners);
+        scanners = find_match(&mut scanners);
     }
 
     (scanners[0].beacons.len(), scanners[0].largest_manhattan())
 }
 
-fn find_match(scanners: &Vec<Scanner>) -> Vec<Scanner> {
+fn find_match(scanners: &mut Vec<Scanner>) -> Vec<Scanner> {
     let mut remaining = Vec::new();
     let mut composite_scanner = scanners[0].clone();
-    remaining.push(scanners[0].clone());
+    composite_scanner.update_fingerprints();
 
-    for other in scanners[1..].iter() {
-        if let Some(combined) = composite_scanner.try_combine(&other) {
+    for other in scanners[1..].iter_mut() {
+        if let Some(combined) = composite_scanner.try_combine(other) {
             // println!("Successfully combined with {}", i + 1);
             composite_scanner = combined;
         } else {
@@ -211,7 +244,11 @@ fn find_match(scanners: &Vec<Scanner>) -> Vec<Scanner> {
         }
     }
 
-    remaining[0] = composite_scanner;
+    if remaining.len() == 0 {
+        remaining.push(composite_scanner);
+    } else {
+        remaining[0] = composite_scanner;
+    }
     remaining
 }
 
@@ -221,20 +258,11 @@ fn parse_scanner(lines: &str) -> Scanner {
         .map(|l| Point::from_string(*l))
         .collect_vec();
 
-    let mut points_relative_vectors: Vec<HashSet<Point>> = vec![HashSet::new(); points.len()];
-
-    for (i, a) in points.iter().enumerate() {
-        for (j, b) in points[i + 1..].iter().enumerate() {
-            points_relative_vectors[i].insert(a.relative_vector(b));
-            points_relative_vectors[i + 1 + j].insert(b.relative_vector(a));
-        }
-    }
-
     let mut beacons: Vec<Beacon> = Vec::new();
-    for (position, relative_vectors) in zip(points, points_relative_vectors) {
+    for position in points {
         beacons.push(Beacon {
             position,
-            relative_vectors,
+            relative_vectors: HashSet::new(),
         })
     }
 
@@ -242,5 +270,6 @@ fn parse_scanner(lines: &str) -> Scanner {
         beacons,
         orientation: 0,
         merged: Vec::new(),
+        fingerprint: HashSet::new(),
     }
 }
