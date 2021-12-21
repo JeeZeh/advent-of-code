@@ -1,6 +1,6 @@
-use std::collections::HashSet;
 
-use itertools::{zip, Itertools};
+use ahash::AHashSet;
+use itertools::Itertools;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 const MIN_BEACON_INTERSECTS: usize = 11;
@@ -12,7 +12,7 @@ struct Point(i32, i32, i32);
 #[derive(Debug, Clone)]
 struct Beacon {
     position: Point,
-    relative_vectors: HashSet<Point>,
+    relative_vectors: AHashSet<Point>,
 }
 
 impl Beacon {
@@ -66,15 +66,15 @@ struct Scanner {
     beacons: Vec<Beacon>,
     orientation: usize,
     merged: Vec<Point>,
-    fingerprint: HashSet<i32>,
+    fingerprint: AHashSet<i32>,
 }
 
 impl Scanner {
     fn update_fingerprints(&mut self) {
-        let mut new_fps = HashSet::new();
+        let mut new_fps = AHashSet::new();
 
-        let mut points_relative_vectors: Vec<HashSet<Point>> =
-            vec![HashSet::new(); self.beacons.len()];
+        let mut points_relative_vectors: Vec<AHashSet<Point>> =
+            vec![AHashSet::new(); self.beacons.len()];
 
         for (i, a) in self.beacons.iter().enumerate() {
             for (j, b) in self.beacons[i + 1..].iter().enumerate() {
@@ -112,7 +112,7 @@ impl Scanner {
         let mut new_beacons = Vec::new();
 
         for beacon in &self.beacons {
-            let mut new_relative_vectors = HashSet::new();
+            let mut new_relative_vectors = AHashSet::new();
 
             beacon.relative_vectors.iter().for_each(|p| {
                 new_relative_vectors.insert(op(p));
@@ -171,13 +171,13 @@ impl Scanner {
             let mut copy = self.clone();
             let (sample_a, sample_b) = matching_beacons[0];
             let translation = sample_a.relative_vector(&sample_b);
-            let matched_from_other: HashSet<Point> = matching_beacons.iter().map(|p| p.1).collect();
+            let matched_from_other: AHashSet<Point> = matching_beacons.iter().map(|p| p.1).collect();
 
             for beacon in &other_orientation.beacons {
                 if !matched_from_other.contains(&beacon.position) {
                     let mut migrated_beacon = Beacon {
                         position: translation.relative_vector(&beacon.position),
-                        relative_vectors: HashSet::new(),
+                        relative_vectors: AHashSet::new(),
                     };
 
                     // Update relative vectors
@@ -262,7 +262,7 @@ fn parse_scanner(lines: &str) -> Scanner {
     for position in points {
         beacons.push(Beacon {
             position,
-            relative_vectors: HashSet::new(),
+            relative_vectors: AHashSet::new(),
         })
     }
 
@@ -270,6 +270,6 @@ fn parse_scanner(lines: &str) -> Scanner {
         beacons,
         orientation: 0,
         merged: Vec::new(),
-        fingerprint: HashSet::new(),
+        fingerprint: AHashSet::new(),
     }
 }
