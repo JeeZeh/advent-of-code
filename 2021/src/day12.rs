@@ -1,5 +1,6 @@
+use ahash::AHashMap;
 use primes::{PrimeSet, Sieve};
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 
 use itertools::Itertools;
 
@@ -16,7 +17,7 @@ pub fn solve(lines: Vec<String>) -> (u32, u32) {
             START,
             false,
             false,
-            &mut HashMap::new(),
+            &mut AHashMap::new(),
         ),
         explore_rec(
             &connections,
@@ -24,7 +25,7 @@ pub fn solve(lines: Vec<String>) -> (u32, u32) {
             START,
             false,
             true,
-            &mut HashMap::new(),
+            &mut AHashMap::new(),
         ),
     )
 }
@@ -35,7 +36,7 @@ fn explore_rec(
     current: i32,
     visited_twice: bool,
     allowed_two_visits: bool,
-    cache: &mut HashMap<(i32, u64), u32>,
+    cache: &mut AHashMap<(i32, u64), u32>,
 ) -> u32 {
     if let Some(cached_paths) = cache.get(&(current, seen)) {
         return *cached_paths;
@@ -69,7 +70,7 @@ fn explore_rec(
 }
 
 fn parse_connections(lines: &[String]) -> Vec<Vec<(i32, u64)>> {
-    let mut ids: HashMap<String, i32> = HashMap::new();
+    let mut ids: AHashMap<String, i32> = AHashMap::new();
     ids.insert(String::from("start"), START);
     ids.insert(String::from("end"), END);
 

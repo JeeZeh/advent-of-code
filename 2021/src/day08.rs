@@ -1,24 +1,22 @@
+use ahash::{AHashMap, AHashSet};
 use rayon::prelude::*;
-use std::{
-    collections::{HashMap, HashSet},
-    str::FromStr,
-};
+use std::str::FromStr;
 
 use itertools::Itertools;
 
 pub fn solve(lines: Vec<String>) -> (usize, usize) {
     let parsed: Vec<(Vec<String>, Vec<String>)> = lines.iter().map(|l| parse_input(l)).collect();
 
-    let number_segments: Vec<HashSet<char>> = [
+    let number_segments: Vec<AHashSet<char>> = [
         "abcefg", "cf", "acdeg", "acdfg", "bcdf", "abdfg", "abdefg", "acf", "abcdefg", "abcdfg",
     ]
     .iter()
-    .map(|s| HashSet::from_iter(s.chars()))
+    .map(|s| AHashSet::from_iter(s.chars()))
     .collect();
 
-    let mut real_length_map: HashMap<usize, HashSet<char>> = HashMap::new();
+    let mut real_length_map: AHashMap<usize, AHashSet<char>> = AHashMap::new();
     for s in &number_segments {
-        let entry = real_length_map.entry(s.len()).or_insert_with(HashSet::new);
+        let entry = real_length_map.entry(s.len()).or_insert_with(AHashSet::new);
         entry.extend(s);
     }
 
@@ -47,18 +45,18 @@ pub fn solve(lines: Vec<String>) -> (usize, usize) {
 fn solve_line(
     signals: &[String],
     outputs: &[String],
-    number_segments: &[HashSet<char>],
-    real_length_map: &HashMap<usize, HashSet<char>>,
+    number_segments: &[AHashSet<char>],
+    real_length_map: &AHashMap<usize, AHashSet<char>>,
 ) -> Vec<usize> {
     let mut output_digits = Vec::new();
-    let mut possible_segment_wires: HashMap<char, HashSet<char>> = HashMap::new();
+    let mut possible_segment_wires: AHashMap<char, AHashSet<char>> = AHashMap::new();
 
-    let mut cipher_length_map: HashMap<usize, HashSet<char>> = HashMap::new();
+    let mut cipher_length_map: AHashMap<usize, AHashSet<char>> = AHashMap::new();
 
     for s in signals {
         let entry = cipher_length_map
             .entry(s.len())
-            .or_insert_with(HashSet::new);
+            .or_insert_with(AHashSet::new);
         entry.extend(s.chars());
     }
 
@@ -81,7 +79,7 @@ fn solve_line(
         .collect();
 
     // The digit segments we've found so far
-    let mut known: HashMap<String, usize> = HashMap::new();
+    let mut known: AHashMap<String, usize> = AHashMap::new();
 
     // This is the only "brute force" section, though it's not random.
     // Here we try to find a mapping for all digits. We try every digit repeatedly until
@@ -111,15 +109,15 @@ fn solve_line(
 }
 
 fn find_digit_mapping(
-    digit_segments: &HashSet<char>,
-    possible_segment_wires: &HashMap<char, HashSet<char>>,
+    digit_segments: &AHashSet<char>,
+    possible_segment_wires: &AHashMap<char, AHashSet<char>>,
     signals_to_identify: &[String],
 ) -> Option<String> {
     if signals_to_identify.len() == 1 {
         return Some(signals_to_identify[0].clone());
     }
 
-    let mut options: HashMap<char, usize> = HashMap::new();
+    let mut options: AHashMap<char, usize> = AHashMap::new();
 
     // Collect the number of times each possible char appears when trying
     // to construct the given digit_segments
@@ -169,16 +167,16 @@ fn find_digit_mapping(
  */
 fn filter_out_choices(
     wire: char,
-    possible_choices: &mut HashMap<char, HashSet<char>>,
-) -> HashMap<char, HashSet<char>> {
-    let mut filtered_segment_wires: HashMap<char, HashSet<char>> = possible_choices.clone();
+    possible_choices: &mut AHashMap<char, AHashSet<char>>,
+) -> AHashMap<char, AHashSet<char>> {
+    let mut filtered_segment_wires: AHashMap<char, AHashSet<char>> = possible_choices.clone();
     let choices = possible_choices.get(&wire).unwrap();
 
     for (other_wire, other_choices) in possible_choices.iter() {
         if wire == *other_wire || choices == other_choices || choices.len() >= other_choices.len() {
             continue;
         }
-        let intersection: HashSet<char> = choices
+        let intersection: AHashSet<char> = choices
             .intersection(other_choices)
             .into_iter()
             .cloned()

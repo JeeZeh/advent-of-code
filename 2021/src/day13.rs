@@ -1,5 +1,4 @@
-use std::collections::HashSet;
-
+use ahash::AHashSet;
 use itertools::Itertools;
 
 #[derive(PartialEq)]
@@ -10,7 +9,7 @@ enum FoldAxis {
 
 pub fn solve(lines: String) -> (usize, String) {
     let mut parts = lines.split("\n\n");
-    let mut grid: HashSet<(u16, u16)> = parts.next().unwrap().lines().map(parse_coord).collect();
+    let mut grid: AHashSet<(u16, u16)> = parts.next().unwrap().lines().map(parse_coord).collect();
     let folds = parts.next().unwrap().lines().map(parse_fold).collect_vec();
 
     grid = fold_points(&grid, &folds[0..1]);
@@ -21,7 +20,7 @@ pub fn solve(lines: String) -> (usize, String) {
     (part_one, display_grid(&grid))
 }
 
-fn display_grid(grid: &HashSet<(u16, u16)>) -> String {
+fn display_grid(grid: &AHashSet<(u16, u16)>) -> String {
     let max_x = grid.iter().map(|(x, _)| *x).max().unwrap() as usize;
     let max_y = grid.iter().map(|(_, y)| *y).max().unwrap() as usize;
 
@@ -43,9 +42,9 @@ fn display_grid(grid: &HashSet<(u16, u16)>) -> String {
  * Credit to @mgoszcz2 for implementing this... though the idea to process
  * all folds in one go was mine :)
  */
-fn fold_points(grid: &HashSet<(u16, u16)>, folds: &[(FoldAxis, u16)]) -> HashSet<(u16, u16)> {
+fn fold_points(grid: &AHashSet<(u16, u16)>, folds: &[(FoldAxis, u16)]) -> AHashSet<(u16, u16)> {
     use FoldAxis::*;
-    let mut next = HashSet::new();
+    let mut next = AHashSet::new();
     for (mut x, mut y) in grid {
         for (axis, on) in folds {
             x = if x < *on || *axis == Y { x } else { on * 2 - x };

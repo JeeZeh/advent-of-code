@@ -1,8 +1,8 @@
-use std::collections::{HashMap, HashSet};
+use ahash::{AHashMap, AHashSet};
 
 struct Board {
     grid: Vec<Vec<bool>>,
-    locations: HashMap<u32, (usize, usize)>,
+    locations: AHashMap<u32, (usize, usize)>,
 }
 
 impl Board {
@@ -17,7 +17,7 @@ impl Board {
             .collect();
 
         let grid = vec![vec![false; lines[0].len()]; lines.len()];
-        let mut locations: HashMap<u32, (usize, usize)> = HashMap::new();
+        let mut locations: AHashMap<u32, (usize, usize)> = AHashMap::new();
 
         for (y, line) in lines.iter().enumerate() {
             for (x, number) in line.iter().enumerate() {
@@ -60,7 +60,7 @@ pub fn solve(input: String) -> (u32, u32) {
 }
 
 fn play_bingo(boards: &mut Vec<Board>, numbers: &[u32]) -> (u32, u32) {
-    let mut finished: HashSet<usize> = HashSet::new();
+    let mut finished: AHashSet<usize> = AHashSet::new();
     let mut winning_boards: Vec<u32> = Vec::new();
     let total_boards = boards.len();
 

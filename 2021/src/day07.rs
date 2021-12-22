@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use ahash::AHashMap;
 
 use crate::aocutil::numbers;
 
@@ -22,15 +22,15 @@ fn linear(dist: i32, count: i32) -> i32 {
     dist * count
 }
 
-fn get_fuel_for_pos(crab_bins: &HashMap<i32, i32>, pos: i32, fuel_fn: &FuelFn) -> i32 {
+fn get_fuel_for_pos(crab_bins: &AHashMap<i32, i32>, pos: i32, fuel_fn: &FuelFn) -> i32 {
     crab_bins
         .iter()
         .map(|(p2, count)| fuel_fn((pos - p2).abs(), *count))
         .sum()
 }
 
-fn build_crab_bins(crabs: &[i32]) -> HashMap<i32, i32> {
-    let mut bins = HashMap::new();
+fn build_crab_bins(crabs: &[i32]) -> AHashMap<i32, i32> {
+    let mut bins = AHashMap::new();
 
     for crab in crabs {
         let entry = bins.entry(*crab).or_insert(0);

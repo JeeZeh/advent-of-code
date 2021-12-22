@@ -1,12 +1,11 @@
-use std::collections::HashMap;
-
+use ahash::AHashMap;
 use itertools::Itertools;
 
 pub fn solve(lines: String) -> (u64, u64) {
     let mut parts = lines.split("\n\n");
 
     // Parse polymer into count of pairs
-    let mut pairs: HashMap<(char, char), u64> = HashMap::new();
+    let mut pairs: AHashMap<(char, char), u64> = AHashMap::new();
     let polymer = parts.next().unwrap().chars().collect_vec();
     for chars in polymer.windows(2) {
         let pair = (chars[0], chars[1]);
@@ -15,13 +14,13 @@ pub fn solve(lines: String) -> (u64, u64) {
     }
 
     // Init count map
-    let mut count: HashMap<char, u64> = HashMap::new();
+    let mut count: AHashMap<char, u64> = AHashMap::new();
     for char in polymer {
         *count.entry(char).or_insert(0) += 1;
     }
 
     // Parse pair templates
-    let templates: HashMap<(char, char), char> =
+    let templates: AHashMap<(char, char), char> =
         parts.next().unwrap().lines().map(parse_template).collect();
 
     // Part 1
@@ -46,11 +45,11 @@ pub fn solve(lines: String) -> (u64, u64) {
  * of AB in the process.
  */
 fn step(
-    pairs: &HashMap<(char, char), u64>,
-    templates: &HashMap<(char, char), char>,
-    counts: &mut HashMap<char, u64>,
-) -> HashMap<(char, char), u64> {
-    let mut new_pairs = HashMap::new();
+    pairs: &AHashMap<(char, char), u64>,
+    templates: &AHashMap<(char, char), char>,
+    counts: &mut AHashMap<char, u64>,
+) -> AHashMap<(char, char), u64> {
+    let mut new_pairs = AHashMap::new();
 
     for (pair, count) in pairs {
         if let Some(output) = templates.get(pair) {
