@@ -1,7 +1,5 @@
-use std::{collections::HashSet, ops::Range};
-
-use ahash::AHashSet;
 use itertools::Itertools;
+use std::ops::Range;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Cube {
@@ -41,15 +39,9 @@ impl Cube {
 }
 
 pub fn solve(lines: Vec<String>) -> (u32, u64) {
-    let mut ranges: Vec<Cube> = parse_cubes(&lines);
-    let part_two = part_two(&mut ranges);
+    let cubes: Vec<Cube> = parse_cubes(&lines);
 
-    // for i in 0..ranges.len() {
-    //     dbg!(part_one(&ranges[0..i+1]));
-    // }
-
-    // assert_eq!(part_two, 2758514936282235);
-    (part_one(&ranges), part_two)
+    (part_one(&cubes), part_two(&cubes))
 }
 
 fn part_two(cubes: &Vec<Cube>) -> u64 {
@@ -99,7 +91,7 @@ fn part_one(init_steps: &[Cube]) -> u32 {
 fn parse_cubes(lines: &[String]) -> Vec<Cube> {
     let mut cubes = Vec::new();
 
-    for (i, line) in lines.iter().enumerate() {
+    for line in lines.iter() {
         let (left, right) = line.split_once(" ").unwrap();
         let on = left == "on";
 
