@@ -29,7 +29,7 @@ impl Cube {
 
         if left_x < right_x && top_y < bottom_y && close_z < far_z {
             Some(Cube::new(
-                !other.on,
+                true,
                 left_x..right_x,
                 top_y..bottom_y,
                 close_z..far_z,
@@ -52,49 +52,25 @@ pub fn solve(lines: Vec<String>) -> (u32, u64) {
     (part_one(&ranges), part_two)
 }
 
-fn part_two(cubes: &mut Vec<Cube>) -> u64 {
-    let mut total: u64 = 0;
-
-    let mut overlaps: Vec<Cube> = Vec::new();
-    for (i, current_cube) in cubes.iter().enumerate() {
-        if !current_cube.on {
-            continue;
-        }
-        println!("Adding cube: {:?}", &current_cube);
-        total += &current_cube.vol;
-
-        for previous_cube in cubes[0..i].iter() {
-            if let Some(intersect) = current_cube.get_intersection(previous_cube) {
-                // Don't count overlaps with OFF cubes
-                if previous_cube.on {
-                    total -= intersect.vol;
-                    println!("Overlap created: {:?}", &intersect);
-                    overlaps.push(intersect);
-                }
-            }
-        }
-
-        let mut inclusion = false;
-        while overlaps.len() > 1 {
-            let head = &overlaps[0];
-            for other in overlaps[1..].iter() {
-                if let Some(intersect) = other.get_intersection(head) {
-                    if inclusion {
-                        total += intersect.vol;
-                        inclusion = false;
-                    } else {
-                        total -= intersect.vol;
-                        inclusion = true;
-                    }
-                }
-            }
-            overlaps = overlaps[1..].iter().map(|c| c.clone()).collect_vec();
-        }
-
-        dbg!(total);
+fn part_two(cubes: &Vec<Cube>) -> u64 {
+    if cubes.len() == 0 {
+        return 0;
     }
 
-    total
+    let head = cubes[0].clone();
+    let rest = cubes[1..].iter().map(|c| c.clone()).collect_vec();
+
+    if !head.on {
+        return part_two(&rest);
+    }
+
+    return head.vol + part_two(&rest)
+        - part_two(
+            &rest
+                .iter()
+                .filter_map(|other| head.get_intersection(other))
+                .collect_vec(),
+        );
 }
 
 fn part_one(init_steps: &[Cube]) -> u32 {
