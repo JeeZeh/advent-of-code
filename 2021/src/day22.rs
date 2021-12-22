@@ -88,6 +88,8 @@ fn part_one(init_steps: &[Cube]) -> u32 {
     count
 }
 
+// With credit:
+// https://www.reddit.com/r/adventofcode/comments/rlxhmg/comment/hplp672/?utm_source=share&utm_medium=web2x&context=3
 fn parse_cubes(lines: &[String]) -> Vec<Cube> {
     let mut cubes = Vec::new();
 
