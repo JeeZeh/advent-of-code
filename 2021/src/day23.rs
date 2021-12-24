@@ -2,8 +2,7 @@ use std::{cmp::Ordering, collections::BinaryHeap};
 
 use ahash::AHashSet;
 use itertools::Itertools;
-
-use crate::aocutil::Grid;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 struct Amphipod {
@@ -101,13 +100,15 @@ impl GameState {
             }
         } else {
             // We're in a room, check if we can move out
-            let pod_above = self.rooms[pod.x as usize][self.hall_y + 1..pod.y]
-                .iter()
-                .find(|(k, _)| *k != usize::MAX)
-                .is_some();
+            if pod.y > 2 {
+                let pod_above = self.rooms[pod.x as usize][self.hall_y + 1..pod.y]
+                    .iter()
+                    .find(|(k, _)| *k != usize::MAX)
+                    .is_some();
 
-            if pod_above {
-                return None;
+                if pod_above {
+                    return None;
+                }
             }
         }
 
@@ -157,15 +158,19 @@ impl Ord for GameState {
 // https://www.reddit.com/r/adventofcode/comments/rmnozs/comment/hpnoqsj/?utm_source=share&utm_medium=web2x&context=3
 pub fn solve(mut lines: Vec<String>) -> (u32, u32) {
     let starting_state = parse_game_state(&lines);
-    let part_one = move_pods(&starting_state);
 
     lines.insert(3, String::from("  #D#C#B#A#"));
     lines.insert(4, String::from("  #D#B#A#C#"));
 
     let extended_state = parse_game_state(&lines);
-    let part_two = move_pods(&extended_state);
+    let mut results = [&starting_state, &extended_state]
+        .par_iter()
+        .map(|state| move_pods(*state))
+        .collect::<Vec<u32>>();
 
-    (part_one, part_two)
+    results.sort();
+
+    (results[0], results[1])
 }
 
 fn move_pods(start: &GameState) -> u32 {
