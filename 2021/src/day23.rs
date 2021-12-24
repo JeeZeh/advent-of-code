@@ -3,6 +3,8 @@ use std::{cmp::Ordering, collections::BinaryHeap};
 use ahash::AHashSet;
 use itertools::Itertools;
 
+use crate::aocutil::Grid;
+
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 struct Amphipod {
     id: usize,
@@ -10,6 +12,7 @@ struct Amphipod {
     y: u8,
     dest_x: u8,
     cost: u32,
+    kind: char,
 }
 
 impl Amphipod {
@@ -20,6 +23,7 @@ impl Amphipod {
             y: pos.1,
             dest_x: (kind * 2) + 3,
             cost: (10 as u32).pow(kind as u32),
+            kind: ['A', 'B', 'C', 'D'][kind as usize],
         }
     }
 }
@@ -52,7 +56,7 @@ impl GameState {
         let mut walk = start as i32;
         while walk != end as i32 {
             walk += walk_dir;
-            if slice[walk as usize].0 == usize::MAX {
+            if slice[walk as usize].0 != usize::MAX {
                 return true;
             }
         }
@@ -65,6 +69,8 @@ impl GameState {
             .iter()
             .map(|cols| cols[self.hall_y])
             .collect_vec();
+
+        // dbg!(&hallway_slice);
 
         // Are we in the hallway?
         if start.1 == self.hall_y {
@@ -80,7 +86,8 @@ impl GameState {
             }
         } else {
             // We need to check if we can move to the hallway first
-            let start_room_slice = &self.locations[start.1];
+            let start_room_slice = &self.locations[start.0];
+            // dbg!(&start_room_slice, start.0, start.1, end.1);
             if self.is_slice_obstructed(&start_room_slice, start.1, end.1) {
                 return true;
             }
@@ -99,7 +106,7 @@ impl GameState {
         let pod = self.pods[kind][id];
 
         let move_x = (pod.x as i32 - dest.0 as i32).abs() as u8;
-        let move_y = (pod.y as i32 - dest.1 as i32) as u8;
+        let move_y = (pod.y as i32 - dest.1 as i32).abs() as u8;
         let cost = (move_x + move_y) as u32 * pod.cost;
         new_state.cost += cost;
         new_state.pods[kind as usize][id].x = dest.0 as u8;
@@ -110,7 +117,6 @@ impl GameState {
     }
 
     fn try_move_pod_to_destination(&self, kind: usize, id: usize) -> Option<GameState> {
-        let mut new_state = self.clone();
         let pod = self.pods[kind][id];
 
         // If there's a different kind of pod in our destination room, we can't move in there yet
@@ -122,11 +128,10 @@ impl GameState {
             return None;
         }
 
-        let dest_y = if self.locations[pod.dest_x as usize][3].0 == kind {
-            2
-        } else {
-            3
-        };
+        let dest_y = (2..=self.bottom_y)
+            .rev()
+            .find(|y| self.locations[pod.dest_x as usize][*y].0 == usize::MAX)
+            .unwrap();
 
         // Check that the hallway path is not obstructed
         if self.is_path_obstructed(
@@ -139,26 +144,39 @@ impl GameState {
         Some(self.move_pod(kind, id, (pod.dest_x as usize, dest_y)))
     }
 
-    fn try_move_pod_to_hallway_x(&self, kind: usize, id: usize) -> Option<GameState> {
+    fn try_move_pod_to_hallway_x(&self, kind: usize, id: usize, x: usize) -> Option<GameState> {
         let pod = self.pods[kind][id];
-
         let dest_y: usize = 1;
 
-        // Can't move to doorways (3, 5, 7, 9)
-        for dest_x in [1, 2, 4, 6, 8, 10, 11] {
-            // let pod_above = self.locations[pod.x as usize][self.hall_y + 1..pod.y as usize]
-            //     .iter()
-            //     .find(|(k, _)| *k != usize::MAX);
+        // dbg!(&pod, x);
+        // let pod_above = self.locations[pod.x as usize][self.hall_y + 1..pod.y as usize]
+        //     .iter()
+        //     .find(|(k, _)| *k != usize::MAX);
 
-            // If we're not the top-most pod in the room and there's a pod above us,
-            // we can't move yet.
-            if self.is_path_obstructed((pod.x as usize, pod.y as usize), (dest_x as usize, dest_y))
-            {
-                return None;
-            }
+        // If we're not the top-most pod in the room and there's a pod above us,
+        // we can't move yet.
+        if self.is_path_obstructed((pod.x as usize, pod.y as usize), (x, dest_y)) {
+            return None;
         }
 
-        Some(self.move_pod(kind, id, (pod.dest_x as usize, dest_y)))
+        Some(self.move_pod(kind, id, (x as usize, dest_y)))
+    }
+
+    fn is_done(&self) -> bool {
+        self.pods.iter().flatten().all(|a| a.x == a.dest_x)
+    }
+
+    fn print(&self) {
+        let mut lines = vec![vec![' '; self.locations.len()]; self.locations[0].len()];
+
+        for (x, col) in self.locations.iter().enumerate() {
+            for (y, row) in col.iter().enumerate() {
+                if row.0 != usize::MAX {
+                    lines[y][x] = self.pods[row.0][row.1].kind;
+                }
+            }
+        }
+        lines.show_display();
     }
 }
 
@@ -174,21 +192,35 @@ impl Ord for GameState {
     }
 }
 
-pub fn solve(lines: Vec<String>) -> (u64, u64) {
-    let starting_state = parse_game_state(lines);
+// Terribly adapted from
+// https://www.reddit.com/r/adventofcode/comments/rmnozs/comment/hpnoqsj/?utm_source=share&utm_medium=web2x&context=3
+pub fn solve(mut lines: Vec<String>) -> (u32, u32) {
+    let starting_state = parse_game_state(&lines);
+    let part_one = move_pods(&starting_state);
 
-    (0, 0)
+    lines.insert(3, String::from("  #D#C#B#A#"));
+    lines.insert(4, String::from("  #D#B#A#C#"));
+
+    let extended_state = parse_game_state(&lines);
+    let part_two = move_pods(&extended_state);
+
+    (part_one, part_two)
 }
 
-fn move_pods(start: GameState) {
+fn move_pods(start: &GameState) -> u32 {
     // Dijkstra
     let mut queue: BinaryHeap<GameState> = BinaryHeap::new();
     let mut visited: AHashSet<GameState> = AHashSet::new();
 
     queue.push(start.clone());
-    visited.insert(start);
+    visited.insert(start.clone());
 
     while let Some(next_state) = queue.pop() {
+        if next_state.is_done() {
+            next_state.print();
+            return next_state.cost;
+        }
+
         for (kind, pods) in next_state.pods.iter().enumerate() {
             for (id, pod) in pods.iter().enumerate() {
                 // Handle some unreachable states
@@ -199,7 +231,7 @@ fn move_pods(start: GameState) {
                     }
                     // At the top of the destination area, and the same pod type is in
                     // the same room below it (both are in the right spot)
-                    if next_state.locations[pod.x as usize][3].0 == kind {
+                    if next_state.locations[pod.x as usize][next_state.bottom_y].0 == kind {
                         continue;
                     }
                 }
@@ -207,19 +239,36 @@ fn move_pods(start: GameState) {
                 // We're in the hallway
                 if pod.y == 1 {
                     if let Some(new_state) = next_state.try_move_pod_to_destination(kind, id) {
+                        if visited.contains(&new_state) {
+                            continue;
+                        }
                         visited.insert(new_state.clone());
                         queue.push(new_state);
                     }
                 } else {
                     // We're in a room and need to move to the hallway
-                    if let Some(new_state) = next_state.try_move_pod_to_hallway(kind, id) {}
+                    // Can't move to doorways (3, 5, 7, 9)
+                    // dbg!(&next_state);
+                    for dest_x in [1, 2, 4, 6, 8, 10, 11] {
+                        if let Some(new_state) =
+                            next_state.try_move_pod_to_hallway_x(kind, id, dest_x)
+                        {
+                            if visited.contains(&new_state) {
+                                continue;
+                            }
+                            visited.insert(new_state.clone());
+                            queue.push(new_state);
+                        }
+                    }
                 }
             }
         }
     }
+
+    unreachable!("We should have found a finished state!");
 }
 
-fn parse_game_state(lines: Vec<String>) -> GameState {
+fn parse_game_state(lines: &Vec<String>) -> GameState {
     let mut parsed_pods: [Vec<Amphipod>; 4] = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
 
     for (y, line) in lines.iter().skip(2).enumerate() {
