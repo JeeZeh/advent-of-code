@@ -239,7 +239,7 @@ impl CPU {
             self.pc += 1;
         }
         // println!("{}", self.inputs[self.ic]);
-        self.print_registers();
+        // self.print_registers();
 
         self.reg[3] == 0
     }

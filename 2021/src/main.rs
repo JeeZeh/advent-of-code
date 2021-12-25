@@ -31,10 +31,11 @@ mod day23;
 mod day24;
 mod day25;
 
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use aocutil::*;
 use clap::{App, Arg};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 pub fn main() {
     let matches = App::new("AoC Runner")
@@ -70,10 +71,19 @@ pub fn main() {
                 .required(false)
                 .takes_value(false),
         )
+        .arg(
+            Arg::new("parallel")
+                .about("Runs all solutions in parallel")
+                .short('p')
+                .long("parallel")
+                .required(false)
+                .takes_value(false),
+        )
         .get_matches();
 
     let time = matches.is_present("time");
     let sample_test = matches.is_present("sample");
+    let parallel = matches.is_present("parallel");
 
     if let Some(day) = matches.value_of("day") {
         let (output, dur) = match matches.value_of("language").unwrap() {
@@ -89,20 +99,28 @@ pub fn main() {
     }
 
     let mut total = Duration::new(0, 0);
-    for i in 1..=25 {
-        let (output, duration) = run_rust(i, sample_test);
-        println!("------------");
-        if time {
-            println!("Day {} — {:.2?}", i, duration);
-            total += duration;
-        } else {
-            println!("Day {}", i);
-        }
-        println!("------------");
-        output.show();
-        println!();
-    }
 
+    if parallel {
+        let now = Instant::now();
+        (1..26).into_par_iter().for_each(|i| {
+            run_rust(i, sample_test);
+        });
+        total += now.elapsed();
+    } else {
+        for i in 1..=25 {
+            let (output, duration) = run_rust(i, sample_test);
+            println!("------------");
+            if time {
+                println!("Day {} — {:.2?}", i, duration);
+                total += duration;
+            } else {
+                println!("Day {}", i);
+            }
+            println!("------------");
+            output.show();
+            println!();
+        }
+    }
     if time {
         println!("------------");
         println!("Total Execution Time: {:.2?}", total);
