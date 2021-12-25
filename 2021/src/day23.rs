@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, collections::BinaryHeap};
 
-use ahash::AHashSet;
+use ahash::{AHashMap, AHashSet};
 use itertools::Itertools;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
@@ -33,16 +33,16 @@ struct GameState {
     cost: u32,
     hall_y: usize,
     bottom_y: usize,
-    hall: Vec<(usize, usize)>,
-    rooms: Vec<Vec<(usize, usize)>>, // Indexed by [room][slot 0..bottom_y]
+    hall: [(usize, usize); 12],
+    rooms: [[(usize, usize); 6]; 12], // Indexed by [room][slot 0..bottom_y]
 }
 
 impl GameState {
     // Returns a 2d array of all the positions indexed [x][y], and the pod
     // kind and id located at that position
     fn generate_locations(&mut self) {
-        let mut hall = vec![(usize::MAX, usize::MAX); 12];
-        let mut rooms = vec![vec![(usize::MAX, usize::MAX); self.bottom_y + 1]; 12];
+        let mut hall = [(usize::MAX, usize::MAX); 12];
+        let mut rooms = [[(usize::MAX, usize::MAX); 6]; 12];
 
         for (kind, pods) in self.pods.iter().enumerate() {
             for (id, pod) in pods.iter().enumerate() {
@@ -91,7 +91,7 @@ impl GameState {
 
         // If there's a different kind of pod in our destination room, we can't move in there yet
         if to_room {
-            if self.rooms[pod.dest_x]
+            if self.rooms[pod.dest_x][..=self.bottom_y]
                 .iter()
                 .find(|(other_kind, _)| *other_kind != kind && *other_kind != usize::MAX)
                 .is_some()
@@ -115,10 +115,14 @@ impl GameState {
         let dest_y;
 
         if to_room {
-            dest_y = (2..=self.bottom_y)
+            if let Some(free_spot) = (2..=self.bottom_y)
                 .rev()
                 .find(|y| self.rooms[pod.dest_x][*y].0 == usize::MAX)
-                .unwrap();
+            {
+                dest_y = free_spot;
+            } else {
+                return None;
+            }
         } else {
             dest_y = 1;
         }
@@ -171,64 +175,81 @@ pub fn solve(mut lines: Vec<String>) -> (u32, u32) {
     results.sort();
 
     (results[0], results[1])
+    // (move_pods(&starting_state), 0)
 }
+
+static HALL_SPOTS: [usize; 7] = [1, 2, 4, 6, 8, 10, 11];
+const FREE: i8 = -1;
+const DOOR: i8 = -2;
+
+// Clean hallway.
+const HALLWAY: [i8; 11] = [
+    FREE, FREE, DOOR, FREE, DOOR, FREE, DOOR, FREE, DOOR, FREE, FREE,
+];
+// Exit indices into the hallway.
+const EXITS: [usize; 4] = [2, 4, 6, 8];
+// Energy for a given amphipod.
+const ENERGIES: [usize; 4] = [1, 10, 100, 1000];
+
 
 fn move_pods(start: &GameState) -> u32 {
     // Dijkstra
     let mut queue: BinaryHeap<GameState> = BinaryHeap::new();
-    let mut visited: AHashSet<[Vec<Amphipod>; 4]> = AHashSet::new();
+    let mut best = AHashMap::<[Vec<Amphipod>; 4], u32>::new();
 
     queue.push(start.clone());
-    visited.insert(start.pods.clone());
 
     while let Some(next_state) = queue.pop() {
         if next_state.is_done() {
             return next_state.cost;
         }
 
-        for (kind, pods) in next_state.pods.iter().enumerate() {
-            for (id, pod) in pods.iter().enumerate() {
-                // Handle some unreachable states
-                if pod.x == pod.dest_x {
-                    // At the bottom of the destination room = don't move
-                    if pod.y == next_state.bottom_y {
-                        continue;
-                    }
-                    // At the top of the destination area, and the same pod type is in
-                    // the same room below it (both are in the right spot)
-                    if next_state.rooms[pod.x][pod.y + 1].0 == kind {
-                        continue;
-                    }
-                }
+        if *best.get(&next_state.pods).unwrap_or(&u32::MAX) < next_state.cost {
+            continue;
+        }
 
-                // We're in the hallway
-                if pod.y == next_state.hall_y {
-                    if let Some(new_state) = next_state.try_move_pod(kind, id, pod.dest_x, true) {
-                        if visited.contains(&new_state.pods) {
-                            continue;
-                        }
-                        visited.insert(new_state.pods.clone());
-                        queue.push(new_state);
-                    }
-                } else {
+        let mut futures = Vec::new();
+        let mut solved_one = false;
+
+        for (kind, id) in &next_state.hall {
+            if *kind != usize::MAX {
+                if let Some(new_state) =
+                    next_state.try_move_pod(*kind, *id, next_state.pods[*kind][*id].dest_x, true)
+                {
+                    solved_one = true;
+                    futures.push(new_state);
+                    break;
+                }
+            }
+        }
+
+        if !solved_one {
+            for kind in 0..4 {
+                for id in 0..next_state.bottom_y - 1 {
                     // We're in a room and need to move to the hallway
                     // Can't move to doorways (3, 5, 7, 9)
                     // dbg!(&next_state);
-                    for dest_x in [1, 2, 4, 6, 8, 10, 11] {
+
+                    for dest_x in HALL_SPOTS {
                         if let Some(new_state) = next_state.try_move_pod(kind, id, dest_x, false) {
-                            if visited.contains(&new_state.pods) {
-                                continue;
-                            }
-                            visited.insert(new_state.pods.clone());
-                            queue.push(new_state);
+                            futures.push(new_state);
                         }
                     }
                 }
             }
         }
+
+        // dbg!(&futures);
+
+        for next in futures {
+            if next.cost < *best.get(&next.pods).unwrap_or(&u32::MAX) {
+                best.insert(next.pods.clone(), next.cost);
+                queue.push(next);
+            }
+        }
     }
 
-    unreachable!("We should have found a finished state!");
+    panic!("We should have found a finished state!");
 }
 
 fn parse_game_state(lines: &Vec<String>) -> GameState {
@@ -265,8 +286,8 @@ fn parse_game_state(lines: &Vec<String>) -> GameState {
         hall_y: 1,
         bottom_y,
         cost: 0,
-        hall: vec![(usize::MAX, usize::MAX); 12],
-        rooms: vec![vec![(usize::MAX, usize::MAX); bottom_y + 1]; 12],
+        hall: [(usize::MAX, usize::MAX); 12],
+        rooms: [[(usize::MAX, usize::MAX); 6]; 12],
     };
     // Generate initial locations
     state.generate_locations();
