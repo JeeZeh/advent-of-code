@@ -1,123 +1,116 @@
 use itertools::Itertools;
 
-pub fn solve(lines: Vec<String>) -> (u64, u64) {
+// This solution is hardcoded from manually analysing
+pub fn solve(lines: Vec<String>) -> (i64, i64) {
     let instructions = parse_instructions(lines);
-    // let mut monad = CPU::new(ve c![], instructions);
-    // let mut monad = CPU::new(generate_inputs(solver().unwrap()).unwrap(), instructions);
-    // monad.run();
+    let (smallest, largest) = solver();
+    let mut monad = CPU::new(generate_inputs(largest).unwrap(), instructions);
+    assert!(monad.run());
 
-    solver();
-    // for (i, num) in (333333333333..99999999999999).enumerate() {
-    //     if let Some(inputs) = generate_inputs(333333333333) {
-    //         monad.reset();
-    //         monad.set_inputs(inputs);
-    //         let trial = monad.run();
-    //         if trial == 0 {
-    //             println!("{} {}", num, trial);
-    //         }
-    //     }
-    // }
+    monad.reset();
+    monad.set_inputs(generate_inputs(smallest).unwrap());
+    assert!(monad.run());
 
-    (0, 0)
+    (largest, smallest)
 }
 
-fn get_w5(W1: i32, W2: i32, W3: i32, W4: i32) -> Option<i32> {
-    let res = ((((((((W1 + 14) * 26) + (W2 + 6)) * 26) + (W3 + 6)) * 26) + (W4 + 13)) % 26) - 12;
-    if (1..10).contains(&res) {
+fn get_w5(w1: i32, w2: i32, w3: i32, w4: i32) -> Option<i32> {
+    let res = ((((((((w1 + 14) * 26) + (w2 + 6)) * 26) + (w3 + 6)) * 26) + (w4 + 13)) % 26) - 12;
+    if ((1..10).rev()).contains(&res) {
         Some(res)
     } else {
         None
     }
 }
 
-fn get_w7(W1: i32, W2: i32, W3: i32, W6: i32) -> Option<i32> {
-    let res = ((((((((W1 + 14) * 26) + (W2 + 6)) * 26) + (W3 + 6)) * 26) + (W6 + 8)) % 26) - 15;
-    if (1..10).contains(&res) {
+fn get_w7(w1: i32, w2: i32, w3: i32, w6: i32) -> Option<i32> {
+    let res = ((((((((w1 + 14) * 26) + (w2 + 6)) * 26) + (w3 + 6)) * 26) + (w6 + 8)) % 26) - 15;
+    if ((1..10).rev()).contains(&res) {
         Some(res)
     } else {
         None
     }
 }
 
-fn get_w10(W1: i32, W2: i32, W3: i32, W8: i32, W9: i32) -> Option<i32> {
-    let res = ((((((((((W1 + 14) * 26) + (W2 + 6)) * 26) + (W3 + 6)) * 26) + (W8 + 10)) * 26)
-        + (W9 + 8))
+fn get_w10(w1: i32, w2: i32, w3: i32, w8: i32, w9: i32) -> Option<i32> {
+    let res = ((((((((((w1 + 14) * 26) + (w2 + 6)) * 26) + (w3 + 6)) * 26) + (w8 + 10)) * 26)
+        + (w9 + 8))
         % 26)
         - 13;
-    if (1..10).contains(&res) {
+    if ((1..10).rev()).contains(&res) {
         Some(res)
     } else {
         None
     }
 }
 
-fn get_w11(W1: i32, W2: i32, W3: i32, W8: i32) -> Option<i32> {
-    let res = ((((((((W1 + 14) * 26) + (W2 + 6)) * 26) + (W3 + 6)) * 26) + (W8 + 10)) % 26) - 13;
-    if (1..10).contains(&res) {
+fn get_w11(w1: i32, w2: i32, w3: i32, w8: i32) -> Option<i32> {
+    let res = ((((((((w1 + 14) * 26) + (w2 + 6)) * 26) + (w3 + 6)) * 26) + (w8 + 10)) % 26) - 13;
+    if ((1..10).rev()).contains(&res) {
         Some(res)
     } else {
         None
     }
 }
-fn get_w12(W1: i32, W2: i32, W3: i32) -> Option<i32> {
-    let res = ((((((W1 + 14) * 26) + (W2 + 6)) * 26) + (W3 + 6)) % 26) - 14;
-    if (1..10).contains(&res) {
+fn get_w12(w1: i32, w2: i32, w3: i32) -> Option<i32> {
+    let res = ((((((w1 + 14) * 26) + (w2 + 6)) * 26) + (w3 + 6)) % 26) - 14;
+    if ((1..10).rev()).contains(&res) {
         Some(res)
     } else {
         None
     }
 }
-fn get_w13(W1: i32, W2: i32) -> Option<i32> {
-    let res = ((((W1 + 14) * 26) + (W2 + 6)) % 26) - 2;
-    if (1..10).contains(&res) {
+fn get_w13(w1: i32, w2: i32) -> Option<i32> {
+    let res = ((((w1 + 14) * 26) + (w2 + 6)) % 26) - 2;
+    if ((1..10).rev()).contains(&res) {
         Some(res)
     } else {
         None
     }
 }
-fn get_w14(W1: i32) -> Option<i32> {
-    let res = ((W1 + 14) % 26) - 9;
-    if (1..10).contains(&res) {
+fn get_w14(w1: i32) -> Option<i32> {
+    let res = ((w1 + 14) % 26) - 9;
+    if ((1..10).rev()).contains(&res) {
         Some(res)
     } else {
         None
     }
 }
 
-fn solver() -> Option<i64> {
-    // ((((((W1 + 14) * 26) + (W2 + 6)) * 26) + (W3 + 6)) * 26) + (W4 + 13) % 26
+fn solver() -> (i64, i64) {
+    let mut model_numbers: Vec<i64> = Vec::new();
 
-    for W1 in (1..10).rev() {
-        for W2 in (1..10).rev() {
-            for W3 in (1..10).rev() {
-                for W4 in (1..10).rev() {
-                    if let Some(W5) = get_w5(W1, W2, W3, W4) {
-                        for W6 in (1..10).rev() {
-                            if let Some(W7) = get_w7(W1, W2, W3, W5) {
-                                for W8 in (1..10).rev() {
-                                    for W9 in (1..10).rev() {
-                                        if let Some(W10) = get_w10(W1, W2, W3, W8, W9) {
-                                            if let Some(W11) = get_w11(W1, W2, W3, W8) {
-                                                if let Some(W12) = get_w12(W1, W2, W3) {
-                                                    if let Some(W13) = get_w13(W1, W2) {
-                                                        if let Some(W14) = get_w14(W1) {
-                                                            return Some(
+    for w1 in (1..10).rev() {
+        for w2 in (1..10).rev() {
+            for w3 in (1..10).rev() {
+                for w4 in (1..10).rev() {
+                    if let Some(w5) = get_w5(w1, w2, w3, w4) {
+                        for w6 in (1..10).rev() {
+                            if let Some(w7) = get_w7(w1, w2, w3, w6) {
+                                for w8 in (1..10).rev() {
+                                    for w9 in (1..10).rev() {
+                                        if let Some(w10) = get_w10(w1, w2, w3, w8, w9) {
+                                            if let Some(w11) = get_w11(w1, w2, w3, w8) {
+                                                if let Some(w12) = get_w12(w1, w2, w3) {
+                                                    if let Some(w13) = get_w13(w1, w2) {
+                                                        if let Some(w14) = get_w14(w1) {
+                                                            model_numbers.push(
                                                                 format!(
                                                                     "{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
-                                                                    W1,
-                                                                    W2,
-                                                                    W3,
-                                                                    W4,
-                                                                    W5,
-                                                                    W6,
-                                                                    W7,
-                                                                    W8,
-                                                                    W9,
-                                                                    W10,
-                                                                    W11,
-                                                                    W12,
-                                                                    W13,
-                                                                    W14
+                                                                    w1,
+                                                                    w2,
+                                                                    w3,
+                                                                    w4,
+                                                                    w5,
+                                                                    w6,
+                                                                    w7,
+                                                                    w8,
+                                                                    w9,
+                                                                    w10,
+                                                                    w11,
+                                                                    w12,
+                                                                    w13,
+                                                                    w14
                                                                 )
                                                                 .parse()
                                                                 .unwrap(),
@@ -136,7 +129,12 @@ fn solver() -> Option<i64> {
             }
         }
     }
-    None
+
+    // dbg!(&model_numbers);
+    (
+        *model_numbers.last().unwrap(),
+        *model_numbers.first().unwrap(),
+    )
 }
 
 fn generate_inputs(mut number: i64) -> Option<Vec<i64>> {
@@ -234,21 +232,16 @@ impl CPU {
         // dbg!(self.reg[1]);
     }
 
-    fn run(&mut self) -> i64 {
+    fn run(&mut self) -> bool {
         while self.pc < self.instructions.len() {
             let (opcode, (a, b)) = self.instructions.get(self.pc).unwrap();
-
-            if b.is_none() {
-                println!("{}", self.inputs[self.ic]);
-                self.print_registers();
-            }
             opcode(self, *a, b.clone());
             self.pc += 1;
         }
         // println!("{}", self.inputs[self.ic]);
         self.print_registers();
 
-        self.reg[3]
+        self.reg[3] == 0
     }
 
     fn reset(&mut self) {
@@ -263,7 +256,7 @@ impl CPU {
 
     fn print_registers(&self) {
         println!(
-            "W: {}\nX: {}\nY: {}\nZ: {}\n",
+            "w: {}\nX: {}\nY: {}\nZ: {}\n",
             self.reg[0], self.reg[1], self.reg[2], self.reg[3]
         )
     }
