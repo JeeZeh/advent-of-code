@@ -1,141 +1,71 @@
+use std::collections::VecDeque;
+
 use itertools::Itertools;
 
 // This solution is hardcoded from manually analysing
-pub fn solve(lines: Vec<String>) -> (i64, i64) {
+pub fn solve(lines: Vec<String>) -> (String, String) {
     let instructions = parse_instructions(lines);
-    let (smallest, largest) = solver();
-    let mut monad = CPU::new(generate_inputs(largest).unwrap(), instructions);
+    let smallest = solver(11111111111111, &instructions);
+    let largest = solver(99999999999999, &instructions);
+
+    let mut monad = CPU::new(largest.clone(), instructions);
     assert!(monad.run());
 
     monad.reset();
-    monad.set_inputs(generate_inputs(smallest).unwrap());
+    monad.set_inputs(smallest.clone());
     assert!(monad.run());
 
-    (largest, smallest)
+    (
+        String::from_iter(largest.iter().map(|v| format!("{}", v))),
+        String::from_iter(smallest.iter().map(|v| format!("{}", v))),
+    )
 }
 
-fn get_w5(w1: i32, w2: i32, w3: i32, w4: i32) -> Option<i32> {
-    let res = ((((((((w1 + 14) * 26) + (w2 + 6)) * 26) + (w3 + 6)) * 26) + (w4 + 13)) % 26) - 12;
-    if ((1..10).rev()).contains(&res) {
-        Some(res)
-    } else {
-        None
-    }
-}
+static BLOCK_LEN: usize = 18;
+static DIV_IDX: usize = 4;
+static ADD_X_IDX: usize = 5;
+static ADD_Z_IDX: usize = 15;
 
-fn get_w7(w1: i32, w2: i32, w3: i32, w6: i32) -> Option<i32> {
-    let res = ((((((((w1 + 14) * 26) + (w2 + 6)) * 26) + (w3 + 6)) * 26) + (w6 + 8)) % 26) - 15;
-    if ((1..10).rev()).contains(&res) {
-        Some(res)
-    } else {
-        None
-    }
-}
+// Great solution https://www.reddit.com/r/adventofcode/comments/rnejv5/2021_day_24_solutions/hpuu3e0/?context=3
+// Though still not sure I *fully* understand it
+fn solver(to_correct: i64, instructions: &Vec<Instruction>) -> Vec<i64> {
+    let mut inputs = generate_inputs(to_correct).unwrap();
+    let mut stack: VecDeque<(usize, i64)> = VecDeque::new();
 
-fn get_w10(w1: i32, w2: i32, w3: i32, w8: i32, w9: i32) -> Option<i32> {
-    let res = ((((((((((w1 + 14) * 26) + (w2 + 6)) * 26) + (w3 + 6)) * 26) + (w8 + 10)) * 26)
-        + (w9 + 8))
-        % 26)
-        - 13;
-    if ((1..10).rev()).contains(&res) {
-        Some(res)
-    } else {
-        None
-    }
-}
+    for curr_number_idx in 0..14 {
+        let block_idx = curr_number_idx * BLOCK_LEN;
+        let div = instructions[block_idx + DIV_IDX].get_literal().unwrap();
+        let add_x = instructions[block_idx + ADD_X_IDX].get_literal().unwrap();
+        let add_z = instructions[block_idx + ADD_Z_IDX].get_literal().unwrap();
 
-fn get_w11(w1: i32, w2: i32, w3: i32, w8: i32) -> Option<i32> {
-    let res = ((((((((w1 + 14) * 26) + (w2 + 6)) * 26) + (w3 + 6)) * 26) + (w8 + 10)) % 26) - 13;
-    if ((1..10).rev()).contains(&res) {
-        Some(res)
-    } else {
-        None
-    }
-}
-fn get_w12(w1: i32, w2: i32, w3: i32) -> Option<i32> {
-    let res = ((((((w1 + 14) * 26) + (w2 + 6)) * 26) + (w3 + 6)) % 26) - 14;
-    if ((1..10).rev()).contains(&res) {
-        Some(res)
-    } else {
-        None
-    }
-}
-fn get_w13(w1: i32, w2: i32) -> Option<i32> {
-    let res = ((((w1 + 14) * 26) + (w2 + 6)) % 26) - 2;
-    if ((1..10).rev()).contains(&res) {
-        Some(res)
-    } else {
-        None
-    }
-}
-fn get_w14(w1: i32) -> Option<i32> {
-    let res = ((w1 + 14) % 26) - 9;
-    if ((1..10).rev()).contains(&res) {
-        Some(res)
-    } else {
-        None
-    }
-}
+        if div == 1 {
+            stack.push_back((curr_number_idx, add_z))
+        } else {
+            let (prev_num_idx, add_z) = stack.pop_back().unwrap();
 
-fn solver() -> (i64, i64) {
-    let mut model_numbers: Vec<i64> = Vec::new();
+            // Make the X = W check pass
+            inputs[curr_number_idx] = inputs[prev_num_idx] + add_x + add_z;
 
-    for w1 in (1..10).rev() {
-        for w2 in (1..10).rev() {
-            for w3 in (1..10).rev() {
-                for w4 in (1..10).rev() {
-                    if let Some(w5) = get_w5(w1, w2, w3, w4) {
-                        for w6 in (1..10).rev() {
-                            if let Some(w7) = get_w7(w1, w2, w3, w6) {
-                                for w8 in (1..10).rev() {
-                                    for w9 in (1..10).rev() {
-                                        if let Some(w10) = get_w10(w1, w2, w3, w8, w9) {
-                                            if let Some(w11) = get_w11(w1, w2, w3, w8) {
-                                                if let Some(w12) = get_w12(w1, w2, w3) {
-                                                    if let Some(w13) = get_w13(w1, w2) {
-                                                        if let Some(w14) = get_w14(w1) {
-                                                            model_numbers.push(
-                                                                format!(
-                                                                    "{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
-                                                                    w1,
-                                                                    w2,
-                                                                    w3,
-                                                                    w4,
-                                                                    w5,
-                                                                    w6,
-                                                                    w7,
-                                                                    w8,
-                                                                    w9,
-                                                                    w10,
-                                                                    w11,
-                                                                    w12,
-                                                                    w13,
-                                                                    w14
-                                                                )
-                                                                .parse()
-                                                                .unwrap(),
-                                                            );
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            if inputs[curr_number_idx] > 9 {
+                // Offset the previous block to correct current block to be
+                // within the range 1..=9
+                inputs[prev_num_idx] -= inputs[curr_number_idx] - 9;
+                inputs[curr_number_idx] = 9 // This will be corrected in the next step
+            }
+            if inputs[curr_number_idx] < 1 {
+                // Offset the previous block to correct current block to be
+                // within the range 1..=9
+                inputs[prev_num_idx] += 1 - inputs[curr_number_idx];
+                inputs[curr_number_idx] = 1 // This will be corrected in the next step
             }
         }
     }
 
-    // dbg!(&model_numbers);
-    (
-        *model_numbers.last().unwrap(),
-        *model_numbers.first().unwrap(),
-    )
+    inputs
 }
+
+// The rest of this is my implentation. See commit history for terrible
+// hard-coded solution
 
 fn generate_inputs(mut number: i64) -> Option<Vec<i64>> {
     let mut inputs: Vec<i64> = Vec::new();
@@ -153,10 +83,31 @@ fn generate_inputs(mut number: i64) -> Option<Vec<i64>> {
     Some(inputs)
 }
 
+struct Instruction(Opcode, (Operand, Option<Operand>));
+
+impl Instruction {
+    fn get_literal(&self) -> Option<i64> {
+        let Instruction(_, (_, maybe_value)) = self;
+        match maybe_value {
+            Some(v) => v.get_value(),
+            None => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 enum Operand {
     Register(usize),
     Value(i64),
+}
+
+impl Operand {
+    fn get_value(&self) -> Option<i64> {
+        match self {
+            &Operand::Register(_) => None,
+            &Operand::Value(v) => Some(v),
+        }
+    }
 }
 
 type Opcode = fn(&mut CPU, Operand, Option<Operand>);
@@ -165,11 +116,11 @@ struct CPU {
     ic: usize,
     reg: [i64; 4],
     inputs: Vec<i64>,
-    instructions: Vec<(Opcode, (Operand, Option<Operand>))>,
+    instructions: Vec<Instruction>,
 }
 
 impl CPU {
-    fn new(inputs: Vec<i64>, instructions: Vec<(Opcode, (Operand, Option<Operand>))>) -> CPU {
+    fn new(inputs: Vec<i64>, instructions: Vec<Instruction>) -> CPU {
         CPU {
             pc: 0,
             ic: 0,
@@ -234,7 +185,7 @@ impl CPU {
 
     fn run(&mut self) -> bool {
         while self.pc < self.instructions.len() {
-            let (opcode, (a, b)) = self.instructions.get(self.pc).unwrap();
+            let Instruction(opcode, (a, b)) = self.instructions.get(self.pc).unwrap();
             opcode(self, *a, b.clone());
             self.pc += 1;
         }
@@ -262,7 +213,7 @@ impl CPU {
     }
 }
 
-fn parse_instructions(lines: Vec<String>) -> Vec<(Opcode, (Operand, Option<Operand>))> {
+fn parse_instructions(lines: Vec<String>) -> Vec<Instruction> {
     let mut instructions = Vec::new();
     for line in lines {
         let (instr, inputs) = line.split_once(' ').unwrap();
@@ -297,7 +248,7 @@ fn parse_instructions(lines: Vec<String>) -> Vec<(Opcode, (Operand, Option<Opera
             )
         }
 
-        instructions.push((opcode, operands));
+        instructions.push(Instruction(opcode, operands));
     }
 
     instructions
