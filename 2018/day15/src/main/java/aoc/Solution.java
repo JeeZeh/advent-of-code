@@ -8,31 +8,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-class Point {
-    int x, y;
-
-    Point(int x, int y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == this)
-            return true;
-        if (!(o instanceof Point)) {
-            return false;
-        }
-        Point point = (Point) o;
-        return x == point.x && y == point.y;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(x, y);
-    }
-
-}
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
 
 enum Tile {
     Wall, Floor
@@ -40,16 +20,6 @@ enum Tile {
 
 enum Entity {
     Goblin, Elf
-}
-
-class Cave {
-    Map<Point, Tile> world;
-    Map<Point, Entity> entities;
-
-    public Cave(Map<Point, Tile> world, Map<Point, Entity> entities) {
-        this.world = world;
-        this.entities = entities;
-    }
 }
 
 public class Solution {
@@ -73,6 +43,6 @@ public class Solution {
             }
         }
 
-        return new Cave(world, entities);
+        return new Cave(lines.get(0).length(), lines.size(), world, entities);
     }
 }
