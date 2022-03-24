@@ -1,18 +1,8 @@
 package aoc;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.experimental.Accessors;
 
 enum Tile {
     Wall, Floor
@@ -24,7 +14,32 @@ enum Entity {
 
 public class Solution {
     public static void main(String[] args) {
+        // Get input
+        String input = "#########\n#G..G..G#\n#.......#\n#.......#\n#G..E..G#\n#.......#\n#.......#\n#G..G..G#\n#########";
+        // Init cave
+        Cave cave = constructCaveFloorMap(input);
+        
+        // Start round
+        boolean playing = true;
+        while (playing) {
+            // Gather order of entities
+            List<Entity> turnReadingOrder = cave.entities.entrySet().stream().sorted((a, b) -> a.getKey() < b.getKey())
+        }
 
+        // For each entity
+            //      Get all targets
+            //      Any in range? 
+                //      Check UDLR
+                //      Attack if enemy
+                //      Resolve ties with reading order
+            //      Else Move
+                //      BFS outwards to find the nearest destinatios
+                    //      Cannot walk through entities or walls
+                    //      Only look at current state of the world
+                    //      Attack location = UDLR adjacent positions
+                    //      Use Manhattan Distance
+                //      Always move towards chosen destination in the order of ULRD
+                
     }
 
     public static Cave constructCaveFloorMap(String input) {
