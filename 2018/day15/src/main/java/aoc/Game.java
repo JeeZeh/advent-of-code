@@ -30,10 +30,10 @@ public class Game {
                 // Attack
             } else {
                 // Move
-                var nearestReachable = takingTurn.findNearestReachablePosition(cave);
-                if (nearestReachable.isPresent()) {
+                var nextMove = takingTurn.tryGetNextMovement(cave);
+                if (nextMove.isPresent()) {
                     stale = false;
-                    takingTurn.moveTowards(nearestReachable.get());
+                    takingTurn.moveTo(nextMove.get());
                 }
             }
         }

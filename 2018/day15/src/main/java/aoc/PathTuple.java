@@ -8,5 +8,5 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode
 public class PathTuple {
     final Point point;
-    final Optional<Point> startingDirection;
+    final Optional<Point> firstMove;
 }

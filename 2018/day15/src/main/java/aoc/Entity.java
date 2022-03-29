@@ -18,7 +18,7 @@ public class Entity implements Comparable<Entity> {
     final EntityType type;
     Point position;
 
-    public Optional<Point> findNearestReachablePosition(Cave cave) {
+    public Optional<Point> tryGetNextMovement(Cave cave) {
         Set<Point> entityLocations = cave.entities.stream().map(Entity::getPosition).collect(Collectors.toSet());
         Set<Point> validLocations = cave.entities.stream().filter(this::isEnemy)
                 .flatMap((Entity e) -> e.position.getAdjacent()).collect(Collectors.toSet());
@@ -30,19 +30,21 @@ public class Entity implements Comparable<Entity> {
         while (!toExplore.isEmpty()) {
             var nextTuple = toExplore.remove();
             if (validLocations.contains(nextTuple.point)) {
-                found.add(nextTuple);
+                return nextTuple.firstMove;
             }
             if (found.isEmpty()) {
                 nextTuple.point.getAdjacent()
                         .filter((Point p) -> !seen.contains(p) && cave.isFloor(p) && !entityLocations.contains(p))
                         .forEach((Point p) -> {
                             seen.add(p);
-                            toExplore.add(new p);
+                            toExplore.add(new PathTuple(p, nextTuple.firstMove.or(() -> {
+                                return Optional.of(p);
+                            })));
                         });
             }
         }
 
-        return found.stream().sorted().findFirst();
+        return Optional.empty();
     }
 
     public Optional<Entity> findTargetInRange(List<Entity> entities) {
@@ -54,16 +56,8 @@ public class Entity implements Comparable<Entity> {
                 .findFirst();
     }
 
-    public void moveTowards(Point direction) {
-        if (direction.y < position.y) {
-            this.position = this.position.add(new Point(0, -1));
-        } else if (direction.x < position.x) {
-            this.position = this.position.add(new Point(-1, 0));
-        } else if (direction.x > position.x) {
-            this.position = this.position.add(new Point(1, 0));
-        } else if (direction.y > position.y) {
-            this.position = this.position.add(new Point(0, 1));
-        }
+    public void moveTo(Point position) {
+        this.position = position;
     }
 
     public Set<Point> getPointsInRange() {

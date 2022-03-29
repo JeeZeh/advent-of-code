@@ -53,9 +53,9 @@ public class EntityTest {
         var entity = world.entities.get(0);
         assertEquals("Elf @ 1,1", entity.toString());
 
-        Optional<Point> reachable = entity.findNearestReachablePosition(world);
+        Optional<Point> reachable = entity.tryGetNextMovement(world);
         assertTrue(reachable.isPresent());
-        assertEquals(new Point(3, 1), reachable.get());
+        assertEquals(new Point(2, 1), reachable.get());
     }
 
     @Test
@@ -64,9 +64,9 @@ public class EntityTest {
         var entity = world.entities.get(0);
         assertEquals("Elf @ 1,1", entity.toString());
 
-        Optional<Point> reachable = entity.findNearestReachablePosition(world);
+        Optional<Point> reachable = entity.tryGetNextMovement(world);
         assertTrue(reachable.isPresent());
-        assertEquals(new Point(5, 2), reachable.get());
+        assertEquals(new Point(2, 1), reachable.get());
     }
     
     @Test
@@ -75,7 +75,7 @@ public class EntityTest {
         var entity = world.entities.get(0);
         assertEquals("Elf @ 1,1", entity.toString());
 
-        Optional<Point> reachable = entity.findNearestReachablePosition(world);
+        Optional<Point> reachable = entity.tryGetNextMovement(world);
         assertTrue(reachable.isEmpty());
     }
     
@@ -85,7 +85,7 @@ public class EntityTest {
         var entity = world.entities.get(0);
         assertEquals("Elf @ 1,1", entity.toString());
 
-        Optional<Point> reachable = entity.findNearestReachablePosition(world);
+        Optional<Point> reachable = entity.tryGetNextMovement(world);
         assertTrue(reachable.isEmpty());
     }
 }
