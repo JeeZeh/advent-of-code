@@ -3,6 +3,7 @@ package aoc;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import java.util.Arrays;
+import java.util.Optional;
 import org.junit.Test;
 
 public class EntityTest {
@@ -38,5 +39,53 @@ public class EntityTest {
 
         assertTrue(target.isPresent());
         assertEquals(target.get(), shouldFind);
+    }
+
+    @Test
+    public void testToString() {
+        var test = new Entity(EntityType.Goblin, new Point(-1, 20));
+        assertEquals("Goblin @ -1,20", test.toString());
+    }
+
+    @Test
+    public void testFindNearestReachablePositionEasy() {
+        Cave world = Cave.fromString("#######\n#E..G.#\n#...#.#\n#.G.#G#\n#######");
+        var entity = world.entities.get(0);
+        assertEquals("Elf @ 1,1", entity.toString());
+
+        Optional<Point> reachable = entity.findNearestReachablePosition(world);
+        assertTrue(reachable.isPresent());
+        assertEquals(new Point(3, 1), reachable.get());
+    }
+
+    @Test
+    public void testFindNearestReachablePositionHard() {
+        Cave world = Cave.fromString("#######\n#E....#\n#...#.#\n#...#G#\n#######");
+        var entity = world.entities.get(0);
+        assertEquals("Elf @ 1,1", entity.toString());
+
+        Optional<Point> reachable = entity.findNearestReachablePosition(world);
+        assertTrue(reachable.isPresent());
+        assertEquals(new Point(5, 2), reachable.get());
+    }
+    
+    @Test
+    public void testFindNearestReachablePositionImpossibleWall() {
+        Cave world = Cave.fromString("#######\n#E..#.#\n#...#.#\n#...#G#\n#######");
+        var entity = world.entities.get(0);
+        assertEquals("Elf @ 1,1", entity.toString());
+
+        Optional<Point> reachable = entity.findNearestReachablePosition(world);
+        assertTrue(reachable.isEmpty());
+    }
+    
+    @Test
+    public void testFindNearestReachablePositionImpossibleEntity() {
+        Cave world = Cave.fromString("#######\n#E..E.#\n#...#.#\n#...#G#\n#######");
+        var entity = world.entities.get(0);
+        assertEquals("Elf @ 1,1", entity.toString());
+
+        Optional<Point> reachable = entity.findNearestReachablePosition(world);
+        assertTrue(reachable.isEmpty());
     }
 }

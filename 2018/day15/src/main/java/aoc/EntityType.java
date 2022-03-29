@@ -1,5 +1,12 @@
 package aoc;
 
 public enum EntityType {
-    Elf, Goblin
+    Elf("E"),
+    Goblin("G");
+
+    public final String label;
+
+    private EntityType(String label) {
+        this.label = label;
+    }
 }

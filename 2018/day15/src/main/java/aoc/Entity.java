@@ -1,8 +1,13 @@
 package aoc;
 
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
@@ -17,6 +22,33 @@ public class Entity implements Comparable<Entity> {
     final EntityType type;
     Point position;
 
+    public Optional<Point> findNearestReachablePosition(Cave cave) {
+        Set<Point> entityLocations = cave.entities.stream().map(Entity::getPosition).collect(Collectors.toSet());
+        Set<Point> validLocations = cave.entities.stream().filter(this::isEnemy)
+                .flatMap((Entity e) -> e.position.getAdjacent()).collect(Collectors.toSet());
+        Queue<Point> toExplore = new ArrayDeque<>();
+        toExplore.add(position);
+        Set<Point> seen = new HashSet<>();
+        Set<Point> found = new HashSet<>();
+        seen.add(this.position);
+        while (!toExplore.isEmpty()) {
+            var next = toExplore.remove();
+            if (validLocations.contains(next)) {
+                found.add(next);
+            }
+            if (found.isEmpty()) {
+                next.getAdjacent()
+                        .filter((Point p) -> !seen.contains(p) && cave.isFloor(p) && !entityLocations.contains(p))
+                        .forEach((Point p) -> {
+                            seen.add(p);
+                            toExplore.add(p);
+                        });
+            }
+        }
+
+        return found.stream().sorted().findFirst();
+    }
+
     public Optional<Entity> findTargetInRange(List<Entity> entities) {
         var attackPositions = this.getPointsInRange();
         return entities
@@ -26,14 +58,24 @@ public class Entity implements Comparable<Entity> {
                 .findFirst();
     }
 
-    public void move(Point direction) {
-        this.position.add(direction);
+    public void moveTowards(Point direction) {
+        if (direction.y < position.y) {
+            this.position = this.position.add(new Point(0, -1));
+        } else if (direction.x < position.x) {
+            this.position = this.position.add(new Point(-1, 0));
+        } else if (direction.x > position.x) {
+            this.position = this.position.add(new Point(1, 0));
+        } else if (direction.y > position.y) {
+            this.position = this.position.add(new Point(0, 1));
+        }
     }
 
     public Set<Point> getPointsInRange() {
-        return Stream
-                .of(this.position.up(), this.position.down(), this.position.left(), this.position.right())
-                .collect(Collectors.toSet());
+        return this.position.getAdjacent().collect(Collectors.toSet());
+    }
+
+    public boolean isEnemy(Entity other) {
+        return !other.equals(this) && other.type != this.type;
     }
 
     public EntityType getTargetType() {
@@ -43,5 +85,10 @@ public class Entity implements Comparable<Entity> {
     @Override
     public int compareTo(Entity o) {
         return position.compareTo(o.position);
+    }
+
+    @Override
+    public String toString() {
+        return "%s @ %s".formatted(type, position);
     }
 }

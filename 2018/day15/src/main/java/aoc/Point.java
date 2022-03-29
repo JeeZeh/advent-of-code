@@ -1,32 +1,34 @@
 package aoc;
 
 import java.util.Objects;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class Point implements Comparable<Point> {
     final int x, y;
 
+    public int dist(Point other) {
+        return Math.abs(other.x - this.x) + Math.abs(other.y - this.y);
+    }
+
     public Point add(Point other) {
         return new Point(x + other.x, y + other.y);
     }
 
-    public Point up() {
-        return new Point(x, y - 1);
+    public Stream<Point> getAdjacent() {
+        return Stream.of(new Point(x, y - 1), new Point(x - 1, y), new Point(x + 1, y), new Point(x, y + 1));
     }
 
-    public Point down() {
-        return new Point(x, y + 1);
-    }
-
-    public Point left() {
-        return new Point(x - 1, y);
-    }
-
-    public Point right() {
-        return new Point(x + 1, y);
-    }
-
+    /**
+     * Compares two points in reading order, such that the following numbers indicate 
+     * their sorted order when considered as a 2D grid of Points.
+     * 
+     * Example:
+     *      1  2  3
+     *      4 [5] 6  <- 5 is comparably greater than [1, 2, 3, 4] and less than [6, 7, 8, 9]
+     *      7  8  9
+     */
     @Override
     public int compareTo(Point other) {
         if (y < other.y) {
@@ -59,5 +61,10 @@ public class Point implements Comparable<Point> {
     @Override
     public int hashCode() {
         return Objects.hash(x, y);
+    }
+
+    @Override
+    public String toString() {
+        return "%d,%d".formatted(x, y);
     }
 }
