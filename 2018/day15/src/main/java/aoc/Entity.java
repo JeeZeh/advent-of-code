@@ -1,19 +1,15 @@
 package aoc;
 
 import java.util.ArrayDeque;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-
 
 @Getter
 @AllArgsConstructor
@@ -26,22 +22,22 @@ public class Entity implements Comparable<Entity> {
         Set<Point> entityLocations = cave.entities.stream().map(Entity::getPosition).collect(Collectors.toSet());
         Set<Point> validLocations = cave.entities.stream().filter(this::isEnemy)
                 .flatMap((Entity e) -> e.position.getAdjacent()).collect(Collectors.toSet());
-        Queue<Point> toExplore = new ArrayDeque<>();
-        toExplore.add(position);
+        Queue<PathTuple> toExplore = new ArrayDeque<>();
+        toExplore.add(new PathTuple(position, Optional.empty()));
         Set<Point> seen = new HashSet<>();
-        Set<Point> found = new HashSet<>();
+        Set<PathTuple> found = new HashSet<>();
         seen.add(this.position);
         while (!toExplore.isEmpty()) {
-            var next = toExplore.remove();
-            if (validLocations.contains(next)) {
-                found.add(next);
+            var nextTuple = toExplore.remove();
+            if (validLocations.contains(nextTuple.point)) {
+                found.add(nextTuple);
             }
             if (found.isEmpty()) {
-                next.getAdjacent()
+                nextTuple.point.getAdjacent()
                         .filter((Point p) -> !seen.contains(p) && cave.isFloor(p) && !entityLocations.contains(p))
                         .forEach((Point p) -> {
                             seen.add(p);
-                            toExplore.add(p);
+                            toExplore.add(new p);
                         });
             }
         }
