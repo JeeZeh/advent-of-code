@@ -27,37 +27,48 @@ public class GameTest {
         assertTrue(game.step().isEmpty());
     }
 
-    public static String difference(String str1, String str2) {
-        if (str1 == null) {
-            return str2;
-        }
-        if (str2 == null) {
-            return str1;
-        }
-        int at = indexOfDifference(str1, str2);
-        if (at == -1) {
-            return "";
-        }
-        return str2.substring(at);
+    @Test
+    public void testAttackInRange() {
+        // #######
+        // #...G.#
+        // #...EG#
+        // #.....#
+        // #######
+        String starting = "#######\n#...G.#\n#...EG#\n#.....#\n#######";
+        Game game = new Game(Cave.fromString(starting), false);
+
+        // final Entity expectedTarget = game.cave.entities
+        // .stream()
+        // .filter((Entity e) -> e.position.equals(new Point(4, 1)))
+        // .findFirst()
+        // .get();
+
+        game.step();
+
+        // Every target should
+        var entities = game.cave.entities.stream().sorted().toList();
+        assertEquals(entities.get(0).hp, 197);
+        assertEquals(entities.get(1).hp, 194);
+        assertEquals(entities.get(2).hp, 200);
+        assertEquals(starting, game.cave.toString());
     }
 
-    public static int indexOfDifference(CharSequence cs1, CharSequence cs2) {
-        if (cs1 == cs2) {
-            return -1;
-        }
-        if (cs1 == null || cs2 == null) {
-            return 0;
-        }
-        int i;
-        for (i = 0; i < cs1.length() && i < cs2.length(); ++i) {
-            if (cs1.charAt(i) != cs2.charAt(i)) {
-                break;
-            }
-        }
-        if (i < cs2.length() || i < cs1.length()) {
-            return i;
-        }
-        return -1;
+    @Test
+    public void testDeadTargetsAreRemovedFromPlay() {
+        // #######
+        // #...G.#
+        // #...EG#
+        // #.....#
+        // #######
+        String starting = "#######\n#...G.#\n#...EG#\n#.....#\n#######";
+        Game game = new Game(Cave.fromString(starting), false);
+
+        game.cave.getEntityAtPosition(4, 2).get().hp = 4;
+        game.step();
+
+        // Every target should
+        assertEquals(game.cave.entities.size(), 2);
+        assertEquals("#######\n#...G.#\n#....G#\n#.....#\n#######", game.cave.toString());
     }
 }
 

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -40,6 +40,13 @@ public class Cave {
 
     public boolean isFloor(Point p) {
         return world.getOrDefault(p, Tile.Wall) == Tile.Floor;
+    }
+
+    public Optional<Entity> getEntityAtPosition(int x, int y) {
+        return entities
+                .stream()
+                .filter((Entity e) -> e.position.equals(new Point(4, 2)))
+                .findFirst();
     }
 
     @Override

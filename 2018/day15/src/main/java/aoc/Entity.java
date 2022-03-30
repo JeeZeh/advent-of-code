@@ -7,16 +7,21 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @Getter
-@AllArgsConstructor
 @EqualsAndHashCode
 public class Entity implements Comparable<Entity> {
+    final int AP = 3;
     final EntityType type;
     Point position;
+    int hp = 200;
+
+    public Entity(EntityType type, Point position) {
+        this.type = type;
+        this.position = position;
+    }
 
     public Optional<Point> tryGetNextMovement(Cave cave) {
         Set<Point> entityLocations = cave.entities.stream().map(Entity::getPosition).collect(Collectors.toSet());
@@ -49,10 +54,11 @@ public class Entity implements Comparable<Entity> {
 
     public Optional<Entity> findTargetInRange(List<Entity> entities) {
         var attackPositions = this.getPointsInRange();
+        // Sort targets by HP and then position if tied
         return entities
                 .stream()
                 .filter((Entity e) -> attackPositions.contains(e.position))
-                .sorted()
+                .sorted(Entity::compareByHpAndPosition)
                 .findFirst();
     }
 
@@ -72,6 +78,11 @@ public class Entity implements Comparable<Entity> {
         return this.type == EntityType.Goblin ? EntityType.Elf : EntityType.Goblin;
     }
 
+    public static int compareByHpAndPosition(Entity a, Entity b) {
+        int hpCompare = a.hp - b.hp;
+        return hpCompare != 0 ? hpCompare : a.compareTo(b);
+    }
+
     @Override
     public int compareTo(Entity o) {
         return position.compareTo(o.position);
@@ -80,5 +91,10 @@ public class Entity implements Comparable<Entity> {
     @Override
     public String toString() {
         return "%s @ %s".formatted(type, position);
+    }
+
+    public boolean attack(Entity target) {
+        target.hp -= this.AP;
+        return target.hp <= 0;
     }
 }

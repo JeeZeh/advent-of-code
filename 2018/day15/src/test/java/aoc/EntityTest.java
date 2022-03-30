@@ -35,10 +35,30 @@ public class EntityTest {
         var activeEntity = new Entity(EntityType.Goblin, new Point(0, 0));
         var shouldFind = new Entity(EntityType.Elf, new Point(0, 1));
         var entities = Arrays.asList(shouldFind);
-        var target = activeEntity.findTargetInRange(entities);
+        var target = activeEntity.findTargetInRange(entities).get();
 
-        assertTrue(target.isPresent());
-        assertEquals(target.get(), shouldFind);
+        assertEquals(target, shouldFind);
+    }
+
+    @Test
+    public void testFindTargetByLowestHp() {
+        var activeEntity = new Entity(EntityType.Goblin, new Point(0, 0));
+        var shouldFind = new Entity(EntityType.Elf, new Point(1, 0));
+        shouldFind.hp = 100;
+        var entities = Arrays.asList(shouldFind, new Entity(EntityType.Elf, new Point(-1, 0)));
+        var target = activeEntity.findTargetInRange(entities).get();
+
+        assertEquals(target, shouldFind);
+    }
+
+    @Test
+    public void testFindTargetByLowestHpResolvesByReadingOrder() {
+        var activeEntity = new Entity(EntityType.Goblin, new Point(0, 0));
+        var shouldFind = new Entity(EntityType.Elf, new Point(-1, 0));
+        var entities = Arrays.asList(shouldFind, new Entity(EntityType.Elf, new Point(1, 0)));
+        var target = activeEntity.findTargetInRange(entities).get();
+
+        assertEquals(target, shouldFind);
     }
 
     @Test
@@ -68,7 +88,7 @@ public class EntityTest {
         assertTrue(reachable.isPresent());
         assertEquals(new Point(2, 1), reachable.get());
     }
-    
+
     @Test
     public void testFindNearestReachablePositionImpossibleWall() {
         Cave world = Cave.fromString("#######\n#E..#.#\n#...#.#\n#...#G#\n#######");
@@ -78,7 +98,7 @@ public class EntityTest {
         Optional<Point> reachable = entity.tryGetNextMovement(world);
         assertTrue(reachable.isEmpty());
     }
-    
+
     @Test
     public void testFindNearestReachablePositionImpossibleEntity() {
         Cave world = Cave.fromString("#######\n#E..E.#\n#...#.#\n#...#G#\n#######");
