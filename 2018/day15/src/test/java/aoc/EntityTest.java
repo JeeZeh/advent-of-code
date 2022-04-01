@@ -81,8 +81,8 @@ public class EntityTest {
     @Test
     public void testFindNearestReachablePositionHard() {
         Cave world = Cave.fromString("#######\n#E....#\n#...#.#\n#...#G#\n#######");
-        var entity = world.entities.get(0);
-        assertEquals("Elf @ 1,1", entity.toString());
+        Entity entity = world.getEntityAtPosition(1, 1).get();
+        assertEquals("Elf @ 1,1", world.getEntityAtPosition(1, 1).get().toString());
 
         Optional<Point> reachable = entity.tryGetNextMovement(world);
         assertTrue(reachable.isPresent());

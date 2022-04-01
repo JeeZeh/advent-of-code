@@ -4,6 +4,7 @@ import java.util.Optional;
 
 public class Game {
     final Cave cave;
+    int rounds = 0;
     boolean friendlyMode;
 
     public Game(Cave cave, boolean friendlyMode) {
@@ -16,7 +17,8 @@ public class Game {
     }
 
     public Optional<Game> step() {
-        boolean stale = true;
+        rounds++;
+        boolean incomplete = false;
 
         for (final Entity takingTurn : cave.entities.stream().sorted().toList()) {
             // Since we're looping through a snapshot of the entities as they were
@@ -26,10 +28,6 @@ public class Game {
                 continue;
             }
             var targets = cave.entities.stream().filter((Entity e) -> e.type != takingTurn.type).toList();
-            if (targets.size() == 0) {
-                stale = true;
-                break;
-            }
 
             // Try attack
             var toAttack = takingTurn.findTargetInRange(cave.entities);
@@ -37,7 +35,6 @@ public class Game {
                 // Move
                 var nextMove = takingTurn.tryGetNextMovement(cave);
                 if (nextMove.isPresent()) {
-                    stale = false;
                     takingTurn.moveTo(nextMove.get());
                 }
                 // Try find a target again
@@ -46,18 +43,36 @@ public class Game {
 
             if (!friendlyMode && toAttack.isPresent()) {
                 final var target = toAttack.get();
-
                 // Check if we killed the target
                 if (takingTurn.attack(target)) {
                     // Remove it from play
                     cave.entities.removeIf((Entity e) -> e.equals(target));
                 }
             }
+            if (targets.size() == 0) {
+                incomplete = true;
+                break;
+            }
         }
-        if (stale) {
+
+        // This is the end state, if we ever find that we can't complete a round (any move, even the first)
+        // then we end the round and count it as incomplete
+        if (incomplete) {
+            // Only count full rounds
+            rounds--;
             return Optional.empty();
         }
         return Optional.of(this);
+    }
+
+    public Game play() {
+        while (this.step().isPresent()) {
+        }
+        return this;
+    }
+
+    public GameSummary getSummary() {
+        return new GameSummary(this);
     }
 
     @Override

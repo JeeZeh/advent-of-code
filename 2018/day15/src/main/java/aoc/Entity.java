@@ -42,9 +42,7 @@ public class Entity implements Comparable<Entity> {
                         .filter((Point p) -> !seen.contains(p) && cave.isFloor(p) && !entityLocations.contains(p))
                         .forEach((Point p) -> {
                             seen.add(p);
-                            toExplore.add(new PathTuple(p, nextTuple.firstMove.or(() -> {
-                                return Optional.of(p);
-                            })));
+                            toExplore.add(new PathTuple(p, nextTuple.firstMove.or(() -> Optional.of(p))));
                         });
             }
         }
@@ -57,7 +55,7 @@ public class Entity implements Comparable<Entity> {
         // Sort targets by HP and then position if tied
         return entities
                 .stream()
-                .filter((Entity e) -> attackPositions.contains(e.position))
+                .filter((Entity e) -> e.type != this.type && attackPositions.contains(e.position))
                 .sorted(Entity::compareByHpAndPosition)
                 .findFirst();
     }

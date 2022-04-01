@@ -45,7 +45,7 @@ public class Cave {
     public Optional<Entity> getEntityAtPosition(int x, int y) {
         return entities
                 .stream()
-                .filter((Entity e) -> e.position.equals(new Point(4, 2)))
+                .filter((Entity e) -> e.position.equals(new Point(x, y)))
                 .findFirst();
     }
 
