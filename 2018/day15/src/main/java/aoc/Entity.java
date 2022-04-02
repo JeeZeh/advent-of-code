@@ -13,8 +13,8 @@ import lombok.Getter;
 @Getter
 @EqualsAndHashCode
 public class Entity implements Comparable<Entity> {
-    final int AP = 3;
     final EntityType type;
+    int AP = 3;
     Point position;
     int hp = 200;
 
@@ -23,31 +23,46 @@ public class Entity implements Comparable<Entity> {
         this.position = position;
     }
 
-    public Optional<Point> tryGetNextMovement(Cave cave) {
+    public Optional<PathTuple> tryGetNextMovement(Cave cave) {
         Set<Point> entityLocations = cave.entities.stream().map(Entity::getPosition).collect(Collectors.toSet());
         Set<Point> validLocations = cave.entities.stream().filter(this::isEnemy)
                 .flatMap((Entity e) -> e.position.getAdjacent()).collect(Collectors.toSet());
         Queue<PathTuple> toExplore = new ArrayDeque<>();
         toExplore.add(new PathTuple(position, Optional.empty()));
         Set<Point> seen = new HashSet<>();
-        Set<PathTuple> found = new HashSet<>();
+        PathTuple best = null;
         seen.add(this.position);
+
         while (!toExplore.isEmpty()) {
             var nextTuple = toExplore.remove();
             if (validLocations.contains(nextTuple.point)) {
-                return nextTuple.firstMove;
+                if (best == null) {
+                    best = nextTuple;
+                } else {
+                    int newDistance = nextTuple.point.dist(this.position);
+                    int bestDistance = best.point.dist(this.position);
+                    if (newDistance < bestDistance) {
+                        best = nextTuple;
+                    } else if (newDistance == bestDistance) {
+                        if (nextTuple.point.compareTo(best.point) < 0) {
+                            best = nextTuple;
+                        }
+                    }
+                }
             }
-            if (found.isEmpty()) {
-                nextTuple.point.getAdjacent()
-                        .filter((Point p) -> !seen.contains(p) && cave.isFloor(p) && !entityLocations.contains(p))
-                        .forEach((Point p) -> {
-                            seen.add(p);
-                            toExplore.add(new PathTuple(p, nextTuple.firstMove.or(() -> Optional.of(p))));
-                        });
-            }
+
+            nextTuple.point.getAdjacent()
+                    .filter((Point p) -> !seen.contains(p) && cave.isFloor(p) && !entityLocations.contains(p))
+                    .forEach((Point p) -> {
+                        seen.add(p);
+                        toExplore.add(new PathTuple(p, nextTuple.firstMove.or(() -> Optional.of(p))));
+                    });
         }
 
-        return Optional.empty();
+        if (best == null) {
+            return Optional.empty();
+        }
+        return Optional.of(best);
     }
 
     public Optional<Entity> findTargetInRange(List<Entity> entities) {
@@ -79,6 +94,10 @@ public class Entity implements Comparable<Entity> {
     public static int compareByHpAndPosition(Entity a, Entity b) {
         int hpCompare = a.hp - b.hp;
         return hpCompare != 0 ? hpCompare : a.compareTo(b);
+    }
+
+    public String asDebug() {
+        return "(%s,%d,%d,%d)".formatted(type.label.substring(0, 1), position.y, position.x, hp);
     }
 
     @Override

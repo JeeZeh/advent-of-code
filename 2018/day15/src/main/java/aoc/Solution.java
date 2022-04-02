@@ -8,15 +8,24 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 public class Solution {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ElfDiedException {
         // Get input
         String input = getResourceFileAsString("aoc/input.txt");
-        Game game = new Game(Cave.fromString(input), false);
-        partOne(game);
+
+        partOne(input);
+        partTwo(input);
     }
 
-    public static void partOne(Game game) {
-        game.play();
+    public static void partOne(String input) throws ElfDiedException {
+        Game game = new Game(Cave.fromString(input), false, false);
+        game.play(false);
+        System.out.println(game.getSummary());
+    }
+
+    public static void partTwo(String input) {
+        // Override Elf config
+        Game game = null;
+        
         System.out.println(game.getSummary());
     }
 

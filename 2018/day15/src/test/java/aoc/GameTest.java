@@ -7,10 +7,10 @@ import org.junit.Test;
 
 public class GameTest {
     @Test
-    public void testMovementSteps() {
+    public void testMovementSteps() throws ElfDiedException {
         String start =
                 "#########\n#G..G..G#\n#.......#\n#.......#\n#G..E..G#\n#.......#\n#.......#\n#G..G..G#\n#########";
-        Game game = new Game(Cave.fromString(start), true);
+        Game game = new Game(Cave.fromString(start), true, false);
         assertEquals(start, game.toString());
 
         String roundOne =
@@ -27,14 +27,14 @@ public class GameTest {
     }
 
     @Test
-    public void testAttackInRange() {
+    public void testAttackInRange() throws ElfDiedException {
         // #######
         // #...G.#
         // #...EG#
         // #.....#
         // #######
         String starting = "#######\n#...G.#\n#...EG#\n#.....#\n#######";
-        Game game = new Game(Cave.fromString(starting), false);
+        Game game = new Game(Cave.fromString(starting), false, false);
 
         // final Entity expectedTarget = game.cave.entities
         // .stream()
@@ -52,14 +52,14 @@ public class GameTest {
     }
 
     @Test
-    public void testDeadTargetsAreRemovedFromPlay() {
+    public void testDeadTargetsAreRemovedFromPlay() throws ElfDiedException {
         // #######
         // #...G.#
         // #...EG#
         // #.....#
         // #######
         String starting = "#######\n#...G.#\n#...EG#\n#.....#\n#######";
-        Game game = new Game(Cave.fromString(starting), false);
+        Game game = new Game(Cave.fromString(starting), false, false);
 
         game.cave.getEntityAtPosition(4, 2).get().hp = 4;
         game.step();
@@ -71,7 +71,7 @@ public class GameTest {
     }
 
     @Test
-    public void testRealRoundMovements() {
+    public void testExampleZero() throws ElfDiedException {
         // Initial
         // #######
         // #.G...# G(200)
@@ -81,7 +81,7 @@ public class GameTest {
         // #.....#
         // #######
         String initial = "#######\n#.G...#\n#...EG#\n#.#.#G#\n#..G#E#\n#.....#\n#######";
-        Game game = new Game(Cave.fromString(initial), false);
+        Game game = new Game(Cave.fromString(initial), false, false);
 
         // After 1 step
         // #######
@@ -118,7 +118,7 @@ public class GameTest {
     }
 
     @Test
-    public void testGameFinishes() {
+    public void testGameFinishes() throws ElfDiedException {
         // Initial
         // #######
         // #.G...# G(200)
@@ -128,8 +128,7 @@ public class GameTest {
         // #.....#
         // #######
         String initial = "#######\n#.G...#\n#...EG#\n#.#.#G#\n#..G#E#\n#.....#\n#######";
-        Game game = new Game(Cave.fromString(initial), false).play();
-        ;
+        Game game = new Game(Cave.fromString(initial), false, false).play(false);
 
         assertEquals(47, game.getSummary().rounds);
         assertEquals(590, game.getSummary().totalHpRemaining);
@@ -141,50 +140,76 @@ public class GameTest {
     }
 
     @Test
-    public void testExampleOne() {
-        Game game = new Game(Cave.fromString("#######\n#G..#E#\n#E#E.E#\n#G.##.#\n#...#E#\n#...E.#\n#######"), false)
-                .play();
+    public void testExampleOne() throws ElfDiedException {
+        Game game = new Game(Cave.fromString("#######\n#G..#E#\n#E#E.E#\n#G.##.#\n#...#E#\n#...E.#\n#######"),
+                false, false)
+                        .play(false);
         String summaryString =
                 "Combat ends after 37 full rounds\nElves win with 982 total hit points left\nOutcome: 37 * 982 = 36334";
         assertEquals(summaryString, game.getSummary().toString());
     }
 
     @Test
-    public void testExampleTwo() {
-        Game game = new Game(Cave.fromString("#######\n#E..EG#\n#.#G.E#\n#E.##E#\n#G..#.#\n#..E#.#\n#######"), false)
-                .play();
+    public void testExampleTwo() throws ElfDiedException {
+        Game game = new Game(Cave.fromString("#######\n#E..EG#\n#.#G.E#\n#E.##E#\n#G..#.#\n#..E#.#\n#######"),
+                false, false)
+                        .play(false);
         String summaryString =
                 "Combat ends after 46 full rounds\nElves win with 859 total hit points left\nOutcome: 46 * 859 = 39514";
         assertEquals(summaryString, game.getSummary().toString());
     }
 
     @Test
-    public void testExampleThree() {
-        Game game = new Game(Cave.fromString("#######\n#E.G#.#\n#.#G..#\n#G.#.G#\n#G..#.#\n#...E.#\n#######"), false)
-                .play();
+    public void testExampleThree() throws ElfDiedException {
+        Game game = new Game(Cave.fromString("#######\n#E.G#.#\n#.#G..#\n#G.#.G#\n#G..#.#\n#...E.#\n#######"),
+                false, false)
+                        .play(false);
         String summaryString =
                 "Combat ends after 35 full rounds\nGoblins win with 793 total hit points left\nOutcome: 35 * 793 = 27755";
         assertEquals(summaryString, game.getSummary().toString());
     }
 
     @Test
-    public void testExampleFour() {
-        Game game = new Game(Cave.fromString("#######\n#.E...#\n#.#..G#\n#.###.#\n#E#G#G#\n#...#G#\n#######"), false)
-                .play();
+    public void testExampleFour() throws ElfDiedException {
+        Game game = new Game(Cave.fromString("#######\n#.E...#\n#.#..G#\n#.###.#\n#E#G#G#\n#...#G#\n#######"),
+                false, false)
+                        .play(false);
         String summaryString =
                 "Combat ends after 54 full rounds\nGoblins win with 536 total hit points left\nOutcome: 54 * 536 = 28944";
         assertEquals(summaryString, game.getSummary().toString());
     }
 
     @Test
-    public void testExampleFive() {
+    public void testExampleFive() throws ElfDiedException {
         Game game = new Game(Cave.fromString(
                 "#########\n#G......#\n#.E.#...#\n#..##..G#\n#...##..#\n#...#...#\n#.G...G.#\n#.....G.#\n#########"),
-                false)
-                        .play();
+                false, false)
+                        .play(false);
         String summaryString =
                 "Combat ends after 20 full rounds\nGoblins win with 937 total hit points left\nOutcome: 20 * 937 = 18740";
         assertEquals(summaryString, game.getSummary().toString());
+    }
+
+    @Test
+    public void testMinimumHpForElvesToSurvive() {
+        Game game = null;
+        int ap = 4;
+        while (true) {
+            game = new Game(Cave.fromString("#######\n#.G...#\n#...EG#\n#.#.#G#\n#..G#E#\n#.....#\n#######"), false,
+                    true);
+            var tryAp = ap;
+            game.cave.entities.stream().filter((Entity e) -> e.type == EntityType.Elf)
+                    .forEach((Entity e) -> e.AP = tryAp);
+            try {
+                game.play(false);
+                break;
+            } catch (ElfDiedException e) {
+                ap++;
+                continue;
+            }
+        }
+
+        assertEquals(ap, 15);
     }
 }
 

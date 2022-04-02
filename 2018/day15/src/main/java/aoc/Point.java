@@ -9,7 +9,7 @@ public class Point implements Comparable<Point> {
     final int x, y;
 
     public int dist(Point other) {
-        return Math.abs(other.x - this.x) + Math.abs(other.y - this.y);
+        return Math.abs(this.x - other.x) + Math.abs(this.y - other.y);
     }
 
     public Point add(Point other) {
@@ -21,13 +21,13 @@ public class Point implements Comparable<Point> {
     }
 
     /**
-     * Compares two points in reading order, such that the following numbers indicate 
-     * their sorted order when considered as a 2D grid of Points.
+     * Compares two points in reading order, such that the following numbers indicate their sorted order
+     * when considered as a 2D grid of Points.
      * 
      * Example:
-     *      1  2  3
-     *      4 [5] 6  <- 5 is comparably greater than [1, 2, 3, 4] and less than [6, 7, 8, 9]
-     *      7  8  9
+     *          1  2  3 
+     *          4 [5] 6 <- 5 is comparably greater than [1, 2, 3, 4] and less than [6, 7, 8, 9]
+     *          7  8  9
      */
     @Override
     public int compareTo(Point other) {

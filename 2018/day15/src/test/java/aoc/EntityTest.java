@@ -43,9 +43,10 @@ public class EntityTest {
     @Test
     public void testFindTargetByLowestHp() {
         var activeEntity = new Entity(EntityType.Goblin, new Point(0, 0));
-        var shouldFind = new Entity(EntityType.Elf, new Point(1, 0));
+        var shouldFind = new Entity(EntityType.Elf, new Point(0, 1));
         shouldFind.hp = 100;
-        var entities = Arrays.asList(shouldFind, new Entity(EntityType.Elf, new Point(-1, 0)));
+        var entities = Arrays.asList(shouldFind, new Entity(EntityType.Elf, new Point(-1, 0)),
+                new Entity(EntityType.Elf, new Point(1, 0)), new Entity(EntityType.Elf, new Point(0, -1)));
         var target = activeEntity.findTargetInRange(entities).get();
 
         assertEquals(target, shouldFind);
@@ -55,7 +56,8 @@ public class EntityTest {
     public void testFindTargetByLowestHpResolvesByReadingOrder() {
         var activeEntity = new Entity(EntityType.Goblin, new Point(0, 0));
         var shouldFind = new Entity(EntityType.Elf, new Point(-1, 0));
-        var entities = Arrays.asList(shouldFind, new Entity(EntityType.Elf, new Point(1, 0)));
+        var entities = Arrays.asList(shouldFind, new Entity(EntityType.Elf, new Point(-1, 0)),
+                new Entity(EntityType.Elf, new Point(1, 0)));
         var target = activeEntity.findTargetInRange(entities).get();
 
         assertEquals(target, shouldFind);
@@ -73,9 +75,9 @@ public class EntityTest {
         var entity = world.entities.get(0);
         assertEquals("Elf @ 1,1", entity.toString());
 
-        Optional<Point> reachable = entity.tryGetNextMovement(world);
+        var reachable = entity.tryGetNextMovement(world);
         assertTrue(reachable.isPresent());
-        assertEquals(new Point(2, 1), reachable.get());
+        assertEquals(new Point(2, 1), reachable.get().firstMove.get());
     }
 
     @Test
@@ -84,9 +86,9 @@ public class EntityTest {
         Entity entity = world.getEntityAtPosition(1, 1).get();
         assertEquals("Elf @ 1,1", world.getEntityAtPosition(1, 1).get().toString());
 
-        Optional<Point> reachable = entity.tryGetNextMovement(world);
+        var reachable = entity.tryGetNextMovement(world);
         assertTrue(reachable.isPresent());
-        assertEquals(new Point(2, 1), reachable.get());
+        assertEquals(new Point(2, 1), reachable.get().firstMove.get());
     }
 
     @Test
@@ -95,7 +97,7 @@ public class EntityTest {
         var entity = world.entities.get(0);
         assertEquals("Elf @ 1,1", entity.toString());
 
-        Optional<Point> reachable = entity.tryGetNextMovement(world);
+        var reachable = entity.tryGetNextMovement(world);
         assertTrue(reachable.isEmpty());
     }
 
@@ -105,7 +107,21 @@ public class EntityTest {
         var entity = world.entities.get(0);
         assertEquals("Elf @ 1,1", entity.toString());
 
-        Optional<Point> reachable = entity.tryGetNextMovement(world);
+        var reachable = entity.tryGetNextMovement(world);
         assertTrue(reachable.isEmpty());
+    }
+
+    @Test
+    public void testFindNearestReachableResolvesInReadingOrder() {
+        // #####
+        // #.E.#
+        // #...#
+        // #G.G#
+        // #####
+        Cave world = Cave.fromString("#####\n#.E.#\n#...#\n#G.G#\n#####");
+        Entity toMove = world.getEntityAtPosition(2, 1).get();
+
+        toMove.tryGetNextMovement(world);
+        assertEquals(new Point(1, 2), toMove.tryGetNextMovement(world).get().point);
     }
 }
