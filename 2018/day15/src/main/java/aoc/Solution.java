@@ -19,14 +19,25 @@ public class Solution {
     public static void partOne(String input) throws ElfDiedException {
         Game game = new Game(Cave.fromString(input), false, false);
         game.play(false);
-        System.out.println(game.getSummary());
+        System.out.println("Part 1:\n%s".formatted(game.getSummary()));
     }
 
     public static void partTwo(String input) {
         // Override Elf config
         Game game = null;
-        
-        System.out.println(game.getSummary());
+        for (int ap = 4; ap < 100; ap++) {
+            game = new Game(Cave.fromString(input), false, true);
+            var tryAp = ap;
+            game.cave.entities.stream().filter((Entity e) -> e.type == EntityType.Elf)
+                    .forEach((Entity e) -> e.AP = tryAp);
+            try {
+                game.play(false);
+                break;
+            } catch (ElfDiedException e) {
+                continue;
+            }
+        }
+        System.out.println("\nPart 2:\n%s".formatted(game.getSummary()));
     }
 
     /**

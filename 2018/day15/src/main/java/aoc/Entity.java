@@ -92,7 +92,7 @@ public class Entity implements Comparable<Entity> {
     }
 
     public static int compareByHpAndPosition(Entity a, Entity b) {
-        int hpCompare = a.hp - b.hp;
+        int hpCompare = Integer.compare(a.hp, b.hp);
         return hpCompare != 0 ? hpCompare : a.compareTo(b);
     }
 
