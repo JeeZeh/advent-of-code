@@ -18,7 +18,7 @@ public class Game {
         this.friendlyMode = friendlyMode;
     }
 
-    public Optional<Game> step() throws ElfDiedException {
+    public Optional<Game> nextRound() throws ElfDiedException {
         this.rounds++;
         boolean incomplete = false;
         
@@ -72,7 +72,7 @@ public class Game {
     }
 
     public Game play(boolean debug) throws ElfDiedException {
-        while (this.step().isPresent()) {
+        while (this.nextRound().isPresent()) {
             if (debug) {
                 System.out.println(this);
                 System.out.println();
