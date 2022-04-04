@@ -9,4 +9,5 @@ import lombok.EqualsAndHashCode;
 public class PathTuple {
     final Point point;
     final Optional<Point> firstMove;
+    final int distance;
 }

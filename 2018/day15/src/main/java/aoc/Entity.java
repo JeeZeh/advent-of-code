@@ -27,23 +27,21 @@ public class Entity implements Comparable<Entity> {
         Set<Point> entityLocations = cave.entities.stream().map(Entity::getPosition).collect(Collectors.toSet());
         Set<Point> validLocations = cave.entities.stream().filter(this::isEnemy)
                 .flatMap((Entity e) -> e.position.getAdjacent()).collect(Collectors.toSet());
-        Queue<PathTuple> toExplore = new ArrayDeque<>();
-        toExplore.add(new PathTuple(position, Optional.empty()));
+        ArrayDeque<PathTuple> toExplore = new ArrayDeque<>();
+        toExplore.add(new PathTuple(position, Optional.empty(), 0));
         Set<Point> seen = new HashSet<>();
         PathTuple best = null;
         seen.add(this.position);
 
         while (!toExplore.isEmpty()) {
-            var nextTuple = toExplore.remove();
+            var nextTuple = toExplore.pollFirst();
             if (validLocations.contains(nextTuple.point)) {
                 if (best == null) {
                     best = nextTuple;
                 } else {
-                    int newDistance = nextTuple.point.dist(this.position);
-                    int bestDistance = best.point.dist(this.position);
-                    if (newDistance < bestDistance) {
+                    if (nextTuple.distance < best.distance) {
                         best = nextTuple;
-                    } else if (newDistance == bestDistance) {
+                    } else if (nextTuple.distance == best.distance) {
                         if (nextTuple.point.compareTo(best.point) < 0) {
                             best = nextTuple;
                         }
@@ -54,9 +52,12 @@ public class Entity implements Comparable<Entity> {
             nextTuple.point.getAdjacent()
                     .filter((Point p) -> !seen.contains(p) && cave.isFloor(p) && !entityLocations.contains(p))
                     .forEach((Point p) -> {
+                        toExplore.add(
+                                new PathTuple(p, nextTuple.firstMove.or(() -> Optional.of(p)),
+                                        nextTuple.distance + 1));
                         seen.add(p);
-                        toExplore.add(new PathTuple(p, nextTuple.firstMove.or(() -> Optional.of(p))));
                     });
+
         }
 
         if (best == null) {

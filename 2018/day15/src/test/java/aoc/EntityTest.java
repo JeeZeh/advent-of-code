@@ -111,6 +111,16 @@ public class EntityTest {
     }
 
     @Test
+    public void testFindNearestReachablePositionImpossibleNoEntities() {
+        Cave world = Cave.fromString("#######\n#E....#\n#...#.#\n#...#.#\n#######");
+        var entity = world.entities.get(0);
+        assertEquals("Elf @ 1,1", entity.toString());
+
+        var reachable = entity.tryGetNextMovement(world);
+        assertTrue(reachable.isEmpty());
+    }
+
+    @Test
     public void testFindNearestReachableResolvesInReadingOrder() {
         // #####
         // #.E.#

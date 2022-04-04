@@ -21,7 +21,7 @@ public class Game {
     public Optional<Game> step() throws ElfDiedException {
         this.rounds++;
         boolean incomplete = false;
-
+        
         for (final Entity takingTurn : cave.entities.stream().sorted().toList()) {
             // Since we're looping through a snapshot of the entities as they were
             // at the start of the round, we should check if the entity is dead before
