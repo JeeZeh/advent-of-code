@@ -5,15 +5,28 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
 import java.util.stream.Collectors;
+
+import lombok.Data;
 
 /**
  * Hello world!
  *
  */
-public class App {
-    public static void main(String[] args) {
-        System.out.println("Hello World!");
+public class Solution {
+    public static void main(String[] args) throws IOException {
+        CPU testCPU = new CPU();
+
+        String input = getResourceFileAsString("aoc/input");
+        String[] parts = input.split("\n\n\n");
+        String tests = parts[0];
+        String program = parts[1];
+    }
+
+    HashMap<Integer, String> findInstructions(String tests) {
+        String[] lines = tests.split("\n\n");
     }
 
     /**

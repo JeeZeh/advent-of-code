@@ -6,14 +6,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static java.util.Map.entry;
-import lombok.Data;
-
-@Data
-class Operands {
-    final int a;
-    final int b;
-    final int c;
-}
 
 interface Operation {
     void func(Operands ops);
@@ -40,9 +32,17 @@ public class CPU {
             entry("eqri", this::eqri),
             entry("eqrr", this::eqrr));
 
-    void exampleCall() {
-        Consumer<Operands> op = this.operations.get("addr");
-        op.accept(new Operands(1, 2, 3));
+    void applyOperation(String operationName, Operands input) {
+        Consumer<Operands> op = this.operations.get(operationName);
+        op.accept(input);
+    }
+
+    void resetRegisters() {
+        setRegisters(0, 0, 0, 0);
+    }
+
+    void setRegisters(int a, int b, int c, int d) {
+        this.reg = new int[] { a, b, c, d };
     }
 
     void addr(Operands ops) {
