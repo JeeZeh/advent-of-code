@@ -11,9 +11,8 @@ interface Operation {
     void func(Operands ops);
 }
 
-public class CPU {
+public class VirtualMachine {
     int[] reg = { 0, 0, 0, 0 };
-
     final Map<String, Consumer<Operands>> operations = Map.ofEntries(
             entry("addr", this::addr),
             entry("addi", this::addi),
