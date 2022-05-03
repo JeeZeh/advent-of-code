@@ -1,11 +1,11 @@
 package aoc;
 
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static java.util.Map.entry;
+
+import java.util.Arrays;
 
 interface Operation {
     void func(Operands ops);
@@ -24,7 +24,7 @@ public class CPU {
             entry("borr", this::borr),
             entry("bori", this::bori),
             entry("setr", this::setr),
-            entry("seti", this::setr),
+            entry("seti", this::seti),
             entry("gtir", this::gtir),
             entry("gtri", this::gtri),
             entry("gtrr", this::gtrr),
@@ -38,11 +38,12 @@ public class CPU {
     }
 
     void resetRegisters() {
-        setRegisters(0, 0, 0, 0);
+        setRegisters(new int[] { 0, 0, 0, 0 });
     }
 
-    void setRegisters(int a, int b, int c, int d) {
-        this.reg = new int[] { a, b, c, d };
+    void setRegisters(int[] register) {
+        assert register.length == 4;
+        this.reg = Arrays.copyOf(register, 4);
     }
 
     void addr(Operands ops) {
