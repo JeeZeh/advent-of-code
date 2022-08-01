@@ -84,7 +84,7 @@ class World:
             return None
 
         if p not in self.grid:
-            self.grid[p] = Tile.EMPTY
+            return Tile.EMPTY
 
         return self.grid[p]
 
@@ -119,37 +119,47 @@ class World:
         # self.x_max += 1
         # self.y_max += 1
 
-    def is_bounded_lateral(self, starting: Point, step: int) -> tuple[bool, list[Point]]:
-        bounded = False
-        checked = []
+    def is_bounded_lateral(self, starting: Point, step: int) -> tuple[bool, list[Point], list[Point]]:
+        empty = []
+        flowing = []
 
         check = starting.add(step, 0)
-        while self[check] == Tile.EMPTY and self[check.add(0, 1)] in [Tile.WALL, Tile.WATER_S]:
-            checked.append(check)
-            check = check.add(step, 0)
-        if self[check] == Tile.WALL:
-            return True, checked
-        elif self[check] != Tile.WATER_M:
-            # We're floating so we need to add the water further out so it falls
-            checked.append(check)
+        while (self[check] == Tile.EMPTY or self[check] == Tile.WATER_M) and self[check.add(0, 1)] in [
+            Tile.WALL,
+            Tile.WATER_S,
+        ]:
+            if self[check] == Tile.EMPTY:
+                empty.append(check)
+            else:
+                flowing.append(check)
 
-        return False, checked
+            check = check.add(step, 0)
+
+        if self[check] == Tile.WALL:
+            return True, empty, flowing
+        elif self[check] == Tile.EMPTY:
+            # We're floating so we need to add the water further out so it falls
+            empty.append(check)
+
+        return False, empty, flowing
 
     def try_bound_flow(self, pos: Point) -> bool:
-        # Go outwards until '#', checking for '|#' and '#|' in both directions
-        if self[pos] != Tile.WATER_M:
-            return False
+        left_bounded, left_empty, left_flowing = self.is_bounded_lateral(pos, -1)
+        right_bounded, right_empty, right_flowing = self.is_bounded_lateral(pos, 1)
 
-        left_bounded, left_checked = self.is_bounded_lateral(pos, -1)
-        right_bounded, right_checked = self.is_bounded_lateral(pos, 1)
+        empty = left_empty + right_empty
+        flowing = left_flowing + right_flowing
 
-        water_state = Tile.WATER_S if left_bounded and right_bounded else Tile.WATER_M
-        if not left_checked and not right_checked:
-            return False
-        
-        for tile_pos in [pos] + left_checked + right_checked:
-            self[tile_pos] = water_state
-        
+        if left_bounded and right_bounded:
+            for tile_pos in [pos] + empty + flowing:
+                self[tile_pos] = Tile.WATER_S
+
+            return True
+        # if not left_checked and not right_checked:
+        #     return False
+
+        for tile_pos in empty:
+            self[tile_pos] = Tile.WATER_M
 
         return True
 
@@ -164,7 +174,7 @@ class World:
             return self.try_set(down, Tile.WATER_M)
         if self[down] is None:
             return False
-        
+
         if self[pos.add(-1, 0)] == Tile.WATER_M and self[pos.add(1, 0)] == Tile.WATER_M:
             return False
 
@@ -173,8 +183,28 @@ class World:
 
     def simulate_water(self) -> bool:
         changed = False
-        active_water = {k: v for k, v in self.grid.items() if v == Tile.WATER_M}
-        for pos in active_water:
+        to_flow = []
+        for k, v in self.grid.items():
+            if v != Tile.WATER_M:
+                continue
+            
+            down = self[k.add(0, 1)]
+            if down == Tile.EMPTY:
+                to_flow.append(k)
+                continue
+            elif down == Tile.WATER_M:
+                continue
+            
+            left, right = self[k.add(-1, 0)], self[k.add(1, 0)]
+            if left == Tile.EMPTY or right == Tile.EMPTY:
+                to_flow.append(k)
+                continue
+            
+            if left == Tile.WALL and right == Tile.WALL:
+                to_flow.append(k)
+                continue
+
+        for pos in to_flow:
             changed |= self.try_flow(pos)
 
         return changed
@@ -184,7 +214,7 @@ class World:
 
     def print(self):
         rows = []
-        for y in range(self.y_min, self.y_max + 1):
+        for y in range(0, 40):
             row = []
             for x in range(self.x_min, self.x_max + 1):
                 row.append(self[Point(x, y)])
@@ -208,3 +238,5 @@ print("Part 1:", len(world.find_water()))
 
 # world.simulate_water()
 # world.print()
+
+# TODO: Consider using BFS or something, still getting wrong answer
