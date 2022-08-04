@@ -1,7 +1,8 @@
-from collections import defaultdict
-from dataclasses import dataclass, field
+from collections import deque
 from enum import Enum
-from typing import Any, Dict, Iterable, NamedTuple, Optional
+from time import time
+from tqdm import tqdm
+from typing import Any, Deque, Iterable, NamedTuple, Optional
 
 
 class Tile(Enum):
@@ -31,6 +32,15 @@ class Point(NamedTuple):
     def add(self, x, y):
         return Point(self.x + x, self.y + y)
 
+    def down(self):
+        return self.add(0, 1)
+
+    def left(self):
+        return self.add(-1, 0)
+
+    def right(self):
+        return self.add(1, 0)
+
 
 class CompType(Enum):
     MIN = -1
@@ -48,58 +58,34 @@ def tuple_comp(ts: Iterable[tuple[Any]], comp_type: CompType):
                 vals[i] = el if el > vals[i] else vals[i]
 
 
-@dataclass
 class World:
-    grid: dict[Point, Tile]
-    x_min: int
-    x_max: int
     y_min: int
     y_max: int
+    x_min: int
+    x_max: int
 
-    spring = Point(500, 0)
+    wall: set[Point] = set()
+    flowing: set[Point] = set()
+    still: set[Point] = set()
+    fronts: Deque[Point] = deque((Point(500, 0),))
 
     def __init__(self, world_file: str = "input") -> None:
-        self.grid = {}
         for line in open(world_file):
             x, y = (p.split("=")[1] for p in sorted(line.split(", ")))
 
             if ".." in x:
                 start, end = map(int, x.split(".."))
                 for x_ in range(start, end + 1):
-                    self[Point(x_, int(y))] = Tile.WALL
+                    self.wall.add(Point(x_, int(y)))
             else:
                 start, end = map(int, y.split(".."))
                 for y_ in range(start, end + 1):
-                    self[Point(int(x), y_)] = Tile.WALL
-
-        # Add spring and initial flow
-        first_water = self.spring.add(0, 1)
-        self[self.spring] = Tile.SPRING
-        self[first_water] = Tile.WATER_M
+                    self.wall.add(Point(int(x), y_))
 
         self._calc_bounds()
 
-    def __getitem__(self, p: Point) -> Optional[Tile]:
-        if p.x < self.x_min or p.x > self.x_max or p.y < self.y_min or p.y > self.y_max:
-            return None
-
-        if p not in self.grid:
-            return Tile.EMPTY
-
-        return self.grid[p]
-
-    def __setitem__(self, p: Point, t: Tile) -> None:
-        self.grid[p] = t
-
-    def try_set(self, p: Point, t: Tile) -> bool:
-        if self.x_min <= p.x <= self.x_max and self.y_min <= p.y <= self.y_max:
-            self.grid[p] = t
-            return True
-
-        return False
-
     def _calc_bounds(self):
-        points = list(self.grid.keys())
+        points = list(self.wall)
         self.x_min, self.y_min = points[0]
         self.x_max, self.y_max = points[0]
 
@@ -114,129 +100,101 @@ class World:
             if y > self.y_max:
                 self.y_max = y
 
-        # self.x_min -= 1
-        # self.y_min -= 1
-        # self.x_max += 1
-        # self.y_max += 1
+    def can_flow_over(self, pos: Point):
+        return pos in self.still or pos in self.wall
 
-    def is_bounded_lateral(self, starting: Point, step: int) -> tuple[bool, list[Point], list[Point]]:
-        empty = []
-        flowing = []
+    def try_settle(self, pos: Point):
+        # If water is flowing below, skip this tile
+        checked = set((pos,))
 
-        check = starting.add(step, 0)
-        while (self[check] == Tile.EMPTY or self[check] == Tile.WATER_M) and self[check.add(0, 1)] in [
-            Tile.WALL,
-            Tile.WATER_S,
-        ]:
-            if self[check] == Tile.EMPTY:
-                empty.append(check)
-            else:
-                flowing.append(check)
+        check = Point(*pos)
+        while self.can_flow_over(check.down()) and (check := check.left()) not in self.wall:
+            checked.add(check)
+        left_wall = check in self.wall
 
-            check = check.add(step, 0)
+        check = Point(*pos)
+        while self.can_flow_over(check.down()) and (check := check.right()) not in self.wall:
+            checked.add(check)
+        right_wall = check in self.wall
 
-        if self[check] == Tile.WALL:
-            return True, empty, flowing
-        elif self[check] == Tile.EMPTY:
-            # We're floating so we need to add the water further out so it falls
-            empty.append(check)
-
-        return False, empty, flowing
-
-    def try_bound_flow(self, pos: Point) -> bool:
-        left_bounded, left_empty, left_flowing = self.is_bounded_lateral(pos, -1)
-        right_bounded, right_empty, right_flowing = self.is_bounded_lateral(pos, 1)
-
-        empty = left_empty + right_empty
-        flowing = left_flowing + right_flowing
-
-        if left_bounded and right_bounded:
-            for tile_pos in [pos] + empty + flowing:
-                self[tile_pos] = Tile.WATER_S
-
+        # Settling
+        if left_wall and right_wall:
+            self.still |= checked
+            self.flowing.difference_update(checked)
             return True
-        # if not left_checked and not right_checked:
-        #     return False
 
-        for tile_pos in empty:
-            self[tile_pos] = Tile.WATER_M
+        # Flowing outwards
+        to_flow = checked.difference(self.flowing)
+        if to_flow:
+            self.flowing |= to_flow
+            self.fronts.extend(to_flow)
+            return True
+
+        return False
+
+    def can_fall(self, pos: Point):
+        return pos not in self.flowing and pos not in self.still and pos not in self.wall and pos.y <= self.y_max
+
+    def try_fall(self, pos: Point):
+        check = Point(*pos).down()
+        if not self.can_fall(check):
+            return False
+        else:
+            self.fronts.append(pos)
+            self.fronts.append(check)
+            self.flowing.add(check)
+
+        check = check.down()
+        while self.can_fall(check):
+            self.fronts.append(check)
+            self.flowing.add(check)
+            check = check.down()
 
         return True
 
-    def try_flow(self, pos: Point) -> bool:
-        # If water is flowing below, skip this tile
-        down = pos.add(0, 1)
-        if self[down] == Tile.WATER_M:
-            return False
+    def simulate_water(self):
+        if not self.fronts:
+            return
 
-        # Try flow down and move to next simulation step
-        if self[down] == Tile.EMPTY:
-            return self.try_set(down, Tile.WATER_M)
-        if self[down] is None:
-            return False
+        next_water = self.fronts.pop()
+        if next_water in self.still:
+            return True
 
-        if self[pos.add(-1, 0)] == Tile.WATER_M and self[pos.add(1, 0)] == Tile.WATER_M:
-            return False
+        return self.try_fall(next_water) or self.try_settle(next_water)
 
-        # Down is blocked by still or clay, try right and left
-        return self.try_bound_flow(pos)
-
-    def simulate_water(self) -> bool:
-        changed = False
-        to_flow = []
-        for k, v in self.grid.items():
-            if v != Tile.WATER_M:
-                continue
-            
-            down = self[k.add(0, 1)]
-            if down == Tile.EMPTY:
-                to_flow.append(k)
-                continue
-            elif down == Tile.WATER_M:
-                continue
-            
-            left, right = self[k.add(-1, 0)], self[k.add(1, 0)]
-            if left == Tile.EMPTY or right == Tile.EMPTY:
-                to_flow.append(k)
-                continue
-            
-            if left == Tile.WALL and right == Tile.WALL:
-                to_flow.append(k)
-                continue
-
-        for pos in to_flow:
-            changed |= self.try_flow(pos)
-
-        return changed
-
-    def find_water(self) -> list[(Point, Tile)]:
-        return [(k, v) for k, v in self.grid.items() if v == Tile.WATER_M or v == Tile.WATER_S]
-
-    def print(self):
-        rows = []
-        for y in range(0, 40):
+    def print(self, focus=False, lowest=True):
+        focus_y = None
+        if focus:
+            if lowest:
+                focus_y = max(self.flowing, key=lambda p: p.y).y
+            else:
+                focus_y = (next_ := self.fronts.pop()).y
+                self.fronts.append(next_)
+        range_ = range(focus_y - 30, focus_y + 10) if focus else range(self.y_min, self.y_max + 1)
+        rows = [""]
+        for y in range_:
             row = []
             for x in range(self.x_min, self.x_max + 1):
-                row.append(self[Point(x, y)])
+                p = Point(x, y)
+                tile = (
+                    Tile.WALL
+                    if p in self.wall
+                    else Tile.WATER_M
+                    if p in self.flowing
+                    else Tile.WATER_S
+                    if p in self.still
+                    else Tile.EMPTY
+                )
+                row.append(tile)
             rows.append("".join(map(str, row)))
         print("\n".join(rows))
 
 
 world = World("input")
-
-while world.simulate_water():
-    # print()
-    # world.print()
-    # input()
+while (changed := world.simulate_water()) is not None:
+    # if changed:
+    #     world.print(focus=True, lowest=False)
     pass
 
-# world.print()
-print("Part 1:", len(world.find_water()))
-
-# world.simulate_water()
-# world.print()
-
-# world.simulate_water()
-# world.print()
-
-# TODO: Consider using BFS or something, still getting wrong answer
+print("Part 1:", sum(1 for p in world.flowing | world.still if world.y_min <= p.y <= world.y_max))
+print("Part 2:", sum(1 for p in world.still if world.y_min <= p.y <= world.y_max))
