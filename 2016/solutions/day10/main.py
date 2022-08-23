@@ -1,38 +1,62 @@
 from collections import defaultdict
 
+monitoring: tuple[int, int] = None
+
 
 class Holds:
     slot_a: int = None
     slot_b: int = None
 
+    def can_give(self):
+        return self.slot_a is None or self.slot_b is None
+
     def give(self, x: int):
-        if not self.slot_a:
-            slot_a = x
-        elif not self.slot_b:
-            self.slot_b = x
+        if not self.can_give():
+            return False
+
+        if self.slot_a is None:
+            self.slot_a = x
         else:
-            raise ValueError(f"Tried to give {x} but {self} already holds 2 values")
+            self.slot_b = x
+
+        return True
 
 
 class Output(Holds):
+    def can_give(self):
+        return self.slot_a is None
+
     def give(self, x: int):
-        if not self.slot_a:
-            self.slot_a = x
-        else:
-            raise ValueError("Output already holds a value")
+        if not self.can_give():
+            return False
+
+        self.slot_a = x
+        return True
 
 
 class Bot(Holds):
     low: Holds
     high: Holds
 
+    def process(self) -> bool:
+        if self.slot_a is not None and self.slot_b is not None:
+            self.low.give(min(self.slot_a, self.slot_b))
+            self.high.give(max(self.slot_a, self.slot_b))
 
-def read_rules():
+            self.slot_a = None
+            self.slot_b = None
+
+            return True
+
+        return False
+
+
+def read_rules(filename: str):
     hardcoded: dict[int, int] = {}
     bots: dict[int, Bot] = defaultdict(Bot)
     outputs: dict[int, Output] = defaultdict(Output)
 
-    for line in map(str.strip, open("test.txt")):
+    for line in map(str.strip, open(filename)):
         if line.startswith("value"):
             value, bot = map(int, line[6:].split(" goes to bot "))
             hardcoded[value] = bot
@@ -48,11 +72,29 @@ def read_rules():
     return hardcoded, bots, outputs
 
 
-def main():
-    hardcoded, bots, outputs = read_rules()
-    
-    print(hardcoded, bots, outputs)
+def main(filename: str, look_for_comparison: tuple[int, int]):
+    global monitoring
+    monitoring = look_for_comparison
+
+    hardcoded, bots, outputs = read_rules(filename)
+    for value, destination in hardcoded.items():
+        dest_bot = bots[destination]
+        if dest_bot.can_give():
+            dest_bot.give(value)
+        else:
+            dest_bot.process()
+
+    active = True
+    while active:
+        active = False
+        for id_, bot in bots.items():
+            if bot.slot_a in monitoring and bot.slot_b in monitoring:
+                print(f"Part 1: {id_}")
+            active |= bot.process()
+
+    mult_result = outputs[0].slot_a * outputs[1].slot_a * outputs[2].slot_a
+    print(f"Part 2: {mult_result}")
 
 
 if __name__ == "__main__":
-    main()
+    main("input.txt", (61, 17))
