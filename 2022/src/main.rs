@@ -5,7 +5,7 @@
 
 mod aocutil;
 mod day01;
-// mod day02;
+mod day02;
 // mod day03;
 mod day04;
 // mod day05;
@@ -29,6 +29,8 @@ mod day04;
 // mod day23;
 // mod day24;
 // mod day25;
+
+const NUM_DAYS: u32 = 2;
 
 use std::time::{Duration, Instant};
 
@@ -97,17 +99,16 @@ pub fn main() {
         return;
     }
 
-    let num_days: u32 = 1;
     let mut total = Duration::new(0, 0);
 
     if parallel {
         let now = Instant::now();
-        (1..=num_days).into_par_iter().for_each(|i| {
+        (1..=NUM_DAYS).into_par_iter().for_each(|i| {
             run_rust(i, sample_test);
         });
         total += now.elapsed();
     } else {
-        for i in 1..=num_days {
+        for i in 1..=NUM_DAYS {
             let (output, duration) = run_rust(i, sample_test);
             println!("------------");
             if time {
@@ -130,7 +131,7 @@ pub fn main() {
 fn run_rust(day: u32, sample: bool) -> (Box<dyn AocOutput>, Duration) {
     match day {
         1 => run(day, day01::solve, sample),
-        // 2 => run(day, day02::solve, sample),
+        2 => run(day, day02::solve, sample),
         // 3 => run(day, day03::solve, sample),
         4 => run(day, day04::solve, sample),
         // 5 => run(day, day05::solve, sample),
