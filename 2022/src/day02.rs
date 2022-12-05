@@ -1,5 +1,5 @@
 #[derive(PartialEq, Clone)]
-struct Hand(usize);
+struct Hand(i8);
 
 // A strategy represents a set of three hands to be applied to (A|X), (B|Y), (C|Z) respectively
 struct Strategy(Hand, Hand, Hand);
@@ -34,7 +34,7 @@ fn get_round_score(opponent_hand: &Hand, player_hand: &Hand) -> usize {
     } else {
         0
     };
-    game_score + player_hand.0 + 1
+    (game_score + player_hand.0 + 1) as usize
 }
 
 pub fn solve(input: String) -> (usize, usize) {
