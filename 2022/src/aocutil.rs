@@ -18,7 +18,7 @@ pub trait AocInput {
 
 impl AocInput for String {
     fn make(input: String) -> String {
-        input
+        input.replace("\r\n", "\n")
     }
 }
 

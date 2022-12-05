@@ -8,7 +8,7 @@ mod day01;
 mod day02;
 mod day03;
 mod day04;
-// mod day05;
+mod day05;
 // mod day06;
 // mod day07;
 // mod day08;
@@ -30,7 +30,7 @@ mod day04;
 // mod day24;
 // mod day25;
 
-const NUM_DAYS: u32 = 4;
+const NUM_DAYS: u32 = 5;
 
 use std::time::{Duration, Instant};
 
@@ -134,7 +134,7 @@ fn run_rust(day: u32, sample: bool) -> (Box<dyn AocOutput>, Duration) {
         2 => run(day, day02::solve, sample),
         3 => run(day, day03::solve, sample),
         4 => run(day, day04::solve, sample),
-        // 5 => run(day, day05::solve, sample),
+        5 => run(day, day05::solve, sample),
         // 6 => run(day, day06::solve, sample),
         // 7 => run(day, day07::solve, sample),
         // 8 => run(day, day08::solve, sample),
