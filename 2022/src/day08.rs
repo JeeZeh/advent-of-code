@@ -55,10 +55,13 @@ fn get_visibility_score<'a, I>(iter: &mut I) -> Vec<usize>
 where
     I: Iterator<Item = &'a u8>,
 {
+    // Keep track of the last time a tree of a given height was seen
     let mut tree_size_last_seen: HashMap<u8, usize> = HashMap::new();
     let mut visibility_scores: Vec<usize> = Vec::new();
 
     for (idx, current_tree) in iter.enumerate() {
+        // Find the most recent tree with a current or greater height
+        // otherwise we don't have one, and we can achieve a 'maximum' score for this position
         let most_recent_blocking_distance = idx
             - *tree_size_last_seen
                 .iter()
