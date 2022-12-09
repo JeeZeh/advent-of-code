@@ -1,34 +1,72 @@
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashMap, HashSet};
 
 use crate::aocutil::Grid;
 
 pub fn solve(forest: Vec<Vec<u8>>) -> (usize, usize) {
-    let visible = get_visible(&forest);
-    (get_visible(&forest).len(), 0)
+    (
+        get_visible(&forest).len(),
+        *get_scores(&forest).values().max().unwrap(),
+    )
 }
-fn get_visibility_scores<'a, I>(forest: &Vec<Vec<u8>>)
-where
-    I: Iterator<Item = &'a u8>,
-{
-    let mut tree_distances: HashMap<u8, u8> = HashMap::new();
-    let visbility_scores: Vec<usize> = Vec::new();
+fn get_scores(forest: &Vec<Vec<u8>>) -> HashMap<(usize, usize), usize> {
+    let mut tree_scores: HashMap<(usize, usize), usize> = HashMap::new();
     let width = forest.width();
     let height = forest.height();
 
     for y in 0..height {
-        // get_visible_in_iter(&mut forest[y][0..width].iter())
-        //     .iter()
-        //     .for_each(|x| {
-        //         visible.insert((*x, y));
-        //     });
-        // get_visible_in_iter(&mut forest[y][0..width].iter().rev())
-        //     .iter()
-        //     .for_each(|x| {
-        //         visible.insert((width - 1 - *x, y));
-        //     });
+        get_visibility_score(&mut forest[y][0..width].iter())
+            .iter()
+            .enumerate()
+            .for_each(|(x, score)| {
+                *tree_scores.entry((x, y)).or_insert(1) *= *score;
+            });
+        get_visibility_score(&mut forest[y][0..width].iter().rev())
+            .iter()
+            .enumerate()
+            .for_each(|(x, score)| {
+                *tree_scores.entry((width - 1 - x, y)).or_insert(1) *= *score;
+            });
     }
 
+    let rotated = forest.rot90();
+    for x in 0..width {
+        get_visibility_score(&mut rotated[x][0..height].iter())
+            .iter()
+            .enumerate()
+            .for_each(|(y, score)| {
+                *tree_scores.entry((x, height - 1 - y)).or_insert(1) *= *score;
+            });
+        get_visibility_score(&mut rotated[x][0..height].iter().rev())
+            .iter()
+            .enumerate()
+            .for_each(|(y, score)| {
+                *tree_scores.entry((x, y)).or_insert(1) *= *score;
+            });
+    }
+    tree_scores
+}
 
+fn get_visibility_score<'a, I>(iter: &mut I) -> Vec<usize>
+where
+    I: Iterator<Item = &'a u8>,
+{
+    let mut tree_size_last_seen: HashMap<u8, usize> = HashMap::new();
+    let mut visibility_scores: Vec<usize> = Vec::new();
+
+    for (idx, current_tree) in iter.enumerate() {
+        let most_recent_blocking_distance = idx
+            - *tree_size_last_seen
+                .iter()
+                .filter(|(tree, _)| *tree >= current_tree)
+                .map(|(_, last_idx)| last_idx)
+                .max()
+                .unwrap_or(&0) as usize;
+
+        visibility_scores.push(most_recent_blocking_distance);
+        tree_size_last_seen.insert(*current_tree, idx);
+    }
+
+    visibility_scores
 }
 
 fn get_visible(forest: &Vec<Vec<u8>>) -> HashSet<(usize, usize)> {
