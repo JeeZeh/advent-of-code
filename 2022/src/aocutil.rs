@@ -48,10 +48,18 @@ where
     }
 }
 
-/// Treat the input string as a bytestring.
+impl AocInput for Vec<Vec<char>> {
+    fn make(input: String) -> Vec<Vec<char>> {
+        input.lines().map(|x| x.chars().collect()).collect()
+    }
+}
+
 impl AocInput for Vec<Vec<u8>> {
     fn make(input: String) -> Vec<Vec<u8>> {
-        input.lines().map(|x| x.bytes().collect()).collect()
+        input
+            .lines()
+            .map(|x| x.chars().map(|c| c.to_digit(10).unwrap() as u8).collect())
+            .collect()
     }
 }
 
