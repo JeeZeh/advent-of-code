@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use itertools::Itertools;
 
 struct Instruction {
