@@ -1,5 +1,7 @@
 use itertools::Itertools;
 
+use crate::aocutil::Grid;
+
 enum Instruction {
     Add(i32),
     Noop,
@@ -32,7 +34,7 @@ impl Instruction {
     }
 }
 
-pub fn solve(input: String) -> (i32, usize) {
+pub fn solve(input: String) -> (i32, String) {
     let mut reg_x: i32 = 1;
     let instructions = input.lines().map(Instruction::from).collect_vec();
 
@@ -49,10 +51,24 @@ pub fn solve(input: String) -> (i32, usize) {
         cycles
             .iter()
             .enumerate()
-            .skip(start)
+            .skip(start - 1)
             .step_by(step)
-            .map(|(i, c)| dbg!(i as i32) * dbg!(c))
+            .map(|(i, c)| (i + 1) as i32 * c)
             .sum::<i32>(),
-        0,
+        format!("\n{}", draw_cycles(&cycles)),
     )
+}
+
+fn draw_cycles(cycles: &[i32]) -> String {
+    let width = 40;
+    let mut rows: Vec<Vec<char>> = vec![vec![' '; 40]; 6];
+    for (c, pos) in cycles.iter().enumerate() {
+        if pos - 1 <= (c % width) as i32 && (c % width) as i32 <= pos + 1 {
+            *rows
+                .getyx_mut((c).div_floor(width) as usize, c % width)
+                .unwrap() = '#';
+        }
+    }
+
+    rows.iter().map(|chars| chars.iter().join("")).join("\n")
 }

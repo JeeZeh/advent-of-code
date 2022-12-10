@@ -2,6 +2,7 @@
 #![allow(dead_code)]
 #![feature(option_result_contains)]
 #![feature(entry_insert)]
+#![feature(int_roundings)]
 
 mod aocutil;
 mod day01;

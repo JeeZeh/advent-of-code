@@ -104,7 +104,7 @@ where
     (output, now.elapsed())
 }
 
-/// A convinience function for splitting and parsing a string.
+/// A convenience function for splitting and parsing a string.
 pub fn numbers<T>(line: &str, sep: char) -> impl Iterator<Item = T> + '_
 where
     T: FromStr,
