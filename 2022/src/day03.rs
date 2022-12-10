@@ -13,7 +13,7 @@ fn get_common_badges(input: &[String]) -> Vec<char> {
     {
         // Needed because multi-set intersection is not possible
         let mut first: HashSet<char> = group.next().unwrap();
-        while let Some(other) = group.next() {
+        for other in group {
             first.retain(|e| other.contains(e));
         }
         common_badges.push(*first.iter().next().unwrap());

@@ -121,7 +121,7 @@ struct Instruction(Direction, usize);
 
 impl From<&str> for Instruction {
     fn from(s: &str) -> Self {
-        let (left, right) = s.split_once(" ").unwrap();
+        let (left, right) = s.split_once(' ').unwrap();
         let direction = match left {
             "U" => Direction::Up,
             "D" => Direction::Down,

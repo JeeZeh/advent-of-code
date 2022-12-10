@@ -40,8 +40,8 @@ fn get_round_score(opponent_hand: &Hand, player_hand: &Hand) -> usize {
 pub fn solve(input: String) -> (usize, usize) {
     let undecided_game: Vec<(Hand, &str)> = input
         .lines()
-        .map(|l| l.split_once(" ").unwrap())
-        .map(|(l, r)| (Hand::with_strategy(&l, HONEST_STRATEGY), r))
+        .map(|l| l.split_once(' ').unwrap())
+        .map(|(l, r)| (Hand::with_strategy(l, HONEST_STRATEGY), r))
         .collect();
 
     let honest_game = undecided_game
@@ -54,7 +54,7 @@ pub fn solve(input: String) -> (usize, usize) {
         .map(|(op, player)| {
             get_round_score(
                 op,
-                &Hand::with_strategy(&player, Strategy(op.beats(), op.clone(), op.beaten_by())),
+                &Hand::with_strategy(player, Strategy(op.beats(), op.clone(), op.beaten_by())),
             )
         })
         .sum();

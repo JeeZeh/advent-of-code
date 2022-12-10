@@ -20,7 +20,7 @@ enum Pointer {
 
 impl From<&str> for Pointer {
     fn from(value: &str) -> Self {
-        let (left, right) = value.split_once(" ").unwrap();
+        let (left, right) = value.split_once(' ').unwrap();
         match left {
             "dir" => Pointer::Directory(right.to_string()),
             _ => Pointer::File(right.to_string(), left.parse().unwrap()),
@@ -44,7 +44,7 @@ pub fn solve(input: String) -> (u32, u32) {
             .values()
             .sorted()
             .find(|s| **s >= need_to_free)
-            .unwrap() as u32,
+            .unwrap(),
     )
 }
 
@@ -114,7 +114,7 @@ fn process_ls(
     cwd: &VecDeque<String>,
     fs: &mut HashMap<String, Vec<Pointer>>,
 ) {
-    let base_path = if cwd.len() == 0 {
+    let base_path = if cwd.is_empty() {
         String::from("/")
     } else {
         format!("/{}/", cwd.iter().join("/"))
@@ -135,7 +135,7 @@ fn process_ls(
 
 // Extract the command from the passed string
 fn read_command(s: &str) -> Command {
-    let mut parts = s.split(" ").skip(1);
+    let mut parts = s.split(' ').skip(1);
 
     let cmd = parts.next().unwrap();
     match cmd {

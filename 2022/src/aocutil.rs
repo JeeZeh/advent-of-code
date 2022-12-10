@@ -153,8 +153,7 @@ pub trait Grid<T> {
         let mut widths: Vec<u8> = Vec::with_capacity(self.width());
         for x in 0..self.width() {
             let max_width = (0..self.height())
-                .map(|y| self.getyx(y, x))
-                .flatten()
+                .flat_map(|y| self.getyx(y, x))
                 .map(|x| f(x).to_string().len())
                 .max();
             widths.push(max_width.unwrap_or(0) as u8);
@@ -163,8 +162,8 @@ pub trait Grid<T> {
         let all1s = widths.iter().all(|x| *x == 1);
 
         for y in 0..self.height() {
-            for x in 0..self.width() {
-                let width = widths[x] as usize + !all1s as usize;
+            for (x, c) in widths.iter().enumerate().take(self.width()) {
+                let width = *c as usize + !all1s as usize;
                 if let Some(value) = self.getyx(y, x) {
                     print!("{:>w$}", format!("{:}", f(value)), w = width);
                 } else {

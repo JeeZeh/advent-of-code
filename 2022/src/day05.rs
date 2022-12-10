@@ -26,12 +26,8 @@ pub fn solve(input: String) -> (String, String) {
     )
 }
 
-fn crane_go_brrr(
-    stacks: &Vec<Vec<char>>,
-    instructions: &Vec<Instruction>,
-    lifo: bool,
-) -> Vec<Vec<char>> {
-    let mut new_stacks = stacks.clone();
+fn crane_go_brrr(stacks: &[Vec<char>], instructions: &[Instruction], lifo: bool) -> Vec<Vec<char>> {
+    let mut new_stacks: Vec<Vec<char>> = stacks.to_vec();
     for inst in instructions {
         let bottom_of_stack = new_stacks[inst.from].len() - inst.amount;
         let to_move = new_stacks[inst.from].drain(bottom_of_stack..);
@@ -81,7 +77,7 @@ fn parse_stacks(input: &str) -> Vec<Vec<char>> {
 
 impl From<&str> for Instruction {
     fn from(s: &str) -> Self {
-        let mut parts = s.split(" ");
+        let mut parts = s.split(' ');
         let amount = parts.nth(1).unwrap().parse().unwrap();
         let from = parts.nth(1).unwrap().parse::<usize>().unwrap() - 1; // 1-index
         let to = parts.nth(1).unwrap().parse::<usize>().unwrap() - 1;

@@ -11,7 +11,7 @@ impl From<&str> for Instruction {
     fn from(s: &str) -> Self {
         match s {
             x if x.starts_with("addx") => {
-                Instruction::Add(x.split_once(" ").unwrap().1.parse().unwrap())
+                Instruction::Add(x.split_once(' ').unwrap().1.parse().unwrap())
             }
             "noop" => Instruction::Noop,
             _ => panic!("Unexpected instruction"),
@@ -27,7 +27,7 @@ impl Instruction {
             Instruction::Add(v) => {
                 let cycle_values = vec![*reg, *reg];
                 *reg += v;
-                return cycle_values;
+                cycle_values
             }
             Instruction::Noop => vec![*reg],
         }
@@ -40,8 +40,7 @@ pub fn solve(input: String) -> (i32, String) {
 
     let cycles = instructions
         .iter()
-        .map(|inst| inst.apply(&mut reg_x))
-        .flatten()
+        .flat_map(|inst| inst.apply(&mut reg_x))
         .collect_vec();
 
     let start = 20;
@@ -64,11 +63,8 @@ fn draw_cycles(cycles: &[i32]) -> String {
     let mut rows: Vec<Vec<char>> = vec![vec![' '; 40]; 6];
     for (c, pos) in cycles.iter().enumerate() {
         if pos - 1 <= (c % width) as i32 && (c % width) as i32 <= pos + 1 {
-            *rows
-                .getyx_mut((c).div_floor(width) as usize, c % width)
-                .unwrap() = '#';
+            *rows.getyx_mut((c).div_floor(width), c % width).unwrap() = '#';
         }
     }
-
     rows.iter().map(|chars| chars.iter().join("")).join("\n")
 }

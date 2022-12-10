@@ -24,15 +24,17 @@ impl Pair {
 }
 
 fn parse_pair(s: &str) -> Pair {
-    let mut pair_parts = s.split(",");
+    let mut pair_parts = s.split(',');
     let left = parse_zone(pair_parts.next().unwrap());
     let right = parse_zone(pair_parts.next().unwrap());
-    return Pair(left, right);
+
+    Pair(left, right)
 }
 
 fn parse_zone(s: &str) -> Zone {
-    let mut parts = s.split("-");
+    let mut parts = s.split('-');
     let start = parts.next().unwrap().parse().unwrap();
     let end = parts.next().unwrap().parse().unwrap();
-    return Zone { start, end };
+
+    Zone { start, end }
 }

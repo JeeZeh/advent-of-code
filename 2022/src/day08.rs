@@ -13,16 +13,16 @@ fn get_scores(forest: &Vec<Vec<u8>>) -> HashMap<(usize, usize), usize> {
     let width = forest.width();
     let height = forest.height();
 
-    for y in 0..height {
+    for (y, row) in forest.iter().enumerate().take(height) {
         // Scan L->R
-        get_visibility_score(&mut forest[y][0..width].iter())
+        get_visibility_score(&mut row[0..width].iter())
             .iter()
             .enumerate()
             .for_each(|(x, score)| {
                 *tree_scores.entry((x, y)).or_insert(1) *= *score;
             });
         // Scan R->L
-        get_visibility_score(&mut forest[y][0..width].iter().rev())
+        get_visibility_score(&mut row[0..width].iter().rev())
             .iter()
             .enumerate()
             .for_each(|(x, score)| {
@@ -32,16 +32,16 @@ fn get_scores(forest: &Vec<Vec<u8>>) -> HashMap<(usize, usize), usize> {
 
     // Transpose to make L->R become B->T
     let rotated = forest.rot90();
-    for x in 0..width {
+    for (x, column) in rotated.iter().enumerate().take(width) {
         // Scan B->T
-        get_visibility_score(&mut rotated[x][0..height].iter())
+        get_visibility_score(&mut column[0..height].iter())
             .iter()
             .enumerate()
             .for_each(|(y, score)| {
                 *tree_scores.entry((x, height - 1 - y)).or_insert(1) *= *score;
             });
         // Scan T->B
-        get_visibility_score(&mut rotated[x][0..height].iter().rev())
+        get_visibility_score(&mut column[0..height].iter().rev())
             .iter()
             .enumerate()
             .for_each(|(y, score)| {
@@ -68,7 +68,7 @@ where
                 .filter(|(tree, _)| *tree >= current_tree)
                 .map(|(_, last_idx)| last_idx)
                 .max()
-                .unwrap_or(&0) as usize;
+                .unwrap_or(&0);
 
         visibility_scores.push(most_recent_blocking_distance);
         tree_size_last_seen.insert(*current_tree, idx);
@@ -82,15 +82,15 @@ fn get_visible(forest: &Vec<Vec<u8>>) -> HashSet<(usize, usize)> {
     let height = forest.height();
 
     let mut visible = HashSet::new();
-    for y in 0..height {
+    for (y, row) in forest.iter().enumerate().take(height) {
         // Scan L->R
-        get_visible_in_iter(&mut forest[y][0..width].iter())
+        get_visible_in_iter(&mut row[0..width].iter())
             .iter()
             .for_each(|x| {
                 visible.insert((*x, y));
             });
         // Scan R->L
-        get_visible_in_iter(&mut forest[y][0..width].iter().rev())
+        get_visible_in_iter(&mut row[0..width].iter().rev())
             .iter()
             .for_each(|x| {
                 visible.insert((width - 1 - *x, y));
@@ -99,15 +99,15 @@ fn get_visible(forest: &Vec<Vec<u8>>) -> HashSet<(usize, usize)> {
 
     // Transpose to make L->R become B->T
     let rotated = forest.rot90();
-    for x in 0..width {
+    for (x, column) in rotated.iter().enumerate().take(width) {
         // Scan B->T
-        get_visible_in_iter(&mut rotated[x][0..height].iter())
+        get_visible_in_iter(&mut column[0..height].iter())
             .iter()
             .for_each(|y| {
                 visible.insert((x, height - 1 - *y));
             });
         // Scan T->B
-        get_visible_in_iter(&mut rotated[x][0..height].iter().rev())
+        get_visible_in_iter(&mut column[0..height].iter().rev())
             .iter()
             .for_each(|y| {
                 visible.insert((x, *y));

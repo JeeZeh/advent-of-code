@@ -6,7 +6,7 @@ pub fn solve(input: String) -> (usize, usize) {
     // Represent each character of the alphabet in a 32bit bit-mask
     let mask_vec = input
         .bytes()
-        .map(|c| (1 as u32) << (c - ASCII_A_LOWERCASE))
+        .map(|c| (1) << (c - ASCII_A_LOWERCASE))
         .collect_vec();
 
     (get_marker_pos(&mask_vec, 4), get_marker_pos(&mask_vec, 14))
@@ -32,5 +32,5 @@ fn all_unique_bits(masks: &[u32]) -> bool {
         }
         unique |= mask;
     }
-    return true;
+    true
 }
