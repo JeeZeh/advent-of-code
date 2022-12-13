@@ -5,32 +5,46 @@ pub fn solve(input: String) -> (usize, usize) {
         .split("\n\n")
         .map(|p| p.split_once("\n").unwrap())
         .collect_vec();
+
     (0, 0)
 }
 
-trait PacketStr<T> {
-    fn compare_packet(&self, right: T) -> bool;
+fn is_sorted(left: &str, right: &str) -> bool {
+    let mut left_ptr: usize = 0;
+    let mut right_ptr: usize = 0;
 
+    false
+}
+
+trait PacketStr<T> {
     fn next_value_slice<'a>(&self, start: usize) -> Option<&str>;
 }
 
 impl<'a> PacketStr<&'a str> for &str {
-    fn compare_packet(&self, right: &str) -> bool {
-        let mut left_ptr: usize = 0;
-        let mut right_ptr: usize = 0;
-
-        false
-    }
-
     fn next_value_slice(&self, start: usize) -> Option<&str> {
         let mut start_pos = None;
         let mut end_pos = None;
-        for (offset, c) in self.chars().enumerate().skip(start) {
+        let mut relative_nesting = 0;
+        for (offset, c) in self.chars().skip(start).enumerate() {
             if start_pos.is_none() && c != ']' && c != ',' {
                 start_pos = Some(start + offset);
             }
-            if end_pos.is_none() && (c == ']' || c == ',') {
+            if c == '[' {
+                relative_nesting += 1;
+            }
+            if c == ']' {
+                relative_nesting -= 1;
+            }
+            if start_pos.is_some()
+                && end_pos.is_none()
+                && c != '['
+                && c != ','
+                && relative_nesting == 0
+            {
                 end_pos = Some(start + offset)
+            }
+            if start_pos.is_some() && end_pos.is_some() {
+                break;
             }
         }
 
@@ -43,9 +57,34 @@ impl<'a> PacketStr<&'a str> for &str {
 
 #[cfg(test)]
 mod tests {
+    use super::PacketStr;
+
     #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
+    fn next_value_list() {
+        let input = "[1,2,3]";
+        assert_eq!(input.next_value_slice(0).unwrap(), "[1,2,3]");
+    }
+
+    #[test]
+    fn next_value_integer_in_list() {
+        let input = "[1,2,3]";
+        assert_eq!(input.next_value_slice(1).unwrap(), "1");
+    }
+    #[test]
+    fn next_value_list_in_list() {
+        let input = "[1,[2,3]]";
+        assert_eq!(input.next_value_slice(0).unwrap(), "[1,[2,3]]");
+        assert_eq!(input.next_value_slice(1).unwrap(), "1");
+        assert_eq!(input.next_value_slice(2).unwrap(), "[2,3]");
+    }
+
+    #[test]
+    fn next_value_empty_list_in_list() {
+        let input = "[1,[[],3]]";
+        assert_eq!(input.next_value_slice(0).unwrap(), "[1,[[],3]]");
+        assert_eq!(input.next_value_slice(1).unwrap(), "1");
+        assert_eq!(input.next_value_slice(2).unwrap(), "[[],3]");
+        assert_eq!(input.next_value_slice(4).unwrap(), "[]");
+        assert_eq!(input.next_value_slice(6).unwrap(), "3");
     }
 }
