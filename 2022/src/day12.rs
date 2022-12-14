@@ -14,7 +14,7 @@ pub fn solve(mut grid: Vec<Vec<char>>) -> (usize, usize) {
         .iter()
         .flatten()
         .enumerate()
-        .find(|(i, c)| **c == 'E')
+        .find(|(_, c)| **c == 'E')
         .map(|(i, _)| (i % grid[0].len(), i.div_floor(grid[0].len())))
         .unwrap();
 
@@ -35,7 +35,7 @@ pub fn solve(mut grid: Vec<Vec<char>>) -> (usize, usize) {
         .iter()
         .flatten()
         .enumerate()
-        .filter(|(i, c)| **c == 'a')
+        .filter(|(_, c)| **c == 'a')
         .map(|(i, _)| (i % grid[0].len(), i.div_floor(grid[0].len())))
     {
         if let Some(dist) = bfs(&grid, start_attempt, end, &mut shared_visited) {
