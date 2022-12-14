@@ -25,12 +25,12 @@ fn part_two(input: String) -> usize {
     let (div_one, _) = all_sorted
         .iter()
         .enumerate()
-        .find(|(i, p)| *p == "[[2]]")
+        .find(|(_, p)| *p == "[[2]]")
         .unwrap();
     let (div_two, _) = all_sorted
         .iter()
         .enumerate()
-        .find(|(i, p)| *p == "[[6]]")
+        .find(|(_, p)| *p == "[[6]]")
         .unwrap();
 
     (div_one + 1) * (div_two + 1)
