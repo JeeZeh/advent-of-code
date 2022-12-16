@@ -20,7 +20,7 @@ mod day12;
 mod day13;
 mod day14;
 mod day15;
-// mod day16;
+mod day16;
 // mod day17;
 // mod day18;
 // mod day19;
@@ -31,7 +31,7 @@ mod day15;
 // mod day24;
 // mod day25;
 
-const NUM_DAYS: u32 = 15;
+const NUM_DAYS: u32 = 16;
 
 use std::time::{Duration, Instant};
 
@@ -48,7 +48,7 @@ pub fn main() {
             Arg::new("day")
                 .required(false)
                 .takes_value(true)
-                .about("Which solution to run, runs all solutions if ommited"),
+                .about("Which solution to run, runs all solutions if omitted"),
         )
         .arg(
             Arg::new("language")
@@ -146,7 +146,7 @@ fn run_rust(day: u32, sample: bool) -> (Box<dyn AocOutput>, Duration) {
         13 => run(day, day13::solve, sample),
         14 => run(day, day14::solve, sample),
         15 => run(day, day15::solve, sample),
-        // 16 => run(day, day16::solve, sample),
+        16 => run(day, day16::solve, sample),
         // 17 => run(day, day17::solve, sample),
         // 18 => run(day, day18::solve, sample),
         // 19 => run(day, day19::solve, sample),
