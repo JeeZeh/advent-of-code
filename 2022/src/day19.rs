@@ -5,24 +5,28 @@ use std::{
 
 use itertools::Itertools;
 
-pub fn solve(input: String) -> (u32, u32) {
+pub fn solve(input: String) -> (i32, u32) {
     let blueprints = input.lines().map(Blueprint::from).collect_vec();
+    let part_one = blueprints
+        .iter()
+        .enumerate()
+        .map(|(i, b)| (i + 1) as i32 * get_best_possible_geodes(b, 24))
+        .max()
+        .unwrap();
 
-    (0, 0)
-}
-
-fn quality_level(blueprint: &Blueprint) -> usize {
-    0
+    (part_one, 0)
 }
 
 /// Uses backtracking to find all possible paths and result pressures for a given set of distances, achievable
 /// in a max_time
-fn compute_all_paths<'a>(blueprint: &Blueprint, max_time: i32) {
+fn get_best_possible_geodes<'a>(blueprint: &Blueprint, max_time: i32) -> i32 {
+    let mut best = 0;
     // Stack holds (remaining time, materials, robots)
-    let mut states: VecDeque<(i32, [usize; 4], [usize; 4])> = VecDeque::new();
-    states.push_back((max_time, 0, [1, 0, 0, 0]));
-    while let Some((remaining, materials, robots)) = states.pop_back() {
-        let mut additional_choices = Vec::new();
+    let mut states: VecDeque<(i32, [i32; 4], [i32; 4])> = VecDeque::new();
+    states.push_back((max_time, [0, 0, 0, 0], [1, 0, 0, 0]));
+    while let Some((remaining, materials, robots)) = states.pop_front() {
+        dbg!(states.get(states.len().checked_sub(1).unwrap_or(0)));
+        let mut additional_states = Vec::new();
         for (_type, need_material) in [
             blueprint.ore_robot,
             blueprint.clay_robot,
@@ -31,47 +35,65 @@ fn compute_all_paths<'a>(blueprint: &Blueprint, max_time: i32) {
         ]
         .iter()
         .enumerate()
+        // Heuristic: try build the best robot at any point
+        .rev()
         {
-            // Don't take this path if we won't have time to open the valve
-            // or if we've already been to that valve
-            if *distance as i32 > remaining - 2 || path.contains(reachable) {
+            if remaining == 0 {
                 continue;
             }
-            let new_remaining = remaining - *distance as i32 - 1; // 1 to open the valve
-            let new_pressure =
-                pressure + (valves.get(*reachable).unwrap().flow * new_remaining as u32);
-            let mut new_path = path.clone();
-            new_path.push(*reachable);
-            additional_choices.push((new_remaining, new_pressure, new_path, *reachable));
-            // println!(
-            //     "At {}, checking {} next, time left {} after path {:?}",
-            //     current, reachable, remaining, path
-            // );
+
+            let mut new_materials = materials.clone();
+            let mut new_robots = robots.clone();
+            if try_build(&mut new_materials, need_material) {
+                new_robots[_type] += 1;
+                // Our new robot will not be ready yet, so collect materials based on our old bots
+                collect_materials(&mut new_materials, robots);
+                additional_states.push((remaining - 1, new_materials, new_robots));
+            }
         }
-        if !additional_choices.is_empty() {
-            states.extend(additional_choices);
+        if !additional_states.is_empty() {
+            states.extend(additional_states);
+        } else if remaining > 0 {
+            let mut new_materials = materials.clone();
+            collect_materials(&mut new_materials, robots);
+            states.push_back((remaining - 1, new_materials, robots.clone()));
         } else {
-            paths_and_pressures.push((pressure, path[1..].to_vec()));
+            best = best.max(materials[3]);
         }
     }
 
     // paths_and_pressures
+    best
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum Material {
-    Ore(u32),
-    Clay(u32),
-    Obsidian(u32),
-    Geode(u32),
+fn should_build(_type: usize, robots: &[i32; 4], blueprint: &Blueprint) -> bool {
+    false
+}
+
+fn collect_materials(have: &mut [i32; 4], robots: [i32; 4]) {
+    have[0] += robots[0];
+    have[1] += robots[1];
+    have[2] += robots[2];
+    have[3] += robots[3];
+}
+
+fn try_build(have: &mut [i32; 4], need: &[i32; 4]) -> bool {
+    if have[0] >= need[0] && have[1] >= need[1] && have[2] >= need[2] && have[3] >= need[3] {
+        have[0] -= need[0];
+        have[1] -= need[1];
+        have[2] -= need[2];
+        have[3] -= need[3];
+        return true;
+    }
+    false
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Blueprint {
-    ore_robot: Vec<Material>,
-    clay_robot: Vec<Material>,
-    obsidian_robot: Vec<Material>,
-    geode_robot: Vec<Material>,
+    ore_robot: [i32; 4],
+    clay_robot: [i32; 4],
+    obsidian_robot: [i32; 4],
+    geode_robot: [i32; 4],
 }
 
 impl From<&str> for Blueprint {
@@ -101,10 +123,10 @@ impl From<&str> for Blueprint {
         let geode_obsidian = obsidian_parts.nth(2).unwrap().parse().unwrap();
 
         Blueprint {
-            ore_robot: vec![Material::Ore(ore_ore)],
-            clay_robot: vec![Material::Ore(clay_ore)],
-            obsidian_robot: vec![Material::Ore(obsidian_ore), Material::Clay(obsidian_clay)],
-            geode_robot: vec![Material::Ore(geode_ore), Material::Obsidian(geode_obsidian)],
+            ore_robot: [ore_ore, 0, 0, 0],
+            clay_robot: [clay_ore, 0, 0, 0],
+            obsidian_robot: [obsidian_ore, obsidian_clay, 0, 0],
+            geode_robot: [geode_ore, 0, geode_obsidian, 0],
         }
     }
 }

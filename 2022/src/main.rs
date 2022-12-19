@@ -109,7 +109,7 @@ pub fn main() {
         });
         total += now.elapsed();
     } else {
-        for i in 1..=NUM_DAYS {
+        for i in 19..=NUM_DAYS {
             let (output, duration) = run_rust(i, sample_test);
             println!("------------");
             if time {
