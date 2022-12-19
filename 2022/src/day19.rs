@@ -1,45 +1,38 @@
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
+    collections::{HashMap, VecDeque},
     hash::Hash,
 };
 
 use itertools::Itertools;
-use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 pub fn solve(input: String) -> (i32, i32) {
     let blueprints = input.lines().map(Blueprint::from).collect_vec();
-    let mut part_one = 0;
-    part_one = dbg!(blueprints
-        .iter()
-        .enumerate()
-        .map(|(i, b)| (i + 1) as i32 * dbg!(get_best_possible_geodes(b, 24)))
-        .sum());
 
-    let mut part_two = 0;
-    part_two = blueprints
-        .iter()
-        .take(3)
-        .map(|b| dbg!(get_best_possible_geodes(b, 32)))
-        .reduce(|acc, new| acc * new)
-        .unwrap();
-
-    (part_one, part_two)
+    (
+        blueprints
+            .iter()
+            .enumerate()
+            .map(|(i, b)| (i + 1) as i32 * (get_best_possible_geodes(b, 24)))
+            .sum(),
+        blueprints
+            .iter()
+            .take(3)
+            .map(|b| get_best_possible_geodes(b, 32))
+            .product(),
+    )
 }
 
-/// Uses backtracking to find all possible paths and result pressures for a given set of distances, achievable
-/// in a max_time
 fn get_best_possible_geodes<'a>(blueprint: &Blueprint, max_time: i32) -> i32 {
-    let mut best = 0;
     // Stack holds (remaining time, materials, robots, built_last)
-    let mut states: VecDeque<(i32, [i32; 4], [i32; 4], bool, [i32; 4])> = VecDeque::new();
-    states.push_back((max_time, [0, 0, 0, 0], [1, 0, 0, 0], false, [0, 0, 0, 0]));
+    let mut states: VecDeque<(i32, [i32; 4], [i32; 4], bool)> = VecDeque::new();
+    states.push_back((max_time, [0, 0, 0, 0], [1, 0, 0, 0], false));
+
+    // Tracking of best states inspired by https://www.reddit.com/r/adventofcode/comments/zpihwi/2022_day_19_solutions/j0v1sul/
     let mut best_states: HashMap<i32, i32> = HashMap::new();
     for i in 0..=max_time {
         best_states.insert(i, 0);
     }
-    while let Some((remaining, materials, robots, built_last_time, previous_materials)) =
-        states.pop_front()
-    {
+    while let Some((remaining, materials, robots, built_last_time)) = states.pop_front() {
         let best_at_time = *best_states.get(&remaining).unwrap();
         let geodes = materials[3];
         if geodes < best_at_time {
@@ -62,37 +55,25 @@ fn get_best_possible_geodes<'a>(blueprint: &Blueprint, max_time: i32) -> i32 {
             let mut new_robots = robots.clone();
             collect_materials(&mut new_materials, robots);
             new_robots[3] += 1;
-            states.push_back((
-                remaining - 1,
-                new_materials,
-                new_robots,
-                true,
-                materials.clone(),
-            ));
+            states.push_back((remaining - 1, new_materials, new_robots, true));
             continue;
         }
 
         // Try just collecting new materials
         let mut new_materials = materials.clone();
         collect_materials(&mut new_materials, robots);
-        states.push_back((
-            remaining - 1,
-            new_materials,
-            robots.clone(),
-            false,
-            materials.clone(),
-        ));
+        states.push_back((remaining - 1, new_materials, robots.clone(), false));
 
         for robot in 0..=2 {
             let requires = &blueprint.get_target_requirements(robot);
             if can_build(&materials, requires)
                 && should_build(
                     blueprint,
+                    &materials,
                     robot,
                     &robots,
                     requires,
                     built_last_time,
-                    &previous_materials,
                 )
             {
                 let mut new_materials = [
@@ -104,57 +85,39 @@ fn get_best_possible_geodes<'a>(blueprint: &Blueprint, max_time: i32) -> i32 {
                 let mut new_robots = robots.clone();
                 collect_materials(&mut new_materials, robots);
                 new_robots[robot] += 1;
-                states.push_back((
-                    remaining - 1,
-                    new_materials,
-                    new_robots,
-                    true,
-                    materials.clone(),
-                ));
+                states.push_back((remaining - 1, new_materials, new_robots, true));
             }
         }
     }
 
-    *best_states.values().max().unwrap()
+    *best_states.get(&0).unwrap()
 }
 
 fn should_build(
     blueprint: &Blueprint,
+    materials: &[i32; 4],
     robot: usize,
     robots: &[i32; 4],
     requires: &[i32; 4],
     built_last: bool,
-    previous_materials: &[i32; 4],
 ) -> bool {
     if robot == 3 {
         return true;
     }
 
-    let material_cost = |c: [i32; 4]| match robot {
-        0 => c[0],
-        1 => c[1],
-        2 => c[2],
-        _ => unreachable!(),
-    };
-
-    let max_cost = [
-        blueprint.ore_robot,
-        blueprint.clay_robot,
-        blueprint.obsidian_robot,
-        blueprint.geode_robot,
-    ]
-    .into_iter()
-    .map(material_cost)
-    .max()
-    .unwrap_or(0);
-
-    let still_needed = robots[robot] < max_cost;
+    let still_needed = robots[robot] < blueprint.max_needed[robot];
 
     if !built_last {
-        let skipped = can_build(previous_materials, requires);
+        let unwind_inventory = [
+            materials[0] - robots[0],
+            materials[1] - robots[1],
+            materials[2] - robots[2],
+            materials[0],
+        ];
+        let skipped = can_build(&unwind_inventory, requires);
         still_needed && !skipped
     } else {
-        false
+        still_needed
     }
 }
 
@@ -166,7 +129,7 @@ fn collect_materials(have: &mut [i32; 4], robots: [i32; 4]) {
 }
 
 fn can_build(have: &[i32; 4], need: &[i32; 4]) -> bool {
-    have[0] >= need[0] && have[1] >= need[1] && have[2] >= need[2] && have[3] >= need[3]
+    have[0] >= need[0] && have[1] >= need[1] && have[2] >= need[2]
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
