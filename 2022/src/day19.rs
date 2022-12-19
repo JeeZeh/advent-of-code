@@ -22,7 +22,7 @@ pub fn solve(input: String) -> (i32, i32) {
     )
 }
 
-fn get_best_possible_geodes<'a>(blueprint: &Blueprint, max_time: i32) -> i32 {
+fn get_best_possible_geodes(blueprint: &Blueprint, max_time: i32) -> i32 {
     // Stack holds (remaining time, materials, robots, built_last)
     let mut states: VecDeque<(i32, [i32; 4], [i32; 4], bool)> = VecDeque::new();
     states.push_back((max_time, [0, 0, 0, 0], [1, 0, 0, 0], false));
