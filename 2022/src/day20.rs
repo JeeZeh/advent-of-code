@@ -1,116 +1,105 @@
-use std::{collections::HashMap, hash::Hash};
-
 use itertools::Itertools;
 
 pub fn solve(input: Vec<i64>) -> (i64, i64) {
-    let (mut map, mut zero) = build_map(&input);
+    let (mut vec, mut zero) = build_map(&input);
 
-    for (i, n) in input.iter().enumerate() {
-        mix_number(&mut map, (i, *n));
-        // dbg!(&map);
+    // Part 1: run once
+    for i in 0..input.len() {
+        mix_number(&mut vec, i);
     }
+    let part_one = get_coordinate_sum(&vec, zero);
 
-    let part_one = [1000, 2000, 3000]
-        .iter()
-        .map(|n| get_relative_number(&map, zero, *n).1)
-        .sum();
-
+    // Part 2: apply decryption key and run 10 times
     let input_with_key = input.iter().map(|i| i * 811589153).collect_vec();
-    (map, zero) = build_map(&input_with_key);
-
+    (vec, zero) = build_map(&input_with_key);
     for _ in 0..10 {
-        for (i, n) in input_with_key.iter().enumerate() {
-            mix_number(&mut map, (i, *n));
+        for i in 0..input_with_key.len() {
+            mix_number(&mut vec, i);
         }
     }
-
-    let part_two = [1000, 2000, 3000]
-        .iter()
-        .map(|n| get_relative_number(&map, zero, *n).1)
-        .sum();
+    let part_two = get_coordinate_sum(&vec, zero);
 
     (part_one, part_two)
 }
 
-fn mix_number(map: &mut HashMap<(usize, i64), Number>, identifier: (usize, i64)) {
-    if identifier.1 == 0 {
+fn get_coordinate_sum(vec: &[Number], zero_pos: usize) -> i64 {
+    [1000, 2000, 3000]
+        .iter()
+        .map(|n| vec[get_relative_number(&vec, zero_pos, *n)].this)
+        .sum()
+}
+
+fn mix_number(vec: &mut Vec<Number>, identifier: usize) {
+    // Hold starting
+    let mut number = vec[identifier];
+
+    if number.this == 0 {
         return;
     }
-
-    // Hold starting
-    let mut number = map.get(&identifier).unwrap().clone();
 
     // Stitch up start
     let start_prev = number.prev;
     let start_next = number.next;
-    map.get_mut(&start_prev).unwrap().next = start_next;
-    map.get_mut(&start_next).unwrap().prev = start_prev;
+    vec.get_mut(start_prev).unwrap().next = start_next;
+    vec.get_mut(start_next).unwrap().prev = start_prev;
 
     // Find ending
-    let current = get_relative_number(&map, number.this, number.this.1);
+    let current = get_relative_number(&vec, identifier, number.this);
 
-    let (end_prev, end_next) = match identifier.1.is_positive() {
-        true => (current, map.get(&current).unwrap().next),
-        false => (map.get(&current).unwrap().prev, current),
+    let (end_prev, end_next) = match number.this.is_positive() {
+        true => (current, vec[current].next),
+        false => (vec[current].prev, current),
     };
 
     // Stitch up end
     number.prev = end_prev;
     number.next = end_next;
-    map.get_mut(&end_prev).unwrap().next = number.this;
-    map.get_mut(&end_next).unwrap().prev = number.this;
-    map.insert(identifier, number);
+    vec.get_mut(end_prev).unwrap().next = identifier;
+    vec.get_mut(end_next).unwrap().prev = identifier;
+    vec[identifier] = number;
 }
 
-fn get_relative_number(
-    map: &HashMap<(usize, i64), Number>,
-    start: (usize, i64),
-    rel: i64,
-) -> (usize, i64) {
-    let size = map.len() as i64;
+fn get_relative_number(vec: &[Number], start: usize, rel: i64) -> usize {
+    let size = vec.len() as i64;
     let wrapped = rel % (size - 1);
 
+    let positive = wrapped.is_positive();
     let mut current = start;
     for _ in 0..wrapped.abs() {
-        if wrapped.is_negative() {
-            current = map.get(&current).unwrap().prev;
+        current = if positive {
+            vec[current].next
         } else {
-            current = map.get(&current).unwrap().next;
-        }
+            vec[current].prev
+        };
     }
     current
 }
 
-fn build_map(input: &[i64]) -> (HashMap<(usize, i64), Number>, (usize, i64)) {
-    let mut map: HashMap<(usize, i64), Number> = HashMap::new();
-    let mut zero = (0, 0);
+fn build_map(input: &[i64]) -> (Vec<Number>, usize) {
+    let mut vec: Vec<Number> = Vec::with_capacity(input.len());
+    let mut zero = 0;
 
     for (i, number) in input.iter().enumerate() {
         let prev_idx = (i as i64 - 1).rem_euclid(input.len() as i64) as usize;
         let next_idx = (i as i64 + 1).rem_euclid(input.len() as i64) as usize;
-        let previous = input[prev_idx];
-        let next = input[next_idx];
 
         if *number == 0 {
-            zero = (i, *number);
+            zero = i;
         }
 
-        map.insert(
-            (i, *number),
-            Number {
-                prev: (prev_idx, previous),
-                this: (i, *number),
-                next: (next_idx, next),
-            },
-        );
+        vec.push(Number {
+            prev: prev_idx,
+            this: *number,
+            next: next_idx,
+        });
     }
 
-    (map, zero)
+    (vec, zero)
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct Number {
-    prev: (usize, i64),
-    this: (usize, i64),
-    next: (usize, i64),
+    prev: usize,
+    this: i64,
+    next: usize,
 }
