@@ -46,8 +46,7 @@ fn find_correct_humn_value(monkey_machine: &HashMap<String, Monkey>) -> i64 {
             // Otherwise, carefully reverse operands and operation, accounting for division and subtraction
             // special cases.
             needs_value = match (current.operation, human_left) {
-                (Operation::Sub, false) => current.operation.apply(other_value, needs_value),
-                (Operation::Div, false) => current.operation.apply(other_value, needs_value),
+                (Operation::Sub | Operation::Div, false) => current.operation.apply(other_value, needs_value),
                 (_, _) => current.operation.reverse().apply(needs_value, other_value),
             };
         }

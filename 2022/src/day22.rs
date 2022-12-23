@@ -19,7 +19,11 @@ pub fn solve(input: String) -> (i32, i32) {
 
     (
         walk_grid(&grid, &instructions, false),
-        walk_grid(&grid, &instructions, true),
+        if grid.height() < 20 {
+            -1
+        } else {
+            walk_grid(&grid, &instructions, true)
+        },
     )
 }
 
@@ -32,7 +36,6 @@ fn walk_grid(grid: &Vec<Vec<Tile>>, instructions: &[Instruction], as_cube: bool)
     };
 
     for instr in instructions {
-        // dbg!(&player);
         match instr {
             Instruction::Walk(steps) => player.walk_on_grid(&grid, *steps, as_cube),
             Instruction::Turn(dir) => player.rotate(&dir),
@@ -92,6 +95,12 @@ impl Player {
 
     /// Horrible hard-coded translations for my input.
     /// Eric, you are cruel for making the example shape not match the real input.
+    ///
+    /// This function is only called when trying to walk off the 'edge' and into the void, the to_x and to_y position,
+    /// since walking to connected sections (in the input) does not cause a transformation in position or heading.
+    ///
+    /// 1 -> 6 describe the faces, a -> e describe columns/rows in each face.
+    /// I used a 10:1 scale of the input to help my brain.
     fn try_wrap_cube(
         &self,
         grid: &Vec<Vec<Tile>>,
