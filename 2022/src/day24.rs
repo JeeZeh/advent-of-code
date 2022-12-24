@@ -99,13 +99,6 @@ impl Into<Pos> for Direction {
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 struct Pos(i32, i32);
 
-impl Sub for Pos {
-    type Output = Pos;
-    fn sub(self, rhs: Self) -> Self::Output {
-        Pos(self.0 - rhs.0, self.1 - rhs.1)
-    }
-}
-
 impl Add for Pos {
     type Output = Pos;
     fn add(self, rhs: Self) -> Self::Output {
@@ -113,13 +106,10 @@ impl Add for Pos {
     }
 }
 
-impl AddAssign for Pos {
-    fn add_assign(&mut self, rhs: Self) {
-        self.0 += rhs.0;
-        self.1 += rhs.1;
-    }
-}
-
+/// This method works by predicting if a blizzard will intersect the proposed position by
+/// starting from the proposed position and stepping n steps (n = tick) in the positive and negative
+/// x and y axes. This means we don't have to track where the blizzards are moving in time, since the
+/// blizzards move predictably, only wrapping at the edges.
 fn is_blizzard_blocking(pos: Pos, blizzard: &Vec<Vec<Option<Direction>>>, tick: usize) -> bool {
     // dbg!(pos);
     if pos.1 < 1 || pos.1 > blizzard.height() as i32 {
