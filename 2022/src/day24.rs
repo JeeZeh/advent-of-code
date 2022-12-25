@@ -1,7 +1,7 @@
 use std::{
     collections::{HashSet, VecDeque},
     hash::Hash,
-    ops::{Add, AddAssign, Sub},
+    ops::Add,
 };
 
 use itertools::Itertools;
@@ -116,38 +116,29 @@ fn is_blizzard_blocking(pos: Pos, blizzard: &Vec<Vec<Option<Direction>>>, tick: 
         return false;
     }
     // Shift the position to the blizzard map
-    let (offset_x, offset_y) = (pos.0 - 1, pos.1 - 1);
+    let (dx, dy) = (pos.0 - 1, pos.1 - 1);
 
-    // Check up for blizzards pointing down
-    let check_up = (offset_y - tick as i32).rem_euclid(blizzard.height() as i32) as usize;
-    if let Some(b) = blizzard[check_up][offset_x as usize] {
-        if b == Direction::Down {
-            return true;
-        }
-    }
-    // Check down for blizzards pointing up
-    let check_down = (offset_y + tick as i32).rem_euclid(blizzard.height() as i32) as usize;
-    if let Some(b) = blizzard[check_down][offset_x as usize] {
-        if b == Direction::Up {
-            return true;
-        }
-    }
-    // Check left for blizzards pointing right
-    let check_left = (offset_x - tick as i32).rem_euclid(blizzard.width() as i32) as usize;
-    if let Some(b) = blizzard[offset_y as usize][check_left] {
-        if b == Direction::Right {
-            return true;
-        }
-    }
-    // Check right for blizzards pointing left
-    let check_right = (offset_x + tick as i32).rem_euclid(blizzard.width() as i32) as usize;
-    if let Some(b) = blizzard[offset_y as usize][check_right] {
-        if b == Direction::Left {
-            return true;
-        }
-    }
+    return [
+        // Check up for blizzards pointing down
+        ((dx, dy - tick as i32), Direction::Down),
+        // Check down for blizzards pointing up
+        ((dx, dy + tick as i32), Direction::Up),
+        // Check left for blizzards pointing right
+        ((dx - tick as i32, dy), Direction::Right),
+        // Check right for blizzards pointing left
+        ((dx + tick as i32, dy), Direction::Left),
+    ]
+    .iter()
+    .map(|((x, y), dir)| {
+        (
+            blizzard[(*y as usize).rem_euclid(blizzard.height())]
+                [(*x as usize).rem_euclid(blizzard.width())],
+            dir,
+        )
+    })
+    .any(|(b_direction, expected)| b_direction.is_some() && b_direction.unwrap() == *expected);
 
-    false
+    // false
 }
 
 fn parse_valley(input: String) -> (Vec<Vec<Tile>>, Vec<Vec<Option<Direction>>>) {

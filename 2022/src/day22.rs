@@ -131,15 +131,6 @@ impl Player {
         };
 
         if grid[new_pos.1 as usize][new_pos.0 as usize] == Tile::Empty {
-            // println!(
-            //     "At {:?} (face {:?}) heading {:?}, will appear at {:?} (face {:?}) heading {:?}",
-            //     self.position,
-            //     current_face,
-            //     heading,
-            //     new_pos,
-            //     get_cube_face(new_pos),
-            //     new_heading
-            // );
             return Some((new_pos, new_heading.into()));
         }
 

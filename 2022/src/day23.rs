@@ -1,10 +1,8 @@
 use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
-    ops::{Add, AddAssign, Sub},
+    ops::Add,
 };
-
-use crate::aocutil::Grid;
 
 const NORTH_WEST: Pos = Pos(-1, -1);
 const NORTH: Pos = Pos(0, -1);
@@ -38,7 +36,6 @@ pub fn solve(input: String) -> (usize, usize) {
     }
 
     let part_one = count_empty_bounded(&state);
-
     while !play_state(&mut state, round) {
         round += 1;
     }
@@ -53,29 +50,6 @@ fn count_empty_bounded(state: &HashSet<Pos>) -> usize {
     let max_y = state.iter().max_by_key(|p| p.1).unwrap().1;
 
     ((min_y.abs_diff(max_y) + 1) * (min_x.abs_diff(max_x) + 1)) as usize - state.len()
-}
-
-fn print_state(state: &HashSet<Pos>) {
-    let min_x = state.iter().min_by_key(|p| p.0).unwrap().0 - 1;
-    let min_y = state.iter().min_by_key(|p| p.1).unwrap().1 - 1;
-    let max_x = state.iter().max_by_key(|p| p.0).unwrap().0 + 1;
-    let max_y = state.iter().max_by_key(|p| p.1).unwrap().1 + 1;
-
-    let mut to_print = Vec::new();
-
-    for y in min_y - 1..max_y + 1 {
-        let mut row = Vec::new();
-        for x in min_x - 1..max_x + 1 {
-            if state.contains(&Pos(x, y)) {
-                row.push('#');
-            } else {
-                row.push('.');
-            }
-        }
-        to_print.push(row);
-    }
-
-    to_print.show_display();
 }
 
 fn check_around(state: &HashSet<Pos>, pos: &Pos, round: usize) -> Option<Pos> {
@@ -130,24 +104,10 @@ fn play_state(state: &mut HashSet<Pos>, round: usize) -> bool {
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 struct Pos(i32, i32);
 
-impl Sub for Pos {
-    type Output = Pos;
-    fn sub(self, rhs: Self) -> Self::Output {
-        Pos(self.0 - rhs.0, self.1 - rhs.1)
-    }
-}
-
 impl Add for Pos {
     type Output = Pos;
     fn add(self, rhs: Self) -> Self::Output {
         Pos(self.0 + rhs.0, self.1 + rhs.1)
-    }
-}
-
-impl AddAssign for Pos {
-    fn add_assign(&mut self, rhs: Self) {
-        self.0 += rhs.0;
-        self.1 += rhs.1;
     }
 }
 
