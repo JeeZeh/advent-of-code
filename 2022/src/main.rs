@@ -29,9 +29,9 @@ mod day21;
 mod day22;
 mod day23;
 mod day24;
-// mod day25;
+mod day25;
 
-const NUM_DAYS: u32 = 24;
+const NUM_DAYS: u32 = 25;
 
 use std::time::{Duration, Instant};
 
@@ -155,7 +155,7 @@ fn run_rust(day: u32, sample: bool) -> (Box<dyn AocOutput>, Duration) {
         22 => run(day, day22::solve, sample),
         23 => run(day, day23::solve, sample),
         24 => run(day, day24::solve, sample),
-        // 25 => run(day, day25::solve, sample),
+        25 => run(day, day25::solve, sample),
         _ => panic!("Day not yet implemented"),
     }
 }
