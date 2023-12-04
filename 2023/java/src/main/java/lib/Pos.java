@@ -12,7 +12,7 @@ public record Pos(int x, int y) {
   /**
    * Returns neighbouring positions surrounding this Pos.
    */
-  Stream<Pos> neighbours() {
+  public Stream<Pos> neighbours() {
     return neighbours(this);
   }
 
