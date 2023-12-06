@@ -1,16 +1,12 @@
 package day06;
 
-import static java.lang.StringTemplate.STR;
+import lib.Input;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.LongStream;
-
-import com.google.common.collect.Lists;
-import lib.Input;
 
 public class Solution {
 
