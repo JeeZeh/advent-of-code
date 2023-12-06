@@ -64,7 +64,7 @@ public class Solution {
       return mappedSeed.get();
     }).min(Long::compare).get();
 
-    var partTwo = Lists.partition(seeds, 2).stream().flatMapToLong(nums -> LongStream.range(nums.get(0), nums.get(0) + nums.get(1))).map(seed -> {
+    var partTwo = Lists.partition(seeds, 2).parallelStream().flatMapToLong(nums -> LongStream.range(nums.get(0), nums.get(0) + nums.get(1))).map(seed -> {
       AtomicLong mappedSeed = new AtomicLong(seed);
 //      System.out.print(STR. "Seed \{ seed }" );
       almanacs.forEach(almanac -> {
