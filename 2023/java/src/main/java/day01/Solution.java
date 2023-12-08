@@ -4,18 +4,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import lib.Input;
+
 public class Solution {
-  static Map<String, Integer> numberMap = Map.of(
-      "one", 1,
-      "two", 2,
-      "three", 3,
-      "four", 4,
-      "five", 5,
-      "six", 6,
-      "seven", 7,
-      "eight", 8,
-      "nine", 9
-  );
+
+  static Map<String, Integer> numberMap = Map.of("one", 1, "two", 2, "three", 3, "four", 4, "five",
+      5, "six", 6, "seven", 7, "eight", 8, "nine", 9);
 
   public static void main(String[] args) throws IOException {
     List<String> input = Input.lines("day01/input.txt").toList();

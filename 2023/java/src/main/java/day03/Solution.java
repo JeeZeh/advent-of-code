@@ -16,6 +16,7 @@ public class Solution {
 
   public record Schematic(Character[][] elements, List<Part> numbers, List<Pos> maybeGears,
                           boolean[][] symbols) implements Grid<Character> {
+
     static Schematic parseSchematic(List<String> lines) {
       int width = lines.size();
       int height = lines.getFirst().length();
@@ -56,7 +57,6 @@ public class Solution {
             maybeGears_.add(new Pos(x, y));
           }
 
-
           if (isDigit) {
             if (numberStart == -1) {
               numberStart = x;
@@ -83,9 +83,11 @@ public class Solution {
     }
 
     public record Part(int value, Pos start, Pos end) {
+
     }
 
     public record Gear(Part a, Part b) {
+
       int ratio() {
         return a.value * b.value;
       }
@@ -104,11 +106,14 @@ public class Solution {
       for (int partNum = 1; partNum <= parts.size(); partNum++) {
         Part part = parts.get(partNum - 1);
         int finalPartNum = partNum;
-        IntStream.range(part.start.y(), part.end.y() + 1).forEach(y -> IntStream.range(part.start.x(), part.end.x() + 1).forEach(x -> partMap[y][x] = finalPartNum));
+        IntStream.range(part.start.y(), part.end.y() + 1).forEach(
+            y -> IntStream.range(part.start.x(), part.end.x() + 1)
+                .forEach(x -> partMap[y][x] = finalPartNum));
       }
 
       return maybeGears.stream().map(maybe -> {
-        List<Integer> adjacentParts = surroundingPositions(maybe).map(pos -> partMap[pos.y()][pos.x()]).filter(partNum -> partNum != 0).distinct().toList();
+        List<Integer> adjacentParts = surroundingPositions(maybe).map(
+            pos -> partMap[pos.y()][pos.x()]).filter(partNum -> partNum != 0).distinct().toList();
         if (adjacentParts.size() == 2) {
           return new Gear(parts.get(adjacentParts.get(0) - 1), parts.get(adjacentParts.get(1) - 1));
         }

@@ -29,6 +29,7 @@ public class Solution {
   }
 
   public record Almanac(String from, String to, List<AMap> maps) {
+
     long map(long number) {
       for (final AMap map : maps) {
         long mapped = map.apply(number);
@@ -50,7 +51,8 @@ public class Solution {
 
   public static void main(String[] args) throws IOException {
     List<String> blocks = Arrays.stream(Input.read("day05/input.txt").split("\n\n")).toList();
-    List<Long> seeds = Arrays.stream(blocks.get(0).split(": ")[1].split(" ")).map(Long::parseLong).toList();
+    List<Long> seeds = Arrays.stream(blocks.get(0).split(": ")[1].split(" ")).map(Long::parseLong)
+        .toList();
     List<Almanac> almanacs = blocks.stream().skip(1).map(Almanac::fromBlock).toList();
 
     var partOne = seeds.stream().map(seed -> {
@@ -64,16 +66,18 @@ public class Solution {
       return mappedSeed.get();
     }).min(Long::compare).get();
 
-    var partTwo = Lists.partition(seeds, 2).parallelStream().flatMapToLong(nums -> LongStream.range(nums.get(0), nums.get(0) + nums.get(1))).map(seed -> {
-      AtomicLong mappedSeed = new AtomicLong(seed);
+    var partTwo = Lists.partition(seeds, 2).parallelStream()
+        .flatMapToLong(nums -> LongStream.range(nums.get(0), nums.get(0) + nums.get(1)))
+        .map(seed -> {
+          AtomicLong mappedSeed = new AtomicLong(seed);
 //      System.out.print(STR. "Seed \{ seed }" );
-      almanacs.forEach(almanac -> {
-        mappedSeed.set(almanac.map(mappedSeed.get()));
+          almanacs.forEach(almanac -> {
+            mappedSeed.set(almanac.map(mappedSeed.get()));
 //        System.out.print(STR. ", \{ almanac.to() } \{ mappedSeed.get() }" );
-      });
+          });
 //      System.out.println();
-      return mappedSeed.get();
-    }).boxed().min(Long::compare).get();
+          return mappedSeed.get();
+        }).boxed().min(Long::compare).get();
 
     System.out.println(STR. "Part 1: \{ partOne }" );
     System.out.println(STR. "Part 2: \{ partTwo }" );

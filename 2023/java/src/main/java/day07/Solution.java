@@ -12,8 +12,8 @@ import lib.Input;
 public class Solution {
 
   public static void main(String[] args) throws IOException {
-    List<Hand> hands =
-        new ArrayList<>(Input.lines("day07/input.txt").map(Hand::parseLine).sorted().toList());
+    List<Hand> hands = new ArrayList<>(
+        Input.lines("day07/input.txt").map(Hand::parseLine).sorted().toList());
 
     int partOne = 0;
     for (int i = 0; i < hands.size(); i++) {
@@ -31,6 +31,7 @@ public class Solution {
   }
 
   public record Hand(HandKind kind, List<Card> cards, int bet) implements Comparable<Hand> {
+
     static Hand parseLine(String line) {
       String[] parts = line.split(" ");
       List<Card> cards = parts[0].chars().mapToObj(i -> (char) i).map(Hand::getCard).toList();
@@ -44,14 +45,11 @@ public class Solution {
       var fakeCardsThis = cards.stream().toList();
 
       if (countByThis.containsKey(Card.J)) {
-        Optional<Map.Entry<Card, Long>> jokerBecomes = countByThis.entrySet()
-            .stream()
-            .filter(e -> e.getKey() != Card.J)
-            .max(Map.Entry.comparingByValue());
+        Optional<Map.Entry<Card, Long>> jokerBecomes = countByThis.entrySet().stream()
+            .filter(e -> e.getKey() != Card.J).max(Map.Entry.comparingByValue());
         if (jokerBecomes.isPresent()) {
           fakeCardsThis = fakeCardsThis.stream()
-              .map(c -> c == Card.J ? jokerBecomes.get().getKey() : c)
-              .toList();
+              .map(c -> c == Card.J ? jokerBecomes.get().getKey() : c).toList();
         }
       }
       return new Hand(getKind(fakeCardsThis), fakeCardsThis, this.bet);
@@ -93,30 +91,12 @@ public class Solution {
     }
 
     public enum HandKind {
-      HIGH,
-      ONE,
-      TWO,
-      THREE,
-      FULL,
-      FOUR,
-      FIVE,
+      HIGH, ONE, TWO, THREE, FULL, FOUR, FIVE,
     }
 
 
     public enum Card {
-      TWO,
-      THREE,
-      FOUR,
-      FIVE,
-      SIX,
-      SEVEN,
-      EIGHT,
-      NINE,
-      T,
-      J,
-      Q,
-      K,
-      A;
+      TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, T, J, Q, K, A;
 
       int compareToFake(Card o2) {
         if (this == Card.J) {
@@ -154,29 +134,26 @@ public class Solution {
     }
 
     static HandKind getKind(List<Card> cards) {
-      var countBy =
-          cards.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+      var countBy = cards.stream()
+          .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
       if (countBy.keySet().size() == 1) {
         return HandKind.FIVE;
       }
 
       if (countBy.keySet().size() == 2) {
-        if (countBy.values().stream().anyMatch(vals -> vals == 4) && countBy.values()
-            .stream()
+        if (countBy.values().stream().anyMatch(vals -> vals == 4) && countBy.values().stream()
             .anyMatch(vals -> vals == 1)) {
           return HandKind.FOUR;
         }
-        if (countBy.values().stream().anyMatch(vals -> vals == 3) && countBy.values()
-            .stream()
+        if (countBy.values().stream().anyMatch(vals -> vals == 3) && countBy.values().stream()
             .anyMatch(vals -> vals == 2)) {
           return HandKind.FULL;
         }
       }
 
       if (countBy.keySet().size() == 3) {
-        if (countBy.values().stream().anyMatch(vals -> vals == 3) && countBy.values()
-            .stream()
+        if (countBy.values().stream().anyMatch(vals -> vals == 3) && countBy.values().stream()
             .anyMatch(vals -> vals == 1)) {
           return HandKind.THREE;
         }

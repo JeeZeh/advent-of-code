@@ -13,7 +13,8 @@ public class Solution {
   public static void main(String[] args) throws IOException {
     List<String> lines = Input.lines("day06/input.txt").toList();
 
-    List<List<String>> splits = lines.stream().map(line -> Arrays.stream(line.split("\\s+")).skip(1).toList()).toList();
+    List<List<String>> splits = lines.stream()
+        .map(line -> Arrays.stream(line.split("\\s+")).skip(1).toList()).toList();
 
     StringBuilder superTime = new StringBuilder();
     StringBuilder superDistance = new StringBuilder();
@@ -26,9 +27,12 @@ public class Solution {
       superDistance.append(dist);
       races.add(new Race(Long.parseLong(time), Long.parseLong(dist)));
     }
-    Race superRace = new Race(Long.parseLong(superTime.toString()), Long.parseLong(superDistance.toString()));
+    Race superRace = new Race(Long.parseLong(superTime.toString()),
+        Long.parseLong(superDistance.toString()));
 
-    long partOne = races.stream().mapToLong(race -> race.getStrategies().stream().filter(strat -> strat.beats).count()).reduce(1, (x, y) -> x * y);
+    long partOne = races.stream()
+        .mapToLong(race -> race.getStrategies().stream().filter(strat -> strat.beats).count())
+        .reduce(1, (x, y) -> x * y);
     long partTwo = superRace.getStrategies().stream().filter(strat -> strat.beats).count();
 
     System.out.println(STR. "Part 1: \{ partOne }" );
@@ -39,6 +43,7 @@ public class Solution {
   public record Race(long time, long record) {
 
     public record Strategy(long holdTime, boolean beats) {
+
     }
 
     long getDistance(long holdTime) {
@@ -50,7 +55,8 @@ public class Solution {
     }
 
     List<Strategy> getStrategies() {
-      return LongStream.range(0, time).mapToObj(hold -> new Strategy(hold, beats(getDistance(hold)))).toList();
+      return LongStream.range(0, time)
+          .mapToObj(hold -> new Strategy(hold, beats(getDistance(hold)))).toList();
     }
   }
 

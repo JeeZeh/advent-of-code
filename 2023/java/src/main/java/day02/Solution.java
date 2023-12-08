@@ -9,7 +9,9 @@ import java.util.stream.Collectors;
 import lib.Input;
 
 public class Solution {
+
   public record Set(int red, int green, int blue) {
+
     boolean withinBounds(Set other) {
       return this.red <= other.red && this.green <= other.green && this.blue <= other.blue;
     }
@@ -17,6 +19,7 @@ public class Solution {
 
 
   public record Game(int id, List<Set> sets) {
+
     boolean canPlay(Set limit) {
       return sets.stream().allMatch(set -> set.withinBounds(limit));
     }
@@ -26,33 +29,28 @@ public class Solution {
     List<Game> games = Input.lines("day02/input.txt").map(Solution::parseGame).toList();
 
     Set partOneLimit = new Set(12, 13, 14);
-    int partOne = games.stream()
-        .filter(game -> game.canPlay(partOneLimit))
-        .map(Game::id)
-        .mapToInt(Integer::intValue)
-        .sum();
+    int partOne = games.stream().filter(game -> game.canPlay(partOneLimit)).map(Game::id)
+        .mapToInt(Integer::intValue).sum();
 
     int partTwo = games.stream().map(game -> {
-          AtomicInteger minRed = new AtomicInteger();
-          AtomicInteger minGreen = new AtomicInteger();
-          AtomicInteger minBlue = new AtomicInteger();
+      AtomicInteger minRed = new AtomicInteger();
+      AtomicInteger minGreen = new AtomicInteger();
+      AtomicInteger minBlue = new AtomicInteger();
 
-          game.sets.forEach(set -> {
-            if (set.red > minRed.get()) {
-              minRed.set(set.red);
-            }
-            if (set.green > minGreen.get()) {
-              minGreen.set(set.green);
-            }
-            if (set.blue > minBlue.get()) {
-              minBlue.set(set.blue);
-            }
-          });
+      game.sets.forEach(set -> {
+        if (set.red > minRed.get()) {
+          minRed.set(set.red);
+        }
+        if (set.green > minGreen.get()) {
+          minGreen.set(set.green);
+        }
+        if (set.blue > minBlue.get()) {
+          minBlue.set(set.blue);
+        }
+      });
 
-          return minRed.get() * minGreen.get() * minBlue.get();
-        })
-        .mapToInt(Integer::intValue)
-        .sum();
+      return minRed.get() * minGreen.get() * minBlue.get();
+    }).mapToInt(Integer::intValue).sum();
     System.out.println(partOne);
     System.out.println(partTwo);
   }
