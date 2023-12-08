@@ -20,7 +20,7 @@ public class Solution {
       partOne += hands.get(i).bet * (i + 1);
     }
 
-    hands.sort(Hand::comparePartTwo);
+    hands.sort(Hand::compareToFake);
     int partTwo = 0;
     for (int i = 0; i < hands.size(); i++) {
       partTwo += hands.get(i).bet * (i + 1);
@@ -38,7 +38,7 @@ public class Solution {
       return new Hand(getKind(cards), cards, Integer.parseInt(parts[1]));
     }
 
-    public int comparePartTwo(Hand o2) {
+    public Hand fakeHand() {
       var countByThis = this.cards.stream()
           .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
       var fakeCardsThis = cards.stream().toList();
@@ -54,34 +54,19 @@ public class Solution {
               .toList();
         }
       }
-      Hand fakeHandThis = new Hand(getKind(fakeCardsThis), fakeCardsThis, this.bet);
+      return new Hand(getKind(fakeCardsThis), fakeCardsThis, this.bet);
+    }
 
-
-      var countByOther = o2.cards.stream()
-          .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-      var fakeCardsOther = o2.cards.stream().toList();
-
-      if (countByOther.containsKey(Card.J)) {
-        Optional<Map.Entry<Card, Long>> jokerBecomes = countByOther.entrySet()
-            .stream()
-            .filter(e -> e.getKey() != Card.J)
-            .max(Map.Entry.comparingByValue());
-        if (jokerBecomes.isPresent()) {
-          fakeCardsOther = fakeCardsOther.stream()
-              .map(c -> c == Card.J ? jokerBecomes.get().getKey() : c)
-              .toList();
-        }
-      }
-
-      Hand fakeHandOther = new Hand(getKind(fakeCardsOther), fakeCardsOther, o2.bet);
-
-      int compareKind = fakeHandThis.kind.compareTo(fakeHandOther.kind);
+    public int compareToFake(Hand o2) {
+      Hand fakeThis = this.fakeHand();
+      Hand fakeOther = o2.fakeHand();
+      int compareKind = fakeThis.kind.compareTo(fakeOther.kind);
       if (compareKind != 0) {
         return compareKind;
       }
 
-      for (int i = 0; i < cards.size(); i++) {
-        var compareHand = this.cards.get(i).comparePartTwo(o2.cards.get(i));
+      for (int i = 0; i < fakeThis.cards.size(); i++) {
+        var compareHand = fakeThis.cards.get(i).compareToFake(fakeOther.cards.get(i));
         if (compareHand != 0) {
           return compareHand;
         }
@@ -133,7 +118,7 @@ public class Solution {
       K,
       A;
 
-      int comparePartTwo(Card o2) {
+      int compareToFake(Card o2) {
         if (this == Card.J) {
           if (o2 == Card.J) {
             return 0;
