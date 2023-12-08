@@ -1,13 +1,13 @@
 package day07;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 import lib.Input;
-
-
 
 public class Solution {
 
@@ -20,7 +20,14 @@ public class Solution {
       partOne += hands.get(i).bet * (i + 1);
     }
 
+    hands.sort(Hand::comparePartTwo);
+    int partTwo = 0;
+    for (int i = 0; i < hands.size(); i++) {
+      partTwo += hands.get(i).bet * (i + 1);
+    }
+
     System.out.println(STR. "Part 1: \{ partOne }" );
+    System.out.println(STR. "Part 2: \{ partTwo }" );
   }
 
   public record Hand(HandKind kind, List<Card> cards, int bet) implements Comparable<Hand> {
@@ -31,8 +38,7 @@ public class Solution {
       return new Hand(getKind(cards), cards, Integer.parseInt(parts[1]));
     }
 
-    @Override
-    public int compareTo(Hand o2) {
+    public int comparePartTwo(Hand o2) {
       var countByThis = this.cards.stream()
           .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
       var fakeCardsThis = cards.stream().toList();
@@ -64,13 +70,29 @@ public class Solution {
           fakeCardsOther = fakeCardsOther.stream()
               .map(c -> c == Card.J ? jokerBecomes.get().getKey() : c)
               .toList();
-
         }
       }
 
       Hand fakeHandOther = new Hand(getKind(fakeCardsOther), fakeCardsOther, o2.bet);
 
       int compareKind = fakeHandThis.kind.compareTo(fakeHandOther.kind);
+      if (compareKind != 0) {
+        return compareKind;
+      }
+
+      for (int i = 0; i < cards.size(); i++) {
+        var compareHand = this.cards.get(i).comparePartTwo(o2.cards.get(i));
+        if (compareHand != 0) {
+          return compareHand;
+        }
+      }
+
+      return 0;
+    }
+
+    @Override
+    public int compareTo(Hand o2) {
+      int compareKind = this.kind.compareTo(o2.kind);
       if (compareKind != 0) {
         return compareKind;
       }
@@ -85,8 +107,6 @@ public class Solution {
       return 0;
     }
 
-
-
     public enum HandKind {
       HIGH,
       ONE,
@@ -99,7 +119,6 @@ public class Solution {
 
 
     public enum Card {
-      J,
       TWO,
       THREE,
       FOUR,
@@ -109,9 +128,25 @@ public class Solution {
       EIGHT,
       NINE,
       T,
+      J,
       Q,
       K,
-      A,
+      A;
+
+      int comparePartTwo(Card o2) {
+        if (this == Card.J) {
+          if (o2 == Card.J) {
+            return 0;
+          }
+          return -1;
+        } else {
+          if (o2 == Card.J) {
+            return 1;
+          }
+        }
+
+        return this.compareTo(o2);
+      }
     }
 
     static Card getCard(char c) {
