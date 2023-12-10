@@ -14,8 +14,7 @@ public class Solution {
   public static void main(String[] args) throws IOException {
     List<String> lines = Input.lines("day10/example1.txt").toList();
     Tiles tiles = Tiles.fromLines(lines);
-    List<Pos> startingTiles = tiles.start.neighbours()
-        .map(p -> tiles.tryMove(tiles.start, p))
+    List<Pos> startingTiles = tiles.start.neighbours().map(p -> tiles.tryMove(tiles.start, p))
         .filter(newPos -> newPos != tiles.start).toList();
     System.out.println(STR."Starting tiles: \{Arrays.toString(startingTiles.toArray())}");
   }
