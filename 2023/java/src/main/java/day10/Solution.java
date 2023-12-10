@@ -15,7 +15,7 @@ public class Solution {
     List<String> lines = Input.lines("day10/example1.txt").toList();
     Tiles tiles = Tiles.fromLines(lines);
     List<Pos> startingTiles = tiles.start.neighbours()
-        .map(p -> tiles.elements[p.y()][p.x()].translate(tiles.start, p))
+        .map(p -> tiles.tryMove(tiles.start, p))
         .filter(newPos -> newPos != tiles.start).toList();
     System.out.println(STR."Starting tiles: \{Arrays.toString(startingTiles.toArray())}");
   }
@@ -45,6 +45,24 @@ public class Solution {
 
       return new Tiles(elements, start);
     }
+
+    public Pos tryMove(Pos from, Pos to) {
+      Optional<Direction> maybeApproach = Direction.getDir(from, to);
+
+      // Not a valid approach direction
+      if (maybeApproach.isEmpty()) {
+        return from;
+      }
+
+      // Can't enter this tile from origin
+      Direction approach = maybeApproach.get();
+      Tile tileType = this.elements[to.y()][to.x()];
+      if (!tileType.canEnter(approach)) {
+        return from;
+      }
+
+      return tileType.translate(from, approach);
+    }
   }
 
   public enum Tile {
@@ -63,28 +81,14 @@ public class Solution {
       };
     }
 
-    public boolean isPipe() {
-      return this != GROUND && this != START;
-    }
-
-    public Pos translate(Pos origin, Pos tileLoc) {
-      Optional<Direction> maybeMovement = Direction.getDir(origin, tileLoc);
-      if (maybeMovement.isEmpty()) {
-        return origin;
-      }
-
-      Direction movement = maybeMovement.get();
-      if (!this.canEnter(movement)) {
-        return origin;
-      }
-
+    public Pos translate(Pos origin, Direction approach) {
       return switch (this) {
-        case VERT -> movement == Direction.UP ? origin.add(0, -1) : origin.add(0, 1);
-        case HORIZ -> movement == Direction.LEFT ? origin.add(-1, 0) : origin.add(1, 0);
-        case CORNER_NE -> movement == Direction.DOWN ? origin.add(1, 1) : origin.add(-1, -1);
-        case CORNER_NW -> movement == Direction.DOWN ? origin.add(-1, 1) : origin.add(1, -1);
-        case CORNER_SW -> movement == Direction.RIGHT ? origin.add(1, 1) : origin.add(-1, -1);
-        case CORNER_SE -> movement == Direction.LEFT ? origin.add(-1, 1) : origin.add(1, -1);
+        case VERT -> approach == Direction.UP ? origin.add(0, -1) : origin.add(0, 1);
+        case HORIZ -> approach == Direction.LEFT ? origin.add(-1, 0) : origin.add(1, 0);
+        case CORNER_NE -> approach == Direction.DOWN ? origin.add(1, 1) : origin.add(-1, -1);
+        case CORNER_NW -> approach == Direction.DOWN ? origin.add(-1, 1) : origin.add(1, -1);
+        case CORNER_SW -> approach == Direction.RIGHT ? origin.add(1, 1) : origin.add(-1, -1);
+        case CORNER_SE -> approach == Direction.LEFT ? origin.add(-1, 1) : origin.add(1, -1);
         case START -> origin;
         default -> throw new IllegalStateException(STR."Unexpected value: \{this}");
       };
