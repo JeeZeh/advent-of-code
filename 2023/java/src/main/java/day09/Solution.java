@@ -1,5 +1,6 @@
 package day09;
 
+import com.google.common.primitives.Longs;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -9,27 +10,33 @@ public class Solution {
 
   public static void main(String[] args) throws IOException {
     List<Sequence> sequences = Input.lines("day09/input.txt").map(Sequence::fromLine).toList();
-//    System.out.println(Arrays.toString(sequences.getFirst().elements()));
-//    System.out.println(sequences.get(0).extrapolate());;
-    long partOne = sequences.stream().mapToLong(seq -> {
-      var ext = seq.extrapolate();
-      System.out.println(STR. "\{ seq.elements[seq.elements.length - 1] } => \{ ext }" );
-      return ext;
-    }).sum();
 
-    System.out.println(STR. "Part 1: \{ partOne }" );
+    List<Sequence> reversedSequences = sequences.stream().map(sequence -> {
+      long[] copy = Longs.asList(sequence.elements).reversed().stream().mapToLong(l -> l).toArray();
+      return new Sequence(copy, false);
+    }).toList();
+
+    long partOne = totalExtrapolations(sequences);
+    long partTwo = totalExtrapolations(reversedSequences);
+
+    System.out.println(STR."Part 1: \{partOne}");
+    System.out.println(STR."Part 2: \{partTwo}");
   }
 
-  public record Sequence(long[] elements) {
+  static long totalExtrapolations(List<Sequence> sequences) {
+    return sequences.stream().mapToLong(Sequence::extrapolate).sum();
+  }
+
+  public record Sequence(long[] elements, boolean allZero) {
 
     static Sequence fromLine(String line) {
-      return new Sequence(Arrays.stream(line.split(" ")).mapToLong(Long::parseLong).toArray());
+      return new Sequence(Arrays.stream(line.split(" ")).mapToLong(Long::parseLong).toArray(),
+          false);
     }
 
     public long extrapolate() {
       var steps = this.getSteps();
-//      System.out.println(Arrays.toString(steps.elements));
-      if (steps.elements[steps.elements.length - 1] == 0) {
+      if (steps.allZero) {
         return this.elements[elements.length - 1];
       }
 
@@ -38,13 +45,15 @@ public class Solution {
 
     public Sequence getSteps() {
       long[] steps = new long[elements.length - 1];
+      boolean allZero = true;
       for (int i = 0; i < elements.length - 1; i++) {
         steps[i] = elements[i + 1] - elements[i];
+        if (steps[i] != 0) {
+          allZero = false;
+        }
       }
 
-      return new Sequence(steps);
+      return new Sequence(steps, allZero);
     }
   }
-
-
 }
