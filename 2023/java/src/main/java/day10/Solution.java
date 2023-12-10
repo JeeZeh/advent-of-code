@@ -1,9 +1,14 @@
 package day10;
 
+import day10.Solution.Tiles.Step;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 import lib.Grid;
 import lib.Input;
 import lib.Pos;
@@ -12,15 +17,48 @@ import lib.Pos.Direction;
 public class Solution {
 
   public static void main(String[] args) throws IOException {
-    List<String> lines = Input.lines("day10/example1.txt").toList();
-    Tiles tiles = Tiles.fromLines(lines);
-    List<Pos> startingTiles = tiles.start.neighbours().map(p -> tiles.tryMove(tiles.start, p))
-        .filter(newPos -> newPos != tiles.start).toList();
-    System.out.println(STR."Starting tiles: \{Arrays.toString(startingTiles.toArray())}");
+    List<String> lines = Input.lines("day10/example2.txt").toList();
+    var tiles = Tiles.fromLines(lines);
+    var distances = tiles.getDistances(tiles.start);
+    System.out.println(distances);
+    int partOne = distances.values().stream().max(Integer::compareTo).get();
+
+    System.out.println(STR."Part 1: \{partOne}");
   }
 
 
   public record Tiles(Tile[][] elements, Pos start) implements Grid<Tile> {
+
+    public record Step(Pos pos, int distance) {
+
+    }
+
+    public Map<Pos, Integer> getDistances(Pos start) {
+      final Deque<Step> queue = new ArrayDeque<>();
+      final Map<Pos, Integer> distances = new HashMap<>();
+      distances.put(start, 0);
+
+      // Find next pipe locations
+      nextSteps(start).forEach(queue::add);
+
+      while (!queue.isEmpty()) {
+        Step next = queue.poll();
+        if (!distances.containsKey(next.pos)) {
+          distances.put(next.pos, next.distance);
+
+          nextSteps(next.pos).filter(step -> !distances.containsKey(step.pos))
+              .map(step -> new Step(step.pos, step.distance + next.distance)).forEach(queue::add);
+        }
+      }
+
+      return distances;
+    }
+
+    Stream<Step> nextSteps(Pos pos) {
+      // Find next pipe locations
+      return this.surroundingPositions(pos).map(p -> this.tryMove(pos, p))
+          .filter(step -> step.distance != 0);
+    }
 
     static Tiles fromLines(List<String> lines) {
       int height = lines.size();
@@ -45,19 +83,24 @@ public class Solution {
       return new Tiles(elements, start);
     }
 
-    public Pos tryMove(Pos from, Pos to) {
+    public Step tryMove(Pos from, Pos to) {
+      // Not a valid destination
+      if (to.y() < 0) {
+        return new Step(from, 0);
+      }
+
       Optional<Direction> maybeApproach = Direction.getDir(from, to);
 
       // Not a valid approach direction
       if (maybeApproach.isEmpty()) {
-        return from;
+        return new Step(from, 0);
       }
 
       // Can't enter this tile from origin
       Direction approach = maybeApproach.get();
       Tile tileType = this.elements[to.y()][to.x()];
       if (!tileType.canEnter(approach)) {
-        return from;
+        return new Step(from, 0);
       }
 
       return tileType.translate(from, approach);
@@ -80,15 +123,20 @@ public class Solution {
       };
     }
 
-    public Pos translate(Pos origin, Direction approach) {
+    public Step translate(Pos origin, Direction approach) {
       return switch (this) {
-        case VERT -> approach == Direction.UP ? origin.add(0, -1) : origin.add(0, 1);
-        case HORIZ -> approach == Direction.LEFT ? origin.add(-1, 0) : origin.add(1, 0);
-        case CORNER_NE -> approach == Direction.DOWN ? origin.add(1, 1) : origin.add(-1, -1);
-        case CORNER_NW -> approach == Direction.DOWN ? origin.add(-1, 1) : origin.add(1, -1);
-        case CORNER_SW -> approach == Direction.RIGHT ? origin.add(1, 1) : origin.add(-1, -1);
-        case CORNER_SE -> approach == Direction.LEFT ? origin.add(-1, 1) : origin.add(1, -1);
-        case START -> origin;
+        case VERT -> new Step(approach == Direction.UP ? origin.add(0, -1) : origin.add(0, 1), 1);
+        case HORIZ ->
+            new Step(approach == Direction.LEFT ? origin.add(-1, 0) : origin.add(1, 0), 1);
+        case CORNER_NE ->
+            new Step(approach == Direction.DOWN ? origin.add(1, 1) : origin.add(-1, -1), 2);
+        case CORNER_NW ->
+            new Step(approach == Direction.DOWN ? origin.add(-1, 1) : origin.add(1, -1), 2);
+        case CORNER_SW ->
+            new Step(approach == Direction.RIGHT ? origin.add(1, 1) : origin.add(-1, -1), 2);
+        case CORNER_SE ->
+            new Step(approach == Direction.LEFT ? origin.add(-1, 1) : origin.add(1, -1), 12);
+        case START -> new Step(origin, 0);
         default -> throw new IllegalStateException(STR."Unexpected value: \{this}");
       };
     }
