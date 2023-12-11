@@ -4,7 +4,21 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public record Pos(int x, int y) {
+public record Pos(int x, int y) implements Comparable<Pos> {
+
+
+  public long dist(Pos b) {
+    return Math.abs(b.x - this.x) + Math.abs(b.y - this.y);
+  }
+
+  @Override
+  public int compareTo(Pos o) {
+    if (this.y == o.y) {
+      return Integer.compare(this.x, o.x);
+    }
+
+    return Integer.compare(this.y, o.y);
+  }
 
   public enum Direction {
     UP, DOWN, LEFT, RIGHT, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT;
