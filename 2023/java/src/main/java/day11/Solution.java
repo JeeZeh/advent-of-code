@@ -32,14 +32,13 @@ public class Solution {
                       boolean[] satelliteRows) implements Grid<Boolean> {
 
     public long distance(Pos satA, Pos satB, long scale) {
-      int minX = Math.min(satA.x(), satB.x());
-      int maxX = Math.max(satA.x(), satB.x());
-      int minY = Math.min(satA.y(), satB.y());
-      int maxY = Math.max(satA.y(), satB.y());
-      long xGaps = IntStream.range(minX, maxX).filter(col -> !this.satelliteCols[col]).count();
-      long yGaps = IntStream.range(minY, maxY).filter(row -> !this.satelliteRows[row]).count();
+      long gaps = 0;
+      gaps += IntStream.range(Math.min(satA.x(), satB.x()), Math.max(satA.x(), satB.x()))
+          .filter(col -> !this.satelliteCols[col]).count();
+      gaps += IntStream.range(Math.min(satA.y(), satB.y()), Math.max(satA.y(), satB.y()))
+          .filter(row -> !this.satelliteRows[row]).count();
 
-      return (maxX - minX) + (maxY - minY) + ((xGaps + yGaps) * (scale - 1));
+      return satA.dist(satB) + (gaps * (scale - 1));
     }
 
     static Space fromLines(List<String> lines) {
