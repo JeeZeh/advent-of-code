@@ -1,13 +1,14 @@
 package day10;
 
-import day10.Solution.Tiles.Step;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 import lib.Grid;
 import lib.Input;
@@ -17,13 +18,13 @@ import lib.Pos.Direction;
 public class Solution {
 
   public static void main(String[] args) throws IOException {
-    List<String> lines = Input.lines("day10/example2.txt").toList();
+    List<String> lines = Input.lines("day10/input.txt").toList();
     var tiles = Tiles.fromLines(lines);
     var distances = tiles.getDistances(tiles.start);
-    System.out.println(distances);
     int partOne = distances.values().stream().max(Integer::compareTo).get();
-
+    var enclosed = tiles.findEnclosed(distances.keySet());
     System.out.println(STR."Part 1: \{partOne}");
+    System.out.println(STR."Part 2: \{enclosed.size()}");
   }
 
 
@@ -31,6 +32,61 @@ public class Solution {
 
     public record Step(Pos pos, int distance) {
 
+    }
+
+    Pos getWalkStart(Set<Pos> loop) {
+      for (int y = 0; y < elements.length; y++) {
+        var row = elements[y];
+        for (int x = 0; x < row.length; x++) {
+          var probe = new Pos(x, y);
+          if (loop.contains(probe)) {
+            return probe;
+          }
+        }
+      }
+      throw new IllegalStateException("Could not find starting position");
+    }
+
+    Direction getCheckDir(Direction heading) {
+      return switch (heading) {
+        case UP -> Direction.RIGHT;
+        case DOWN -> Direction.LEFT;
+        case LEFT -> Direction.UP;
+        case RIGHT -> Direction.DOWN;
+        default -> throw new IllegalStateException(STR."Unexpected value: \{heading}");
+      };
+    }
+
+    Set<Pos> findEnclosed(Set<Pos> loop) {
+      Set<Pos> enclosed = new HashSet<>();
+      Pos start = getWalkStart(loop);
+      Pos loc = start.add(0, 0); // Copy
+
+      Direction heading = Direction.getDir(start, nextSteps(start).findFirst().get().pos).get();
+      Direction checkDir = getCheckDir(heading);
+
+      do {
+        var check = checkDir.transpose(loc);
+        if (!loop.contains(check) && !enclosed.contains(check)) {
+          enclosed.addAll(findNonLoop(check, loop));
+        }
+
+        final var prevLoc = loc;
+        loc = heading.transpose(loc);
+        heading = switch (elements[loc.y()][loc.x()]) {
+          case CORNER_NE -> heading == Direction.DOWN ? Direction.RIGHT : Direction.UP;
+          case CORNER_NW -> heading == Direction.DOWN ? Direction.LEFT : Direction.UP;
+          case CORNER_SW -> heading == Direction.UP ? Direction.LEFT : Direction.DOWN;
+          case CORNER_SE -> heading == Direction.UP ? Direction.RIGHT : Direction.DOWN;
+          case START -> Direction.getDir(loc,
+              // Find the direction we must be hading in if we hit the start
+              nextSteps(loc).filter(step -> !step.pos.equals(prevLoc)).findFirst().get().pos).get();
+          default -> heading;
+        };
+        checkDir = getCheckDir(heading);
+      } while (!loc.equals(start));
+
+      return enclosed;
     }
 
     public Map<Pos, Integer> getDistances(Pos start) {
@@ -42,16 +98,32 @@ public class Solution {
       nextSteps(start).forEach(queue::add);
 
       while (!queue.isEmpty()) {
-        Step next = queue.poll();
-        if (!distances.containsKey(next.pos)) {
-          distances.put(next.pos, next.distance);
+        Step curr = queue.poll();
+        if (!distances.containsKey(curr.pos)) {
+          distances.put(curr.pos, curr.distance);
 
-          nextSteps(next.pos).filter(step -> !distances.containsKey(step.pos))
-              .map(step -> new Step(step.pos, step.distance + next.distance)).forEach(queue::add);
+          nextSteps(curr.pos).filter(next -> !distances.containsKey(next.pos))
+              .map(next -> new Step(next.pos, 1 + curr.distance)).forEach(queue::add);
         }
       }
 
       return distances;
+    }
+
+    public Set<Pos> findNonLoop(Pos start, Set<Pos> loop) {
+      final Deque<Pos> queue = new ArrayDeque<>();
+      final Set<Pos> seen = new HashSet<>();
+      queue.add(start);
+
+      while (!queue.isEmpty()) {
+        Pos curr = queue.poll();
+        if (!seen.contains(curr)) {
+          seen.add(curr);
+          surroundingPositions(curr).filter(next -> !loop.contains(next)).forEach(queue::add);
+        }
+      }
+
+      return seen;
     }
 
     Stream<Step> nextSteps(Pos pos) {
@@ -84,33 +156,33 @@ public class Solution {
     }
 
     public Step tryMove(Pos from, Pos to) {
-      // Not a valid destination
-      if (to.y() < 0) {
-        return new Step(from, 0);
-      }
-
       Optional<Direction> maybeApproach = Direction.getDir(from, to);
 
       // Not a valid approach direction
       if (maybeApproach.isEmpty()) {
         return new Step(from, 0);
       }
-
-      // Can't enter this tile from origin
       Direction approach = maybeApproach.get();
-      Tile tileType = this.elements[to.y()][to.x()];
-      if (!tileType.canEnter(approach)) {
+
+      Tile sourceType = this.elements[from.y()][from.x()];
+      if (!sourceType.canTraverse(approach.invert())) {
         return new Step(from, 0);
       }
 
-      return tileType.translate(from, approach);
+      // Can't enter this tile from origin
+      Tile targetType = this.elements[to.y()][to.x()];
+      if (!targetType.canTraverse(approach)) {
+        return new Step(from, 0);
+      }
+
+      return new Step(to, 1);
     }
   }
 
   public enum Tile {
     VERT, HORIZ, CORNER_NE, CORNER_NW, CORNER_SW, CORNER_SE, GROUND, START;
 
-    public boolean canEnter(Direction approach) {
+    public boolean canTraverse(Direction approach) {
       return switch (this) {
         case VERT -> approach == Direction.UP || approach == Direction.DOWN;
         case HORIZ -> approach == Direction.LEFT || approach == Direction.RIGHT;
@@ -120,24 +192,6 @@ public class Solution {
         case CORNER_SE -> approach == Direction.UP || approach == Direction.LEFT;
         case GROUND -> false;
         case START -> true;
-      };
-    }
-
-    public Step translate(Pos origin, Direction approach) {
-      return switch (this) {
-        case VERT -> new Step(approach == Direction.UP ? origin.add(0, -1) : origin.add(0, 1), 1);
-        case HORIZ ->
-            new Step(approach == Direction.LEFT ? origin.add(-1, 0) : origin.add(1, 0), 1);
-        case CORNER_NE ->
-            new Step(approach == Direction.DOWN ? origin.add(1, 1) : origin.add(-1, -1), 2);
-        case CORNER_NW ->
-            new Step(approach == Direction.DOWN ? origin.add(-1, 1) : origin.add(1, -1), 2);
-        case CORNER_SW ->
-            new Step(approach == Direction.RIGHT ? origin.add(1, 1) : origin.add(-1, -1), 2);
-        case CORNER_SE ->
-            new Step(approach == Direction.LEFT ? origin.add(-1, 1) : origin.add(1, -1), 12);
-        case START -> new Step(origin, 0);
-        default -> throw new IllegalStateException(STR."Unexpected value: \{this}");
       };
     }
 

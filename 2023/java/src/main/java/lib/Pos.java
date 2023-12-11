@@ -18,14 +18,42 @@ public record Pos(int x, int y) {
           return Optional.of(UP);
         }
       }
-      if (a.x < b.x) {
-        return Optional.of(RIGHT);
-      }
-      if (a.x > b.y) {
-        return Optional.of(LEFT);
+      if (a.y == b.y) {
+        if (a.x < b.x) {
+          return Optional.of(RIGHT);
+        }
+        if (a.x > b.x) {
+          return Optional.of(LEFT);
+        }
       }
 
       return Optional.empty();
+    }
+
+    public Pos transpose(Pos current) {
+      return switch (this) {
+        case UP -> current.add(0, -1);
+        case DOWN -> current.add(0, 1);
+        case LEFT -> current.add(-1, 0);
+        case RIGHT -> current.add(1, 0);
+        case UP_LEFT -> current.add(-1, -1);
+        case UP_RIGHT -> current.add(1, -1);
+        case DOWN_LEFT -> current.add(-1, 1);
+        case DOWN_RIGHT -> current.add(1, 1);
+      };
+    }
+
+    public Direction invert() {
+      return switch (this) {
+        case UP -> DOWN;
+        case DOWN -> UP;
+        case LEFT -> RIGHT;
+        case RIGHT -> LEFT;
+        case UP_LEFT -> DOWN_RIGHT;
+        case UP_RIGHT -> DOWN_LEFT;
+        case DOWN_LEFT -> UP_RIGHT;
+        case DOWN_RIGHT -> UP_LEFT;
+      };
     }
   }
 
