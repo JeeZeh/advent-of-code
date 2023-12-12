@@ -5,39 +5,42 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lib.Input;
+import org.apache.commons.lang3.ArrayUtils;
 
 /**
  * This solution is a re-implementation of Eoin Davey's solution in Python.
- *
+ * <p>
  * I didn't want to work through today's (not a fan of combinatorial problems), so I chose the
  * challenge of understanding and converting an existing Python solution to Java.
  */
 public class Solution {
 
-  public record FitState(int from, int groupSize) {
+  public record Pair<T>(T a, T b) {
+
   }
 
+  public record Schema(char[] pattern, int[] groups, Map<Pair<Integer>, Long> countCache,
+                       Map<Pair<Integer>, Boolean> fitCache) {
 
-  public record CountState(int from, int groupIdx) {
-  }
-
-
-
-  public record Schema(char[] pattern, int[] groups, Map<CountState, Long> countCache,
-      Map<FitState, Boolean> fitCache) {
     public long count(int position, int groupIdx) {
-      if (groupIdx >= groups.length) {
+      // See if the last group can fit anywhere
+      if (groupIdx == groups.length) {
         return IntStream.range(position, pattern.length).allMatch(this::spaceOrDamaged) ? 1 : 0;
       }
+
+      // End of pattern
       if (position >= pattern.length) {
         return 0;
       }
 
-      var countState = new CountState(position, groupIdx);
-      if (countCache.containsKey(countState)) {
-        return countCache.get(countState);
+      // Have we evaluated this group against from this point on already?
+      var countState = new Pair<Integer>(position, groupIdx);
+      var memoed = countCache.get(countState);
+      if (memoed != null) {
+        return memoed;
       }
 
       long count = 0;
@@ -48,11 +51,12 @@ public class Solution {
         count += count(position + 1, groupIdx);
       }
       countCache.put(countState, count);
+
       return count;
     }
 
     boolean fits(int from, int splitSize) {
-      var fitState = new FitState(from, splitSize);
+      var fitState = new Pair<Integer>(from, splitSize);
       var fitResult = fitCache.get(fitState);
       if (fitResult != null) {
         return fitResult;
@@ -78,16 +82,17 @@ public class Solution {
     }
 
     public Schema unfold() {
-      // TODO
-      return this;
+      var concatSchema = IntStream.range(0, 5).mapToObj(x -> new String(pattern))
+          .collect(Collectors.joining("?")).toCharArray();
+      var concatGroups = IntStream.range(0, 5).mapToObj(x -> groups).reduce(ArrayUtils::addAll)
+          .get();
+      return new Schema(concatSchema, concatGroups, new HashMap<>(), new HashMap<>());
     }
 
     static Schema fromLine(String line) {
       var parts = line.split(" ");
-      return new Schema(
-          parts[0].toCharArray(),
-          Arrays.stream(parts[1].split(",")).mapToInt(Integer::parseInt).toArray(),
-          new HashMap<>(),
+      return new Schema(parts[0].toCharArray(),
+          Arrays.stream(parts[1].split(",")).mapToInt(Integer::parseInt).toArray(), new HashMap<>(),
           new HashMap<>());
     }
   }
@@ -95,9 +100,9 @@ public class Solution {
   public static void main(String[] args) throws IOException {
     List<Schema> originalSchemas = Input.lines("day12/input.txt").map(Schema::fromLine).toList();
     long partOne = originalSchemas.stream().mapToLong(schema -> schema.count(0, 0)).sum();
-    long partTwo = 0;
+    long partTwo = originalSchemas.stream().mapToLong(schema -> schema.unfold().count(0, 0)).sum();
 
-    System.out.println(STR. "Part 1: \{ partOne }" );
-    System.out.println(STR. "Part 2: \{ partTwo }" );
+    System.out.println(STR."Part 1: \{partOne}");
+    System.out.println(STR."Part 2: \{partTwo}");
   }
 }
