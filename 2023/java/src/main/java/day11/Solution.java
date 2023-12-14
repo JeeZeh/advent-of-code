@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
-import lib.Grid;
+import lib.GridPrimitive;
 import lib.Input;
 import lib.Pos;
 
@@ -29,7 +29,7 @@ public class Solution {
   }
 
   public record Space(Boolean[][] elements, List<Pos> satellites, boolean[] satelliteCols,
-                      boolean[] satelliteRows) implements Grid<Boolean> {
+                      boolean[] satelliteRows) implements GridPrimitive<Boolean> {
 
     public long distance(Pos satA, Pos satB, long scale) {
       long gaps = 0;

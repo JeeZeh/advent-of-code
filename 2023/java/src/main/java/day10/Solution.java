@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-import lib.Grid;
+import lib.GridPrimitive;
 import lib.Input;
 import lib.Pos;
 import lib.Pos.Direction;
@@ -28,7 +28,7 @@ public class Solution {
   }
 
 
-  public record Tiles(Tile[][] elements, Pos start) implements Grid<Tile> {
+  public record Tiles(Tile[][] elements, Pos start) implements GridPrimitive<Tile> {
 
     public record Step(Pos pos, int distance) {
 

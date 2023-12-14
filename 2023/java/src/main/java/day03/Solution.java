@@ -1,6 +1,6 @@
 package day03;
 
-import lib.Grid;
+import lib.GridPrimitive;
 import lib.Input;
 import lib.Pos;
 import org.apache.commons.lang3.time.StopWatch;
@@ -9,13 +9,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.IntStream;
 
 public class Solution {
 
   public record Schematic(Character[][] elements, List<Part> numbers, List<Pos> maybeGears,
-                          boolean[][] symbols) implements Grid<Character> {
+                          boolean[][] symbols) implements GridPrimitive<Character> {
 
     static Schematic parseSchematic(List<String> lines) {
       int width = lines.size();

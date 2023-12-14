@@ -1,37 +1,71 @@
 package lib;
 
-import com.google.common.base.Preconditions;
-
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+
 public interface Grid<T> {
 
-  T[][] elements();
-
-  default T getElement(int row, int col) {
-    T[][] elements = elements();
-    Preconditions.checkArgument(row >= 0 && row < elements.length,
-        STR."Column '\{row}' not within bounds '0-\{elements.length}'");
-    Preconditions.checkArgument(col >= 0 && col < elements[row].length,
-        STR."Row '\{col}' not within bounds '0-\{elements[row].length}'");
-
-    return elements[col][row];
+  enum RotationDirection {
+    CLOCKWISE, COUNTER_CLOCKWISE
   }
 
-  default List<T[]> rows() {
-    return Arrays.stream(elements()).toList();
+  List<List<T>> elements();
+
+  default List<List<T>> rotate(RotationDirection direction) {
+    var elements = elements();
+    if (elements.isEmpty() || elements.get(0).isEmpty()) {
+      return elements; // No rotation for empty matrix
+    }
+
+    int rows = elements.size();
+    int cols = elements.get(0).size();
+
+    List<List<T>> rotatedMatrix = new ArrayList<>(cols);
+    for (int i = 0; i < cols; i++) {
+      rotatedMatrix.add(new ArrayList<>(rows));
+    }
+
+    if (direction == RotationDirection.CLOCKWISE) {
+      for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+          rotatedMatrix.get(j).add(0, elements.get(i).get(j));
+        }
+      }
+    } else if (direction == RotationDirection.COUNTER_CLOCKWISE) {
+      for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+          rotatedMatrix.get(cols - 1 - j).add(elements.get(i).get(j));
+        }
+      }
+    } else {
+      throw new IllegalArgumentException("Invalid rotation direction");
+    }
+
+    return rotatedMatrix;
+  }
+
+  default List<List<T>> mirror(boolean horizontal, boolean vertical) {
+    if (!horizontal && !vertical) {
+      return elements();
+    }
+
+    var temp = elements().stream().map(row -> horizontal ? row.reversed() : row).toList();
+    if (vertical) {
+      return temp.reversed();
+    }
+
+    return temp;
   }
 
   default int width() {
-    return elements()[0].length;
+    return elements().getFirst().size();
   }
 
   default int height() {
-    return elements().length;
+    return elements().size();
   }
 
   default Stream<Pos> surroundingPositions(Pos start) {
@@ -47,8 +81,8 @@ public interface Grid<T> {
 
   default String asString() {
     StringBuilder sb = new StringBuilder();
-    Arrays.stream(elements()).forEach(row -> {
-      Arrays.stream(row).forEach(sb::append);
+    elements().forEach(row -> {
+      row.forEach(sb::append);
       sb.append("\n");
     });
     return sb.toString();
