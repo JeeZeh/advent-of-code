@@ -56,14 +56,14 @@ def run() -> None:
 
     for i, r in enumerate(reflections):
         line, is_horizontal = r.line_of_reflection()
-        print(i, score(line, is_horizontal))
         note_sum += score(line, is_horizontal)
 
         line, is_horizontal = r.line_of_reflection(True)
+        print(line, score(line, is_horizontal))
         smudge_sum += score(line, is_horizontal)
 
     print(f"Sum of note values: {note_sum}")
-    # print(f"Sum of smudge values: {smudge_sum}")
+    print(f"Sum of smudge values: {smudge_sum}")
 
 
 if __name__ == "__main__":

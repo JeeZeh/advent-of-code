@@ -17,52 +17,59 @@ public class Solution {
   public record Pattern(List<List<Character>> elements) implements Grid<Character> {
 
     static Pattern fromLines(String block) {
-      return new Pattern(
-          block.lines().map(line -> line.chars().mapToObj(c -> (char) c).toList()).toList());
+      return new Pattern(block.lines()
+          .map(line -> line.chars().mapToObj(c -> (char) c).toList())
+          .toList());
     }
 
     public Pattern rotate() {
       return new Pattern(rotate(RotationDirection.CLOCKWISE));
     }
 
-    Pair<Long, Long> getReflectionNote(Pair<Long, Long> avoidMatch) {
-      var horizontal = findHorizontalReflectionIndex(avoidMatch == null ? 0 : avoidMatch.getRight());
+    Pair<Long, Long> getReflectionNote(int smudges) {
+      var horizontal = findHorizontalReflectionIndex(smudges);
       if (horizontal != -1) {
-        return new ImmutablePair<>(horizontal, 0L);
+        return new ImmutablePair<>(horizontal, -1L);
       }
 
-      var vertical = findVerticalReflectionIndex(avoidMatch == null ? 0 : avoidMatch.getLeft());
+      var vertical = findVerticalReflectionIndex(smudges);
       if (vertical == -1) {
         throw new IllegalStateException("No mirror found");
       }
 
-      return new ImmutablePair<>(0L, vertical);
+      return new ImmutablePair<>(-1L, vertical);
     }
 
-    long findVerticalReflectionIndex(long skipLine) {
-      return rotate().findHorizontalReflectionIndex(skipLine);
+    long findVerticalReflectionIndex(int smudges) {
+      return rotate().findHorizontalReflectionIndex(smudges);
     }
 
-    long findHorizontalReflectionIndex(long skipLine) {
+    long findHorizontalReflectionIndex(int smudges) {
       var image = elements();
       for (int y = 0; y < image.size() - 1; y++) {
         var rowA = image.get(y);
         var rowB = image.get(y + 1);
 
-        var allowedErrors = skipLine > 0L ? 1 : 0;
-        if (rowA.equals(rowB)) {
+        var foundErrors = 0;
+        for (int i = 0; i < width() && foundErrors <= smudges; i++) {
+          if (!rowA.get(i).equals(rowB.get(i))) {
+            foundErrors++;
+          }
+        }
+
+        if (foundErrors <= 1) {
           int walkA = y - 1;
           int walkB = y + 2;
           while (walkA >= 0 && walkB < image.size()) {
             var walkRowA = image.get(walkA--);
             var walkRowB = image.get(walkB++);
-            for (int i = 0; i < width() && allowedErrors >= 0; i++) {
+            for (int i = 0; i < width() && foundErrors <= 1; i++) {
               if (!walkRowA.get(i).equals(walkRowB.get(i))) {
-                allowedErrors--;
+                foundErrors++;
               }
             }
           }
-          if (allowedErrors >= 0 && (skipLine == 0 || skipLine != y)) {
+          if (foundErrors == smudges) {
             return y;
           }
         }
@@ -74,30 +81,26 @@ public class Solution {
 
 
   public static void main(String[] args) throws IOException {
-    List<Pattern> patterns = Arrays.stream(Input.read("day13/input.txt").split("\n\n"))
-        .map(Pattern::fromLines).toList();
-    List<Pair<Long, Long>> seenReflections = new ArrayList<>();
+    List<Pattern> patterns =
+        Arrays.stream(Input.read("day13/input.txt").split("\n\n")).map(Pattern::fromLines).toList();
 
     long partOne = patterns.stream().mapToLong(pattern -> {
-      System.out.println(pattern.asString());
-      Pair<Long, Long> result = pattern.getReflectionNote(null);
-      System.out.println(result);
-      seenReflections.add(result);
-      if (result.getLeft() != 0) {
+      Pair<Long, Long> result = pattern.getReflectionNote(0);
+      if (result.getLeft() != -1) {
         return (result.getLeft() + 1) * 100;
       }
       return result.getRight() + 1;
     }).sum();
 
-    long partTwo = IntStream.range(0, patterns.size()).mapToLong(i -> {
-      var result = patterns.get(i).getReflectionNote(seenReflections.get(i));
-      if (result.getLeft() != 0) {
+    long partTwo = patterns.stream().mapToLong(pattern -> {
+      var result = pattern.getReflectionNote(1);
+      if (result.getLeft() != -1) {
         return (result.getLeft() + 1) * 100;
       }
       return result.getRight() + 1;
     }).sum();
 
-    System.out.println(STR."Part 1: \{partOne}");
-    System.out.println(STR."Part 2: \{partTwo}");
+    System.out.println(STR. "Part 1: \{ partOne }" );
+    System.out.println(STR. "Part 2: \{ partTwo }" );
   }
 }
