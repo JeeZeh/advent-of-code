@@ -47,6 +47,16 @@ public interface Grid<T> {
     return rotatedMatrix;
   }
 
+  default T get(Pos a) {
+    return elements().get(a.y()).get(a.x());
+  }
+
+  default boolean isWithin(Pos a) {
+    var x = a.x();
+    var y = a.y();
+    return x >= 0 && x < width() && y >= 0 && y < height();
+  }
+
   default List<List<T>> mirror(boolean horizontal, boolean vertical) {
     if (!horizontal && !vertical) {
       return elements();
