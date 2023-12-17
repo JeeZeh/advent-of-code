@@ -57,6 +57,19 @@ public record Pos(int x, int y) implements Comparable<Pos> {
       };
     }
 
+    public Pos transpose(Pos current, int times) {
+      return switch (this) {
+        case UP -> current.add(0, -times);
+        case DOWN -> current.add(0, times);
+        case LEFT -> current.add(-times, 0);
+        case RIGHT -> current.add(times, 0);
+        case UP_LEFT -> current.add(-times, -times);
+        case UP_RIGHT -> current.add(times, -times);
+        case DOWN_LEFT -> current.add(-times, times);
+        case DOWN_RIGHT -> current.add(times, times);
+      };
+    }
+
     public Direction invert() {
       return switch (this) {
         case UP -> DOWN;
