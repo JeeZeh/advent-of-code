@@ -1,7 +1,13 @@
 package lib;
 
+import day10.Solution.Tile;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -90,11 +96,34 @@ public interface Grid<T> {
   }
 
   default String asString() {
+    return asString((Object::toString), (x, y) -> null);
+  }
+
+  default String asString(Function<T, String> elementMap) {
+    return asString(elementMap, (x, y) -> null);
+  }
+
+  default String asString(BiFunction<Integer, Integer, String> overlay) {
+    return asString(Object::toString, overlay);
+  }
+
+
+  default String asString(Function<T, String> elementMap,
+      BiFunction<Integer, Integer, String> overlay) {
+    var els = elements();
     StringBuilder sb = new StringBuilder();
-    elements().forEach(row -> {
-      row.forEach(sb::append);
+    for (int y = 0; y < els.size(); y++) {
+      for (int x = 0; x < els.get(y).size(); x++) {
+        var o = overlay.apply(x, y);
+        if (o != null) {
+          sb.append(o);
+        } else {
+          sb.append(elementMap.apply(els.get(y).get(x)));
+        }
+      }
       sb.append("\n");
-    });
+    }
+
     return sb.toString();
   }
 }
