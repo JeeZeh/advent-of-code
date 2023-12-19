@@ -16,7 +16,7 @@ public class Solution {
   final static int NEXT = -3;
 
   public static void main(String[] args) throws IOException {
-    var inputParts = Input.read("day19/example.txt").split("\r\n\r\n");
+    var inputParts = Input.read("day19/input.txt").split("\r\n\r\n");
     var workflowIds = inputParts[0].lines().filter(l -> !l.isEmpty()).map(l -> l.split("\\{")[0])
         .toList();
     var workflows = inputParts[0].lines().filter(l -> !l.isEmpty())
@@ -37,7 +37,8 @@ public class Solution {
       for (int rule = 0; rule < workflows.get(workflow).rules.size(); rule++) {
         if (workflows.get(workflow).rules.get(rule).destination == ACCEPTED) {
           total += getCombinationsForWorkflow(new ImmutablePair<>(workflows.get(workflow), rule),
-              workflows, inId);
+              workflows, inId, new MutablePair[]{new MutablePair(1, 4000), new MutablePair(1, 4000),
+                  new MutablePair(1, 4000), new MutablePair(1, 4000)});
         }
       }
     }
@@ -46,14 +47,11 @@ public class Solution {
   }
 
   public static long getCombinationsForWorkflow(Pair<Workflow, Integer> starting,
-      List<Workflow> workflows, int inId) {
-    MutablePair<Integer, Integer>[] partLimits = new MutablePair[]{new MutablePair(1, 4000),
-        new MutablePair(1, 4000), new MutablePair(1, 4000), new MutablePair(1, 4000)};
-
+      List<Workflow> workflows, int inId, MutablePair<Integer, Integer>[] partLimits) {
     var currentWorkflow = starting.getLeft();
     for (int currentRule = starting.getRight(); currentRule >= 0; currentRule--) {
       // Move the limit based on which rules we need to accept and break
-      var rule = currentWorkflow.rules.get(starting.getRight());
+      var rule = currentWorkflow.rules.get(currentRule);
 
       // 1. Constrain TO the rule which sends us to the last workflow (or accepts us if it's the start)
       if (currentRule == starting.getRight()) {
@@ -62,7 +60,7 @@ public class Solution {
           if (partLimits[rule.check].left <= rule.value) {
             partLimits[rule.check].setLeft(rule.value + 1);
           }
-        } else {
+        } else if (rule.condition == '<') {
           // We want to be below this value to meet
           if (partLimits[rule.check].right >= rule.value) {
             partLimits[rule.check].setRight(rule.value - 1);
@@ -77,7 +75,7 @@ public class Solution {
         if (partLimits[rule.check].right > rule.value) {
           partLimits[rule.check].setRight(rule.value);
         }
-      } else {
+      } else if (rule.condition == '<') {
         // We want to be at or above this value to break
         if (partLimits[rule.check].left < rule.value) {
           partLimits[rule.check].setLeft(rule.value);
@@ -88,9 +86,6 @@ public class Solution {
       }
     }
 
-    long sum = Arrays.stream(partLimits).mapToLong(pair -> pair.right - pair.left + 1)
-        .reduce((a, acc) -> a * acc).stream().sum();
-
     // Find what sends us to the current workflow
     //    - Workflows seem to only be mapped 1:M, so we only need to walk from A -> in
     if (currentWorkflow.id != inId) {
@@ -99,13 +94,14 @@ public class Solution {
       var nextRule = nextWorkflow.rules.stream()
           .filter(rule -> rule.destination == currentWorkflow.id).findFirst();
       var nextRuleId = nextWorkflow.rules.indexOf(nextRule.get());
-      return sum + getCombinationsForWorkflow(new ImmutablePair<>(nextWorkflow, nextRuleId),
-          workflows, inId);
+      return getCombinationsForWorkflow(new ImmutablePair<>(nextWorkflow, nextRuleId), workflows,
+          inId, partLimits);
     }
 
-    // 864256000000000
+    // 172800000000000
     // 167409079868000
-    return sum;
+    return Arrays.stream(partLimits).mapToLong(pair -> pair.right - pair.left + 1)
+        .reduce((a, acc) -> a * acc).stream().sum();
   }
 
   public static boolean trial(long[] part, List<Workflow> workflows, int startingWorkflowId) {
