@@ -83,7 +83,9 @@ public class Solution {
           partLimits[rule.check].setLeft(rule.value);
         }
       }
-      currentRule--;
+      if (Arrays.stream(partLimits).anyMatch(pair -> pair.left > pair.right)) {
+        return 0;
+      }
     }
 
     long sum = Arrays.stream(partLimits).mapToLong(pair -> pair.right - pair.left + 1)
@@ -101,7 +103,9 @@ public class Solution {
           workflows, inId);
     }
 
-    return 0;
+    // 864256000000000
+    // 167409079868000
+    return sum;
   }
 
   public static boolean trial(long[] part, List<Workflow> workflows, int startingWorkflowId) {
