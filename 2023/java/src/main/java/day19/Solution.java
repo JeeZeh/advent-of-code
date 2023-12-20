@@ -36,9 +36,10 @@ public class Solution {
     for (int workflow = 0; workflow < workflows.size(); workflow++) {
       for (int rule = 0; rule < workflows.get(workflow).rules.size(); rule++) {
         if (workflows.get(workflow).rules.get(rule).destination == ACCEPTED) {
-          total += getCombinationsForWorkflow(new ImmutablePair<>(workflows.get(workflow), rule),
-              workflows, inId, new MutablePair[]{new MutablePair(1, 4000), new MutablePair(1, 4000),
-                  new MutablePair(1, 4000), new MutablePair(1, 4000)});
+          MutablePair<Integer, Integer>[] limits = new MutablePair[]{new MutablePair(1, 4000),
+              new MutablePair(1, 4000), new MutablePair(1, 4000), new MutablePair(1, 4000)};
+          var accepted = new ImmutablePair<>(workflows.get(workflow), rule);
+          total += getCombinationsForWorkflow(accepted, workflows, inId, limits);
         }
       }
     }
@@ -98,8 +99,6 @@ public class Solution {
           inId, partLimits);
     }
 
-    // 172800000000000
-    // 167409079868000
     return Arrays.stream(partLimits).mapToLong(pair -> pair.right - pair.left + 1)
         .reduce((a, acc) -> a * acc).stream().sum();
   }
@@ -121,8 +120,6 @@ public class Solution {
         }
       }
     }
-
-//    throw new IllegalStateException(STR."No trial result for part: \{Arrays.toString(part)}");
   }
 
   public static long[] parsePart(String line) {
