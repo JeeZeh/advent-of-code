@@ -16,4 +16,12 @@ public class Number {
       return (b / gcd(a, b)) * a;
     }
   }
+
+  public static long mod(long lhs, long rhs) {
+    var res = lhs % rhs;
+    if (res < 0) {
+      return res + rhs;
+    }
+    return res;
+  }
 }

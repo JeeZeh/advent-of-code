@@ -100,6 +100,10 @@ public interface Grid<T> {
         .filter(this::isWithin);
   }
 
+  default Stream<Pos> surroundingPositionsCardinalUnchecked(Pos start) {
+    return Stream.of(start.add(-1, 0), start.add(1, 0), start.add(0, -1), start.add(0, 1));
+  }
+
   default String asString() {
     return asString((Object::toString), (x, y) -> null);
   }
