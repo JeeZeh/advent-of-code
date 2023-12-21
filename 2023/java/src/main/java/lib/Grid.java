@@ -95,6 +95,11 @@ public interface Grid<T> {
         .filter(p -> !p.equals(start));
   }
 
+  default Stream<Pos> surroundingPositionsCardinal(Pos start) {
+    return Stream.of(start.add(-1, 0), start.add(1, 0), start.add(0, -1), start.add(0, 1))
+        .filter(this::isWithin);
+  }
+
   default String asString() {
     return asString((Object::toString), (x, y) -> null);
   }
