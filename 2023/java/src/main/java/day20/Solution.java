@@ -11,27 +11,51 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lib.Input;
+import lib.Number;
 
 public class Solution {
 
   public static void main(String[] args) throws IOException {
-    List<String> lines = Input.lines("day20/input.txt").toList();
-    List<Module> modules = createModules(lines);
+    List<Module> modules = createModules(Input.lines("day20/input.txt").toList());
+    var broad = modules.stream().filter(m -> m.getId().equals("broadcaster")).findFirst().get();
+    ButtonModule button = new ButtonModule(broad);
+
     Router router = new Router();
     modules.forEach(m -> m.connect(router));
-
-    var broadcaster = modules.stream().filter(m -> m.getId().equals("broadcaster")).findFirst()
-        .get();
-    ButtonModule button = new ButtonModule(broadcaster);
     button.connect(router);
 
     pressButton(router, button, 1000);
-    System.out.println(STR."Part 1: \{router.lowPulses * router.highPulses}");
+    System.out.println(STR."Part 1: \{router.getLowPulses() * router.getHighPulses()}");
+    System.out.println(STR."Part 2: \{findRxInputPulse(router, modules, button)}");
+  }
 
-    modules.forEach(Module::reset);
+  public static long findRxInputPulse(Router router, List<Module> modules, ButtonModule button) {
+    var rxInputs = getInputsForId(modules, "rx");
+    var proxyRxInputs = getInputsForId(modules, rxInputs.getFirst().id);
+    return proxyRxInputs.stream().map(input -> getCycleForHighBit(router, modules, button, input))
+        .reduce(Number::lcm).get();
+  }
+
+  public static long getCycleForHighBit(Router router, List<Module> modules, ButtonModule button,
+      Module module) {
     router.reset();
+    modules.forEach(Module::reset);
 
-    // TODO: Part 2
+    int firstInstance = 0;
+    while (router.getHighPulses(module) == 0) {
+      button.push();
+      router.process();
+      firstInstance += 1;
+    }
+
+    int secondInstance = firstInstance;
+    while (router.getHighPulses(module) == 1) {
+      button.push();
+      router.process();
+      secondInstance += 1;
+    }
+
+    return secondInstance - firstInstance;
   }
 
   public static void pressButton(Router router, ButtonModule button, int times) {
@@ -39,6 +63,10 @@ public class Solution {
       button.push();
       router.process();
     }
+  }
+
+  public static List<Module> getInputsForId(List<Module> modules, String id) {
+    return modules.stream().filter(module -> module.id.equals(id)).findFirst().get().inputs;
   }
 
   public static List<Module> createModules(List<String> lines) {
@@ -75,9 +103,8 @@ public class Solution {
           modules.put(dest, destModule);
         }
         sourceModule.addDestination(destModule);
-        if (ConjunctionModule.class.isAssignableFrom(destModule.getClass())) {
-          ((ConjunctionModule) destModule).addInput(sourceModule);
-        }
+        destModule.addInput(sourceModule);
+
       });
     }
 

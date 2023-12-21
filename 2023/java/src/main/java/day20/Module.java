@@ -14,6 +14,7 @@ public abstract class Module {
   final List<Module> destinations = new ArrayList<>();
 
   Router router;
+  final List<Module> inputs = new ArrayList<>();
 
   public void connect(Router router) {
     this.router = router;
@@ -77,6 +78,7 @@ public abstract class Module {
 
     public void addInput(Module input) {
       lastInputs.put(input, LOW);
+      super.addInput(input);
     }
 
     @Override
@@ -90,6 +92,10 @@ public abstract class Module {
       var send = lastInputs.values().stream().allMatch(p -> p == HIGH) ? LOW : HIGH;
       destinations.forEach(d -> this.send(this, d, send));
     }
+  }
+
+  public void addInput(Module input) {
+    this.inputs.add(input);
   }
 
   public static class BroadcastModule extends Module {
