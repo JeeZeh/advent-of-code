@@ -28,6 +28,14 @@
             <version>3.14.0</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/io.github.tudo-aqua/z3-turnkey -->
+        <dependency>
+            <groupId>io.github.tudo-aqua</groupId>
+            <artifactId>z3-turnkey</artifactId>
+            <version>4.8.14</version>
+        </dependency>
+
+
     </dependencies>
     <build>
         <plugins>
