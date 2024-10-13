@@ -7,10 +7,10 @@ default-run = "aoc"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = "3.0.0-beta.5"
-itertools = "0.10.0"
-primes = "0.3.0"
-rayon = "1.5"
-cached = "0.26.2"
-ahash = "0.7.6"
-regex = "1.7.0"
+clap = "4.5.20"
+itertools = "0.13.0"
+primes = "0.4.0"
+rayon = "1.10.0"
+cached = "0.53.1"
+ahash = "0.8.11"
+regex = "1.11.0"

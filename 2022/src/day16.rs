@@ -42,7 +42,7 @@ fn compute_all_paths<'a>(
     valves: &'a HashMap<String, Valve>,
     distances: &'a HashMap<&'a String, HashMap<&'a String, u32>>,
     max_time: i32,
-) -> Vec<(u64, Vec<&String>)> {
+) -> Vec<(u64, Vec<&'a String>)> {
     let mut paths_and_pressures: Vec<(u64, Vec<&'a String>)> = Vec::new();
     // Stack holds (remaining time, pressure released, path)
     let mut choices: VecDeque<(i32, u64, Vec<&'a String>, &'a String)> = VecDeque::new();

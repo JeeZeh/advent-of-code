@@ -1,7 +1,4 @@
-#![feature(box_syntax)]
 #![allow(dead_code)]
-#![feature(option_result_contains)]
-#![feature(entry_insert)]
 #![feature(int_roundings)]
 
 mod aocutil;
@@ -36,60 +33,58 @@ const NUM_DAYS: u32 = 25;
 use std::time::{Duration, Instant};
 
 use aocutil::*;
-use clap::{App, Arg};
+use clap::{Arg, ArgAction, Command};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 pub fn main() {
-    let matches = App::new("AoC Runner")
+    let matches = Command::new("AoC Runner")
         .version("2021")
         .author("Jesse Ashmore")
         .about("Advent of Code solution runner")
         .arg(
             Arg::new("day")
-                .required(false)
-                .takes_value(true)
-                .about("Which solution to run, runs all solutions if omitted"),
+                .help("Which solution to run, runs all solutions if omitted"),
         )
         .arg(
             Arg::new("language")
-                .about("Target language for solution(s)")
+                .help("Target language for solution(s)")
                 .short('l')
                 .required(false)
-                .default_value("rs"),
+                .default_value("rs")
         )
         .arg(
             Arg::new("time")
-                .about("Output solution(s) run time")
+                .help("Output solution(s) run time")
                 .short('t')
                 .long("time")
                 .required(false)
-                .takes_value(false),
+                .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new("sample")
-                .about("Runs the sample input for the solution(s)")
+                .help("Runs the sample input for the solution(s)")
                 .short('s')
                 .long("sample")
                 .required(false)
-                .takes_value(false),
+                .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new("parallel")
-                .about("Runs all solutions in parallel")
+                .help("Runs all solutions in parallel")
                 .short('p')
                 .long("parallel")
                 .required(false)
-                .takes_value(false),
+                .action(ArgAction::SetTrue),
         )
         .get_matches();
 
-    let time = matches.is_present("time");
-    let sample_test = matches.is_present("sample");
-    let parallel = matches.is_present("parallel");
+    let time = matches.get_flag("time");
+    let sample_test = matches.get_flag("sample");
+    let parallel = matches.get_flag("parallel");
 
-    if let Some(day) = matches.value_of("day") {
-        let (output, dur) = match matches.value_of("language").unwrap() {
-            "rs" => run_rust(day.parse().unwrap(), sample_test),
+    if let Some(day) = matches.get_one::<&str>("day") {
+        let (output, dur) = match matches.get_one::<&str>("language").unwrap() {
+            &"rs" => run_rust(day.parse().unwrap(), sample_test),
             // "py" => run_python(opts.day),
             _ => panic!("Language not supported"),
         };

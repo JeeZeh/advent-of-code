@@ -64,6 +64,7 @@ impl Monkey {
     /// Makes the monkey inspect all items, returning a vec of items to be thrown, where the first
     /// element represents the monkey they item is thrown to, and the second representing the item
     /// with the latest-calculated worry level.
+    ///
     /// If `wrap_around` is provided, this will not perform the division by 3 that reduces worry
     /// levels at a constant rate, but instead will wrap the worry level around the provided value.
     fn inspect(&mut self, wrap_around: Option<u64>) -> Vec<(usize, u64)> {
