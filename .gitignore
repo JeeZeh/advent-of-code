@@ -6,3 +6,5 @@ __pycache__
 obj
 bin
 target
+*.egg-info
+build

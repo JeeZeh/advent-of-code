@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "advent-of-code-jeezeh"
+dynamic = ["version"]
+description = "JeeZeh's solutions for Advent of Code 2024 https://adventofcode.com/"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Games/Entertainment :: Puzzle Games",
+]
+dependencies = ["advent-of-code-data >= 2.0.0"]
+
+[[project.authors]]
+name = "Jesse Ashmore"
+
+# [project.license]
+# text = "WTFPL"
+
+# [project.readme]
+# file = "README.md"
+# content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://github.com/jeezeh/advent-of-code"
+
+[project.scripts]
+aocj = "advent.aoc:solve"
+# aocw = "aoc_wim.cli:run_one"
+# _set_docstrings = "aoc_wim.util:set_docstrings"
+# aoc-init = "aoc_wim.util:start"
+
+[project.entry-points."adventofcode.user"]
+jeezeh = "advent:plugin"
