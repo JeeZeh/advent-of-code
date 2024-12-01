@@ -1,0 +1,8 @@
+from advent.solution import Solution
+
+
+class {class_name}(Solution):
+
+    def run(self, puzzle_input: str):
+        
+        return None, None
