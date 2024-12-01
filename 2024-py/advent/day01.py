@@ -1,18 +1,21 @@
 import sys
+from collections import Counter
 
+list_a = []
+list_b = []
 
-# This is actually 2017-01
-def circular_sum(digits: list[int], sum_distance=1):
-    total = 0
-    list_size = len(digits)
-    for i in range(list_size):
-        if digits[i] == digits[(i + sum_distance) % list_size]:
-            total += digits[i]
+for line in sys.stdin.readlines():
+    a, b = line.split("   ")
+    list_a.append(int(a))
+    list_b.append(int(b))
 
-    return total
+list_a.sort(), list_b.sort()
 
+total = sum(abs(num_a - list_b[i]) for i, num_a in enumerate(list_a))
 
-digits = [int(c) for c in sys.stdin.readline()]
+print(f"Part 1: {total}")
 
-print(f"Part 1: {circular_sum(digits)}")
-print(f"Part 2: {circular_sum(digits, sum_distance=len(digits) // 2)}")
+nums_in_b = Counter(list_b)
+similarity = sum(num * nums_in_b.get(num, 0) for num in list_a)
+
+print(f"Part 2: {similarity}")
