@@ -1,8 +1,13 @@
+from aocd import get_puzzle
+
 from advent.solution import Solution
 
 
 class {class_name}(Solution):
-
     def run(self, puzzle_input: str):
         
         return None, None
+
+
+if __name__ == "__main__":
+    {class_name}().run(get_puzzle(day={day}, year={year}).input_data)

@@ -22,7 +22,9 @@ def cli():
             raise FileExistsError(msg)
 
         template = solutions / "__template__"
-        content = template.read_text().format(class_name=day_name.capitalize())
+        content = template.read_text().format(
+            class_name=day_name.capitalize(), day=args.new, year="2024"
+        )
         solution_file.write_text(content)
 
         # Update index
