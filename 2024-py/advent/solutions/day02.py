@@ -2,7 +2,7 @@ from advent.solution import Solution
 
 
 class Day02(Solution):
-    def direction(self, a, b):
+    def direction(self, a: int, b: int):
         return max(min(b - a, 1), -1)
 
     def floor_is_safe(self, level: list[int]):
@@ -15,7 +15,7 @@ class Day02(Solution):
 
         return True
 
-    def test_floor(self, level: list[int], with_removal=False):
+    def test_floor(self, level: list[int], *, with_removal: bool = False):
         if self.floor_is_safe(level):
             return True
 
