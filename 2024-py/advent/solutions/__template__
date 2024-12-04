@@ -10,4 +10,4 @@ class {class_name}(Solution):
 
 
 if __name__ == "__main__":
-    {class_name}().run(get_puzzle(day={day}, year={year}).input_data)
+    print({class_name}().run(get_puzzle(day={day}, year={year}).input_data))
