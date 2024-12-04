@@ -10,8 +10,6 @@ from aocd import get_puzzle
 
 from advent.solution import Solution
 
-match_dont = compile(r"don't\(\)")
-
 
 class Flag(ABC):
     @staticmethod
@@ -88,6 +86,7 @@ class Day03(Solution):
         with_flags: list[Instruction] = []
         last: Flag = Do()
         for op in instructions:
+            # Replace with match
             if isinstance(last, Do) and isinstance(op, Instruction):
                 with_flags.append(op)
             if isinstance(op, Flag):
