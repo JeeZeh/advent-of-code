@@ -1,0 +1,16 @@
+{
+    "editor.rulers": [
+        88,
+        120
+    ],
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports.ruff": "always",
+        "source.fixAll": "always",
+    },
+    "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.typeCheckingMode": "strict",
+    "cSpell.words": [
+        "Mult"
+    ]
+}
