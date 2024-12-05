@@ -1,6 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from itertools import permutations
+from functools import cmp_to_key
 
 from aocd import get_puzzle
 
@@ -47,53 +47,32 @@ def check_update(update: Update | tuple[int], state: State):
     return True
 
 
-def fix_update(update: Update, state: State):
-    for permutation in permutations(update, len(update)):
-        if check_update(list(permutation), state):
-            return permutation
+def sort_update(update: Update, state: State) -> Update:
+    def comparator(a: int, b: int):
+        if a == b:
+            return 0
+        if b in state.must_precede[a]:
+            return -1
 
-    raise RuntimeError("Unreachable states")
+        return 1
 
-
-def sort_update(update: Update, state: State):
-    for i, num in enumerate(update[:-1]):
-        before, after = update[:i], update[i + 1 :]
-        try:
-            move_back = next(b for b in before if b in state.must_precede[num])
-            try_fix = update[:]
-            try_fix.insert(update.index(move_back), try_fix.pop(i))
-            if check_update(try_fix, state):
-                return try_fix
-            return sort_update(try_fix, state)
-        except StopIteration:
-            pass
-
-        try:
-            move_forward = next(a for a in after if a in state.must_follow[num])
-            try_fix = update[:]
-            try_fix.insert(update.index(move_forward), try_fix.pop(i))
-            if check_update(try_fix, state):
-                return try_fix
-
-            return sort_update(try_fix, state)
-        except StopIteration:
-            pass
-
-    raise RuntimeError("Unreachable")
+    return sorted(update, key=cmp_to_key(comparator))
 
 
 class Day05(Solution):
 
     def run(self, puzzle_input: str):
         state = State.from_string(puzzle_input)
+
         valid_updates = [
             update for update in state.updates if check_update(update, state)
         ]
-        fixed_updates = [
-            sort_update(update, state)
-            for update in state.updates
-            if update not in valid_updates
-        ]
+
+        fixed_updates: list[Update] = []
+        for update in state.updates:
+            if update not in valid_updates:
+                print(update)
+                fixed_updates.append(sort_update(update, state))
 
         return sum(u[len(u) // 2] for u in valid_updates), sum(
             u[len(u) // 2] for u in fixed_updates
@@ -101,4 +80,4 @@ class Day05(Solution):
 
 
 if __name__ == "__main__":
-    print(Day05().run(get_puzzle(day=5, year=2024).examples[0].input_data))
+    print(Day05().run(get_puzzle(day=5, year=2024).input_data))
