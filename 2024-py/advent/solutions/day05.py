@@ -1,81 +1,61 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from functools import cmp_to_key
+from typing import Self
 
 from aocd import get_puzzle
 
 from advent.solution import Solution
 
-Rule = tuple[int, int]
-Update = list[int]
+
+class Update(list[int]):
+    def sort_by(self, rules: dict[int, list[int]]) -> Self:
+        def comparator(a: int, b: int):
+            if a == b:
+                return 0
+            if b in rules[a]:
+                return -1
+
+            return 1
+
+        return Update(sorted(self, key=cmp_to_key(comparator)))  # type: ignore
 
 
 @dataclass
 class State:
-    rules: list[Rule]
     updates: list[Update]
-    must_precede: dict[int, list[int]]
-    must_follow: dict[int, list[int]]
+    rules: dict[int, list[int]]
 
     @staticmethod
     def from_string(text: str):
         a, b = text.split("\n\n")
-        rules: list[tuple[int, int]] = [
-            tuple(map(int, line.split("|"))) for line in a.splitlines()  # type: ignore
-        ]
-        updates = [
-            [int(p) for p in update.strip().split(",")] for update in b.splitlines()
-        ]
-
         precede: dict[int, list[int]] = defaultdict(list)
-        follow: dict[int, list[int]] = defaultdict(list)
-        for first, second in rules:
+        for line in a.splitlines():
+            first, second = tuple(map(int, line.split("|")))
             precede[first].append(second)
-            follow[second].append(first)
 
-        return State(rules, updates, precede, follow)
+        updates = [
+            Update([int(c) for c in update.split(",")]) for update in b.splitlines()
+        ]
 
-
-def check_update(update: Update | tuple[int], state: State):
-    for i, num in enumerate(update[:-1]):
-        before, after = update[:i], update[i + 1 :]
-        if any(b in state.must_precede[num] for b in before) or any(
-            a in state.must_follow[num] for a in after
-        ):
-            return False
-
-    return True
-
-
-def sort_update(update: Update, state: State) -> Update:
-    def comparator(a: int, b: int):
-        if a == b:
-            return 0
-        if b in state.must_precede[a]:
-            return -1
-
-        return 1
-
-    return sorted(update, key=cmp_to_key(comparator))
+        return State(updates, precede)
 
 
 class Day05(Solution):
-
     def run(self, puzzle_input: str):
         state = State.from_string(puzzle_input)
 
-        valid_updates = [
-            update for update in state.updates if check_update(update, state)
-        ]
-
+        valid_updates: list[Update] = []
         fixed_updates: list[Update] = []
-        for update in state.updates:
-            if update not in valid_updates:
-                print(update)
-                fixed_updates.append(sort_update(update, state))
+        for before in state.updates:
+            if (after := before.sort_by(state.rules)) != before:
+                fixed_updates.append(after)
+            else:
+                valid_updates.append(before)
 
-        return sum(u[len(u) // 2] for u in valid_updates), sum(
-            u[len(u) // 2] for u in fixed_updates
+        return (
+            sum(u[len(u) // 2] for u in valid_updates),
+            sum(u[len(u) // 2] for u in fixed_updates),
         )
 
 
