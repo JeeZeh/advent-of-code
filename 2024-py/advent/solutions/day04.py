@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Self
 
-from aocd import get_puzzle
+from aocd.models import Puzzle
 
 from advent.solution import Solution
 
@@ -19,16 +19,36 @@ class Pos:
 @dataclass
 class Grid:
     grid: list[list[str]]
+    width: int
+    height: int
 
     @staticmethod
     def from_string(string: str):
-        return Grid([list(line) for line in string.splitlines()])
+        grid_list = [list(line) for line in string.splitlines()]
+        if not grid_list:
+            raise ValueError("Grid empty")
 
-    def get(self, pos: Pos):
-        try:
+        height = len(grid_list)
+        expected_width = len(grid_list[0])
+
+        # Check is square
+        for row in grid_list:
+            if not row or len(row) != expected_width:
+                raise ValueError("Grid is not square")
+
+        return Grid(grid=grid_list, width=expected_width, height=height)
+
+    def get(self, pos: Pos, *, wrap: bool = False):
+        if wrap:
+            try:
+                return self.grid[pos.y][pos.x]
+            except KeyError:
+                return None
+        else:
+            if not 0 <= pos.y < self.height or not 0 <= pos.x < self.width:
+                return None
+
             return self.grid[pos.y][pos.x]
-        except:  # noqa: E722
-            return None
 
     def rows(self):
         return self.grid.__iter__()
@@ -51,12 +71,17 @@ class Direction(Enum):
 
 
 class Day04(Solution):
-    def search_word(self, grid: Grid, pos: Pos, need: list[str], direction: Direction):
-        if grid.get(pos) == need[0]:
-            if len(need) == 1:
-                return 1
+    def search_word(self, grid: Grid, pos: Pos, need: list[str], direction: Pos) -> int:
+        check = pos
+        while need:
+            if grid.get(check) == need[0]:
+                if len(need) == 1:
+                    return 1
 
-            return self.search_word(grid, pos.add(direction.value), need[1:], direction)
+                need = need[1:]
+                check = check.add(direction)
+            else:
+                break
 
         return 0
 
@@ -68,10 +93,12 @@ class Day04(Solution):
         for pos in grid.scan():
             if grid.get(pos) == word[0]:
                 for direction in Direction:
-                    count += self.search_word(grid, pos.add(direction.value), word[1:], direction)
+                    count += self.search_word(
+                        grid, pos.add(direction.value), word[1:], direction.value
+                    )
 
         return count, None
 
 
 if __name__ == "__main__":
-    print(Day04().run(get_puzzle(day=4, year=2024).input_data))
+    print(Day04().run(Puzzle(day=4, year=2024).input_data))

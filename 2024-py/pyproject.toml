@@ -10,7 +10,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Games/Entertainment :: Puzzle Games",
 ]
-dependencies = ["advent-of-code-data >= 2.0.0"]
+dependencies = ["advent-of-code-data >= 2.0.4"]
 
 [[project.authors]]
 name = "Jesse Ashmore"
@@ -63,4 +63,5 @@ ignore = [
     "TD003",
     "FIX002", # too verbose descriptions of todos
     "PGH003", # allow type: ignore (useful when Pylance is set to "strict")
+    "EM101",  # allow string literal in errors
 ]
