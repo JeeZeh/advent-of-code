@@ -4,6 +4,7 @@ from advent.solutions.day02 import Day02
 from advent.solutions.day03 import Day03
 from advent.solutions.day04 import Day04
 from advent.solutions.day05 import Day05
+from advent.solutions.day06 import Day06
 
 index: dict[str, type[Solution]] = {
     ### START SOLUTIONS ###
@@ -12,5 +13,6 @@ index: dict[str, type[Solution]] = {
     "03": Day03,
     "04": Day04,
     "05": Day05,
+    "06": Day06,
     ### END SOLUTIONS ###
 }

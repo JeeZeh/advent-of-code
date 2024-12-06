@@ -64,4 +64,5 @@ ignore = [
     "FIX002", # too verbose descriptions of todos
     "PGH003", # allow type: ignore (useful when Pylance is set to "strict")
     "EM101",  # allow string literal in errors
+    "EM101",  # allow string templating in errors
 ]
