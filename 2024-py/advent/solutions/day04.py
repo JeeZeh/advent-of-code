@@ -1,23 +1,10 @@
-from enum import Enum
-
 from advent.grid import Grid
 from advent.pos import Pos
 from advent.solution import Solution
 
 
-class Direction(Enum):
-    UP_LEFT = Pos(-1, -1)
-    UP = Pos(0, -1)
-    UP_RIGHT = Pos(1, -1)
-    RIGHT = Pos(1, 0)
-    DOWN_RIGHT = Pos(1, 1)
-    DOWN = Pos(0, 1)
-    DOWN_LEFT = Pos(-1, 1)
-    LEFT = Pos(-1, 0)
-
-
 class Day04(Solution):
-    def search_word(self, grid: Grid, pos: Pos, need: list[str], direction: Pos) -> int:
+    def search_word(self, grid: Grid[str], pos: Pos, need: list[str], direction: Pos) -> int:
         check = pos
         while need:
             if grid.get(check) == need[0]:
@@ -32,7 +19,7 @@ class Day04(Solution):
         return 0
 
     def run(self, puzzle_input: str):
-        grid: Grid = Grid.from_string(puzzle_input)
+        grid: Grid[str] = Grid.from_string(puzzle_input)
 
         word = ["X", "M", "A", "S"]
         xmas = 0
@@ -41,7 +28,7 @@ class Day04(Solution):
                 for direction in Direction:
                     xmas += self.search_word(grid, pos.add(direction.value), word[1:], direction.value)
 
-        kernel = Grid.from_list(
+        kernel = Grid[str | None].from_list(
             [
                 ["M", None, "M"],
                 [None, "A", None],
@@ -51,7 +38,7 @@ class Day04(Solution):
 
         x_mas = 0
         for _rotations in range(4):
-            x_mas += grid.find_convolution_matches(kernel)
+            x_mas += grid.find_convolution_matches(kernel)  # type: ignore
             kernel = kernel.rotate()
 
         return xmas, x_mas

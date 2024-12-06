@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Self
 
@@ -5,18 +6,18 @@ from advent.pos import Pos
 
 
 @dataclass
-class Grid:
-    grid: list[list[str | None]]
+class Grid[T]:
+    grid: list[list[T]]
     width: int
     height: int
 
     @staticmethod
-    def from_string(string: str):
-        grid_list = [list(line) for line in string.splitlines()]
-        return Grid.from_list(grid_list)  # type: ignore
+    def from_string(string: str, mapper: Callable[[str], T] = lambda c: str(c)):
+        grid_list = [[mapper(c) for c in line] for line in string.splitlines()]
+        return Grid[T].from_list(grid_list)
 
     @staticmethod
-    def from_list(grid_list: list[list[str | None]]):
+    def from_list(grid_list: list[list[T]]):
         if not grid_list:
             raise ValueError("Grid empty")
 
@@ -73,3 +74,6 @@ class Grid:
             width=self.width,
             height=self.height,
         )
+
+    def __str__(self):
+        return "\n".join("".join(str(g) for g in line) for line in self.grid)
