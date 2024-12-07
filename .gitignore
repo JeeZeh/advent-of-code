@@ -4,7 +4,6 @@ out
 __pycache__
 .iml
 obj
-bin
 target
 *.egg-info
 build
