@@ -16,7 +16,10 @@ class Operation(Enum):
 @dataclass
 class Equation:
     calibration: int
-    operands: list[int]
+    operands: tuple[int, ...]
+
+    def __hash__(self) -> int:
+        return (self.calibration, self.operands).__hash__()
 
     def evaluate(self, operations: list[Operation] | tuple[Operation, ...]):
         value = self.operands[0]
@@ -41,43 +44,28 @@ class Day07(Solution):
         equations: list[Equation] = []
         for line in puzzle_input.splitlines():
             calibration, operands = line.split(": ")
-            equations.append(Equation(int(calibration), list(map(int, operands.split()))))
+            equations.append(Equation(int(calibration), tuple(map(int, operands.split()))))
 
         return equations
 
+    def validate_equations(self, equations: set[Equation], operations: tuple[Operation, ...]):
+        for equation in equations:
+            for combination in product(operations, repeat=len(equation.operands) - 1):
+                if equation.evaluate(combination):
+                    yield equation
+                    break
+
     def run(self, puzzle_input: str):
-        equations = self.parse(puzzle_input)
+        equations = set(self.parse(puzzle_input))
 
         # Idea: lazy evaluate and bail once equation becomes too large
         # Idea: dynamic programming to memoize when operand combinations have already been tried?
+        valid_with_add_mult = set(self.validate_equations(equations, (Operation.ADD, Operation.MULT)))
+        part_one = sum(eq.calibration for eq in valid_with_add_mult)
+        valid_with_all = set(self.validate_equations(equations - valid_with_add_mult, tuple(Operation)))
+        part_two = part_one + sum(eq.calibration for eq in valid_with_all)
 
-        return (
-            sum(eq.calibration for eq in self.part_one(equations)),
-            sum(eq.calibration for eq in self.part_two(equations)),
-        )
-
-    def part_two(self, equations: list[Equation]):
-        possible: list[Equation] = []
-        for equation in equations:
-            for operations in product(Operation, repeat=len(equation.operands) - 1):
-                if equation.evaluate(operations):
-                    possible.append(equation)
-                    break
-
-        return possible
-
-    def part_one(
-        self,
-        equations: list[Equation],
-    ):
-        possible: list[Equation] = []
-        for equation in equations:
-            for operations in product((Operation.ADD, Operation.MULT), repeat=len(equation.operands) - 1):
-                if equation.evaluate(operations):
-                    possible.append(equation)
-                    break
-
-        return possible
+        return part_one, part_two
 
 
 if __name__ == "__main__":
