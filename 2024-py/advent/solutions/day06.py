@@ -46,7 +46,6 @@ class Day06(Solution):
         raise ValueError("No guard found")
 
     def patrol(self, floor: Grid[Tile], guard: Pos, facing: int):
-        guard = guard
         while True:
             yield guard, facing
             step = guard.add(DIRECTIONS[facing].value)
@@ -62,16 +61,13 @@ class Day06(Solution):
         turtle_generator = self.patrol(floor, guard, facing)
         hare_generator = self.patrol(floor, guard, facing)
 
-        turtle = next(turtle_generator)
-        hare = next(hare_generator)
-        next(hare_generator)
         try:
             while True:
-                if hare == turtle:
-                    return True
                 next(hare_generator)
                 hare = next(hare_generator)
                 turtle = next(turtle_generator)
+                if hare == turtle:
+                    return True
         except StopIteration:
             return False
 
@@ -80,20 +76,19 @@ class Day06(Solution):
         guard = self.find_guard(puzzle_input)
 
         start = guard.add(Direction.UP.value)
-        walk: list[tuple[Pos, int]] = list(self.patrol(floor, guard, DIRECTIONS.index(Direction.UP)))
-        seen: set[tuple[Pos, int]] = {(start, 0)}
+        walk = len({pos for pos, _ in self.patrol(floor, guard, DIRECTIONS.index(Direction.UP))})
         looping_blocks: list[Pos] = []
-        for walking, facing in walk:
+        seen: set[Pos] = set()
+        for walking, _ in self.patrol(floor, guard, DIRECTIONS.index(Direction.UP)):
             # Place block
-            place_at = walking.add(DIRECTIONS[facing].value)
-            if floor.get(place_at) == Tile.SPACE and (place_at, facing) not in seen:
+            if walking != start and floor.get(walking) == Tile.SPACE and walking not in seen:
                 new_floor = deepcopy(floor)
-                new_floor.grid[place_at.y][place_at.x] = Tile.BLOCK
-                if self.loops(new_floor, walking, facing):
-                    looping_blocks.append(place_at)
-            seen.add((place_at, facing))
+                new_floor.grid[walking.y][walking.x] = Tile.BLOCK
+                if self.loops(new_floor, guard, 0):
+                    looping_blocks.append(walking)
+            seen.add(walking)
 
-        return len(set(pos for pos, _ in walk)), len(set(looping_blocks))
+        return walk, len(set(looping_blocks))
 
 
 if __name__ == "__main__":
