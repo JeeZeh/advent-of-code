@@ -169,3 +169,23 @@ where
 //         (x.parse().unwrap(), y.parse().unwrap())
 //     }
 // }
+
+pub trait Pairs<T> {
+    fn pairs<'a>(&self) -> impl Iterator<Item = (T, T)>
+    where
+        T: 'a,
+        T: Copy;
+}
+
+impl<T> Pairs<T> for Vec<T> {
+    fn pairs<'a>(&self) -> impl Iterator<Item = (T, T)>
+    where
+        T: 'a,
+        T: Copy,
+    {
+        return self
+            .iter()
+            .enumerate()
+            .flat_map(|(i, a)| self[i + 1..].iter().map(|b| (*a, *b)).into_iter());
+    }
+}
