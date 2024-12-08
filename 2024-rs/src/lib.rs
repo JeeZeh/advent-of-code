@@ -1,5 +1,8 @@
+#![feature(trait_alias)]
+
 use std::{
     fmt::{Debug, Display},
+    ops::{Add, Div, Mul, Sub},
     str::FromStr,
 };
 
@@ -132,3 +135,37 @@ impl<T: Copy, const W: usize, const H: usize> Grid<T> for [[T; W]; H] {
         *self
     }
 }
+
+pub trait PosNumber = Add + Sub + Mul + Div + Clone + Copy + Debug;
+// #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
+pub trait Pos2D<T: PosNumber> {
+    fn sub(&self, other: &Self) -> (T, T);
+    fn add(&self, other: &Self) -> (T, T);
+}
+
+impl<T: PosNumber> Pos2D<T> for (T, T)
+where
+    T: Add<Output = T>,
+    T: Sub<Output = T>,
+    T: Mul<Output = T>,
+    T: Div<Output = T>,
+{
+    fn add(&self, other: &Self) -> (T, T) {
+        (self.0 + other.0, self.1 + other.1)
+    }
+
+    fn sub(&self, other: &Self) -> (T, T) {
+        (self.0 - other.0, self.1 - other.1)
+    }
+}
+
+// impl<T: FromStr> From<&str> for dyn Pos<T>
+// where
+//     T: PosNumber,
+//     <T as FromStr>::Err: Debug,
+// {
+//     fn from(s: &str) -> (dyn Pos<T> + 'static) {
+//         let (x, y) = s.split_once(',').unwrap();
+//         (x.parse().unwrap(), y.parse().unwrap())
+//     }
+// }

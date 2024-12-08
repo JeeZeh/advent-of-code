@@ -1,6 +1,6 @@
-use std::{collections::HashMap, fmt, thread::LocalKey};
+use std::{collections::HashMap, fmt};
 
-use advent_of_code::Grid;
+use advent_of_code::{Grid, Pos2D};
 use itertools::Itertools;
 
 advent_of_code::solution!(8);
@@ -11,6 +11,8 @@ enum Tile {
     Blank,
 }
 
+type Position = (i32, i32);
+
 impl fmt::Debug for Tile {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let char_ = match self {
@@ -18,19 +20,6 @@ impl fmt::Debug for Tile {
             Tile::Blank => '.',
         };
         write!(f, "{:?}", char_)
-    }
-}
-
-#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
-struct Pos(i32, i32);
-
-impl Pos {
-    fn add(&self, other: &Pos) -> Pos {
-        Pos(self.0 + other.0, self.1 + other.1)
-    }
-
-    fn sub(&self, other: &Pos) -> Pos {
-        Pos(self.0 - other.0, self.1 - other.1)
     }
 }
 
@@ -43,22 +32,26 @@ impl Tile {
     }
 }
 
-fn within_bounds<G: Grid<Tile>>(grid: &G, pos: &Pos) -> Option<Pos> {
-    let Pos(x, y) = *pos;
+fn within_bounds<G: Grid<Tile>>(grid: &G, pos: &Position) -> Option<Position> {
+    let (x, y) = *pos;
 
     if x >= 0 && (x as usize) < grid.width() && y >= 0 && (y as usize) < grid.height() {
-        return Some(Pos(x, y));
+        return Some((x, y));
     }
     None
 }
 
-fn create_antinodes<G: Grid<Tile>>(grid: &G, a: &Pos, b: &Pos, resonance: bool) -> Vec<Pos> {
+fn create_antinodes<G: Grid<Tile>>(
+    grid: &G,
+    a: &Position,
+    b: &Position,
+    resonance: bool,
+) -> Vec<Position> {
     let mut antinodes = Vec::new();
     if resonance {
         antinodes.push(*a);
     }
     let offset = &b.sub(a);
-
     let mut test = b.add(offset);
     while let Some(antinode) = within_bounds(grid, &test) {
         antinodes.push(antinode);
@@ -72,17 +65,14 @@ fn create_antinodes<G: Grid<Tile>>(grid: &G, a: &Pos, b: &Pos, resonance: bool) 
 
 pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
     let mut grid = Vec::new();
-    let mut radios: HashMap<char, Vec<Pos>> = HashMap::new();
+    let mut radios: HashMap<char, Vec<(i32, i32)>> = HashMap::new();
 
     for (y, line) in input.lines().enumerate() {
         let mut row = Vec::new();
         for (x, c) in line.chars().enumerate() {
             let tile = Tile::from_char(c);
             if let Tile::Radio(freq) = tile {
-                radios
-                    .entry(freq)
-                    .or_default()
-                    .push(Pos(x as i32, y as i32));
+                radios.entry(freq).or_default().push((x as i32, y as i32));
             }
             row.push(tile);
         }
