@@ -21,7 +21,6 @@ pub fn handle(day: Day, release: bool, dhat: bool, submit: bool) {
     if submit {
         cmd_args.push("--submit".to_string());
     }
-    println!("{cmd_args:?}");
 
     let mut cmd = Command::new("cargo")
         .args(&cmd_args)

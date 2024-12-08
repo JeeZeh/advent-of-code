@@ -140,6 +140,6 @@ fn submit_result<T: Display>(
         process::exit(1);
     }
 
-    println!("Submitting result via aoc-cli... {args:?}");
+    println!("Submitting result via aoc-cli...");
     Some(aoc_cli::submit(day, part, &result.to_string()))
 }
