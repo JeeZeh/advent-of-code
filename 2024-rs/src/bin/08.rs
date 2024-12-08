@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt};
 
-use advent_of_code::{Grid, Pos2D};
+use advent_of_code::{Grid, Pairs, Pos2D};
 use itertools::Itertools;
 
 advent_of_code::solution!(8);
@@ -81,17 +81,15 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
 
     let mut anti_nodes = Vec::new();
     let mut resonant_nodes = Vec::new();
-    for locations in radios.values() {
-        // TODO: Make Pairs a generic Iterator<(&T, &T)>
-        for (i, a) in locations.iter().enumerate() {
-            for b in &locations[i + 1..] {
-                anti_nodes.extend(create_antinodes(&grid, a, b, false));
-                anti_nodes.extend(create_antinodes(&grid, b, a, false));
-                resonant_nodes.extend(create_antinodes(&grid, a, b, true));
-                resonant_nodes.extend(create_antinodes(&grid, b, a, true));
-            }
-        }
-    }
+    radios
+        .values()
+        .flat_map(|vec| vec.pairs())
+        .for_each(|(a, b)| {
+            anti_nodes.extend(create_antinodes(&grid, &a, &b, false));
+            anti_nodes.extend(create_antinodes(&grid, &b, &a, false));
+            resonant_nodes.extend(create_antinodes(&grid, &a, &b, true));
+            resonant_nodes.extend(create_antinodes(&grid, &b, &a, true));
+        });
 
     let part_one = anti_nodes.iter().unique().count();
     let part_two = resonant_nodes.iter().unique().count();
@@ -106,6 +104,6 @@ mod tests {
     #[test]
     fn test_solve() {
         let result = solve(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, (Some(14), Some(34)));
+        assert_eq!(result, (Some(3), Some(9)));
     }
 }
