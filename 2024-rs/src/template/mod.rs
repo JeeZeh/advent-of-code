@@ -42,16 +42,10 @@ pub fn read_file_part(folder: &str, day: Day, part: u8) -> String {
 #[macro_export]
 macro_rules! solution {
     ($day:expr) => {
-        $crate::solution!(@impl $day, [part_one, 1] [part_two, 2]);
-    };
-    ($day:expr, 1) => {
-        $crate::solution!(@impl $day, [part_one, 1]);
-    };
-    ($day:expr, 2) => {
-        $crate::solution!(@impl $day, [part_two, 2]);
+        $crate::solution!(@impl $day, [solve]);
     };
 
-    (@impl $day:expr, $( [$func:expr, $part:expr] )*) => {
+    (@impl $day:expr, $( [$func:expr] )*) => {
         /// The current day.
         const DAY: $crate::template::Day = $crate::day!($day);
 
@@ -62,7 +56,7 @@ macro_rules! solution {
         fn main() {
             use $crate::template::runner::*;
             let input = $crate::template::read_file("inputs", DAY);
-            $( run_part($func, &input, DAY, $part); )*
+            $( run_solution($func, &input, DAY); )*
         }
     };
 }

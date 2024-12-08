@@ -25,7 +25,7 @@ mod args {
             day: Day,
             release: bool,
             dhat: bool,
-            submit: Option<u8>,
+            submit: bool,
         },
         All {
             release: bool,
@@ -69,7 +69,7 @@ mod args {
             Some("solve") => AppArguments::Solve {
                 day: args.free_from_str()?,
                 release: args.contains("--release"),
-                submit: args.opt_value_from_str("--submit")?,
+                submit: args.contains("--submit"),
                 dhat: args.contains("--dhat"),
             },
             #[cfg(feature = "today")]

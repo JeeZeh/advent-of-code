@@ -9,29 +9,35 @@ use std::{cmp, env, process};
 use crate::template::ANSI_BOLD;
 use crate::template::{aoc_cli, Day, ANSI_ITALIC, ANSI_RESET};
 
-pub fn run_part<I: Clone, T: Display>(func: impl Fn(I) -> Option<T>, input: I, day: Day, part: u8) {
-    let part_str = format!("Part {part}");
+type Solution<A, B> = (Option<A>, Option<B>);
 
-    let (result, duration, samples) =
-        run_timed(func, input, |result| print_result(result, &part_str, ""));
+pub fn run_solution<I: Clone, T: Display>(
+    func: impl Fn(I) -> (Option<T>, Option<T>),
+    input: I,
+    day: Day,
+) {
+    let (result, duration, samples) = run_timed(func, input, |_result| {});
 
-    print_result(&result, &part_str, &format_duration(&duration, samples));
+    print_result(&result, &format_duration(&duration, samples));
 
-    if let Some(result) = result {
-        submit_result(result, day, part);
+    if let Some(part_one) = result.0 {
+        submit_result(part_one, day, 1);
+    }
+    if let Some(part_two) = result.1 {
+        submit_result(part_two, day, 2);
     }
 }
 
 /// Run a solution part. The behavior differs depending on whether we are running a release or debug build:
 ///  1. in debug, the function is executed once.
 ///  2. in release, the function is benched (approx. 1 second of execution time or 10 samples, whatever take longer.)
-fn run_timed<I: Clone, T>(
-    func: impl Fn(I) -> T,
+fn run_timed<I: Clone, A, B>(
+    func: impl Fn(I) -> Solution<A, B>,
     input: I,
-    hook: impl Fn(&T),
-) -> (T, Duration, u128) {
+    hook: impl Fn(&Solution<A, B>),
+) -> (Solution<A, B>, Duration, u128) {
     let timer = Instant::now();
-    let result = {
+    let result: Solution<A, B> = {
         let input = input.clone();
 
         #[cfg(feature = "dhat-heap")]
@@ -94,39 +100,20 @@ fn format_duration(duration: &Duration, samples: u128) -> String {
     }
 }
 
-fn print_result<T: Display>(result: &Option<T>, part: &str, duration_str: &str) {
-    let is_intermediate_result = duration_str.is_empty();
-
-    match result {
-        Some(result) => {
-            if result.to_string().contains('\n') {
-                let str = format!("{part}: ▼ {duration_str}");
-                if is_intermediate_result {
-                    print!("{str}");
-                } else {
-                    print!("\r");
-                    println!("{str}");
-                    println!("{result}");
-                }
-            } else {
-                let str = format!("{part}: {ANSI_BOLD}{result}{ANSI_RESET}{duration_str}");
-                if is_intermediate_result {
-                    print!("{str}");
-                } else {
-                    print!("\r");
-                    println!("{str}");
-                }
-            }
-        }
-        None => {
-            if is_intermediate_result {
-                print!("{part}: ✖");
-            } else {
-                print!("\r");
-                println!("{part}: ✖             ");
-            }
-        }
+fn print_result<A: Display, B: Display>(result: &Solution<A, B>, duration_str: &str) {
+    print!("\r");
+    if let Some(part_one) = &result.0 {
+        println!("Part 1: {ANSI_BOLD}{part_one}{ANSI_RESET}");
+    } else {
+        println!("Part 1: ✖");
     }
+    if let Some(part_two) = &result.1 {
+        println!("Part 2: {ANSI_BOLD}{part_two}{ANSI_RESET}");
+    } else {
+        println!("Part 2: ✖");
+    }
+
+    println!("Total duration: ▼ {duration_str}");
 }
 
 /// Parse the arguments passed to `solve` and try to submit one part of the solution if:
@@ -143,20 +130,9 @@ fn submit_result<T: Display>(
         return None;
     }
 
-    if args.len() < 3 {
-        eprintln!("Unexpected command-line input. Format: cargo solve 1 --submit 1");
+    if args.len() < 2 {
+        eprintln!("Unexpected command-line input. Format: cargo solve 1 --submit");
         process::exit(1);
-    }
-
-    let part_index = args.iter().position(|x| x == "--submit").unwrap() + 1;
-
-    let Ok(part_submit) = args[part_index].parse::<u8>() else {
-        eprintln!("Unexpected command-line input. Format: cargo solve 1 --submit 1");
-        process::exit(1);
-    };
-
-    if part_submit != part {
-        return None;
     }
 
     if aoc_cli::check().is_err() {
@@ -164,6 +140,6 @@ fn submit_result<T: Display>(
         process::exit(1);
     }
 
-    println!("Submitting result via aoc-cli...");
+    println!("Submitting result via aoc-cli... {args:?}");
     Some(aoc_cli::submit(day, part, &result.to_string()))
 }

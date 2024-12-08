@@ -2,7 +2,7 @@ use std::process::{Command, Stdio};
 
 use crate::template::Day;
 
-pub fn handle(day: Day, release: bool, dhat: bool, submit_part: Option<u8>) {
+pub fn handle(day: Day, release: bool, dhat: bool, submit: bool) {
     let mut cmd_args = vec!["run".to_string(), "--bin".to_string(), day.to_string()];
 
     if dhat {
@@ -18,10 +18,10 @@ pub fn handle(day: Day, release: bool, dhat: bool, submit_part: Option<u8>) {
 
     cmd_args.push("--".to_string());
 
-    if let Some(submit_part) = submit_part {
+    if submit {
         cmd_args.push("--submit".to_string());
-        cmd_args.push(submit_part.to_string());
     }
+    println!("{cmd_args:?}");
 
     let mut cmd = Command::new("cargo")
         .args(&cmd_args)
