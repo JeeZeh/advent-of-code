@@ -3,6 +3,7 @@
 use std::{
     fmt::{Debug, Display},
     ops::{Add, Div, Mul, Sub},
+    slice::Iter,
     str::FromStr,
 };
 
@@ -141,6 +142,33 @@ pub trait PosNumber = Add + Sub + Mul + Div + Clone + Copy + Debug;
 pub trait Pos2D<T: PosNumber> {
     fn sub(&self, other: &Self) -> (T, T);
     fn add(&self, other: &Self) -> (T, T);
+}
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+impl Direction {
+    pub fn iterator() -> Iter<'static, Direction> {
+        static DIRECTIONS: [Direction; 4] = [
+            Direction::Up,
+            Direction::Down,
+            Direction::Left,
+            Direction::Right,
+        ];
+        DIRECTIONS.iter()
+    }
+
+    pub fn step(&self) -> (i32, i32) {
+        match self {
+            Direction::Up => (0, -1),
+            Direction::Down => (0, 1),
+            Direction::Left => (-1, 0),
+            Direction::Right => (1, 0),
+        }
+    }
 }
 
 impl<T: PosNumber> Pos2D<T> for (T, T)
