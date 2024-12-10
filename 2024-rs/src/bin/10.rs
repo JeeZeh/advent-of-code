@@ -1,7 +1,7 @@
 #![feature(trait_alias)]
-use std::collections::{HashSet, VecDeque};
+use std::collections::VecDeque;
 
-use advent_of_code::{Direction, Grid, Pos2D};
+use advent_of_code::{Direction, Grid};
 use itertools::Itertools;
 
 advent_of_code::solution!(10);
@@ -13,8 +13,8 @@ fn directions(pos: (usize, usize)) -> impl Iterator<Item = (usize, usize)> {
         .map(move |(dx, dy)| ((pos.0 as i32 + dx) as usize, (pos.1 as i32 + dy) as usize));
 }
 
-pub fn get_score(forest: &impl Grid<u32>, head: (usize, usize)) -> usize {
-    let mut reachable: HashSet<(usize, usize)> = HashSet::new();
+pub fn get_score(forest: &impl Grid<u32>, head: (usize, usize)) -> Vec<(usize, usize)> {
+    let mut reachable: Vec<(usize, usize)> = Vec::new();
     let mut queue: VecDeque<((usize, usize), u32)> = VecDeque::new();
 
     // Populate with each direction.
@@ -29,7 +29,7 @@ pub fn get_score(forest: &impl Grid<u32>, head: (usize, usize)) -> usize {
 
             // println!("Found {num}@{this:?}");
             if *num == 9 {
-                reachable.insert(this);
+                reachable.push(this);
             } else {
                 directions(this).for_each(|next| queue.push_back((next, need + 1)));
 
@@ -38,7 +38,7 @@ pub fn get_score(forest: &impl Grid<u32>, head: (usize, usize)) -> usize {
         }
     }
 
-    reachable.len()
+    reachable
 }
 
 pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
@@ -46,7 +46,6 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
         .lines()
         .map(|line| line.chars().map(|c| c.to_digit(10).unwrap()).collect_vec())
         .collect_vec();
-    forrest.show_debug();
 
     let trailheads = forrest
         .iter()
@@ -61,9 +60,17 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
     let trail_score = trailheads
         .iter()
         .map(|head| get_score(&forrest, *head))
-        .sum::<usize>();
-    // trailheads.iter().map(|head| )
-    (Some(trail_score as u64), None)
+        .collect_vec();
+
+    (
+        Some(
+            trail_score
+                .iter()
+                .map(|trails| trails.iter().unique().count() as u64)
+                .sum(),
+        ),
+        Some(trail_score.iter().map(|trails| trails.len() as u64).sum()),
+    )
 }
 
 #[cfg(test)]
