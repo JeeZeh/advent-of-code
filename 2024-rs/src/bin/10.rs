@@ -8,9 +8,9 @@ advent_of_code::solution!(10);
 
 // trait Pos = Pos2D<usize>;
 fn directions(pos: (usize, usize)) -> impl Iterator<Item = (usize, usize)> {
-    return Direction::iterator()
+    Direction::iterator()
         .map(Direction::step)
-        .map(move |(dx, dy)| ((pos.0 as i32 + dx) as usize, (pos.1 as i32 + dy) as usize));
+        .map(move |(dx, dy)| ((pos.0 as i32 + dx) as usize, (pos.1 as i32 + dy) as usize))
 }
 
 pub fn get_score(forest: &impl Grid<u32>, head: (usize, usize)) -> Vec<(usize, usize)> {

@@ -91,7 +91,7 @@ impl<T: Copy> Grid<T> for Vec<Vec<T>> {
     }
 
     fn width(&self) -> usize {
-        self.get(0).map_or(0, |x| x.len())
+        self.first().map_or(0, |x| x.len())
     }
 
     fn height(&self) -> usize {
@@ -214,6 +214,6 @@ impl<T> Pairs<T> for Vec<T> {
         return self
             .iter()
             .enumerate()
-            .flat_map(|(i, a)| self[i + 1..].iter().map(|b| (*a, *b)).into_iter());
+            .flat_map(|(i, a)| self[i + 1..].iter().map(|b| (*a, *b)));
     }
 }

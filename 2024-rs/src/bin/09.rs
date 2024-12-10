@@ -12,7 +12,7 @@ enum Block {
 
 impl Block {
     fn from_disk_map((idx, c): (usize, char)) -> Self {
-        let size = c.to_digit(10).expect(&format!("Could not parse char: {c}")) as usize;
+        let size = c.to_digit(10).unwrap_or_else(|| panic!("Could not parse char: {c}")) as usize;
         if idx.rem_euclid(2) == 0 {
             Block::File(idx / 2, size)
         } else {
@@ -114,7 +114,7 @@ fn part_two(disk_map: &Vec<Block>) -> usize {
             }
         };
     }
-    return check_sum;
+    check_sum
 }
 
 // Tried to be too smart here, it's not even fast...
