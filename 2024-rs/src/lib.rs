@@ -7,6 +7,8 @@ use std::{
     str::FromStr,
 };
 
+use template::DayFromStrError;
+
 pub mod template;
 
 // Use this file to add helper functions and additional modules.
@@ -186,17 +188,6 @@ where
         (self.0 - other.0, self.1 - other.1)
     }
 }
-
-// impl<T: FromStr> From<&str> for dyn Pos<T>
-// where
-//     T: PosNumber,
-//     <T as FromStr>::Err: Debug,
-// {
-//     fn from(s: &str) -> (dyn Pos<T> + 'static) {
-//         let (x, y) = s.split_once(',').unwrap();
-//         (x.parse().unwrap(), y.parse().unwrap())
-//     }
-// }
 
 pub trait Pairs<T> {
     fn pairs<'a>(&self) -> impl Iterator<Item = (T, T)>
