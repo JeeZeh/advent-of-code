@@ -22,7 +22,6 @@ fn explore_region(grid: &impl Grid<char>, from: (usize, usize)) -> HashSet<(usiz
             && c == region
         {
             seen.insert(this);
-            println!("{this:?}");
             for step in Direction::iterator().map(Direction::step) {
                 let next = (
                     (this.0 as i32 + step.0) as usize,
@@ -38,43 +37,15 @@ fn explore_region(grid: &impl Grid<char>, from: (usize, usize)) -> HashSet<(usiz
     seen
 }
 
-fn get_perimeter_cost(region: &HashSet<(usize, usize)>) -> usize {
-    let mut perimeter: usize = 0;
-    for pos in region {
-        for step in Direction::iterator().map(Direction::step) {
-            let check_bound = (
-                (pos.0 as i32 + step.0) as usize,
-                (pos.1 as i32 + step.1) as usize,
-            );
-            if !region.contains(&check_bound) {
-                perimeter += 1;
-            }
-        }
-    }
-
-    perimeter * region.len()
-}
-
-fn count_sides(slice: &Vec<i32>) -> usize {
-    let mut last = i32::MIN;
-    let mut sides: usize = 1;
-    for num in slice.iter().sorted() {
-        if last != i32::MIN && *num != last + 1 && *num != last {
-            sides += 1;
-        }
-        last = *num;
-    }
-    sides
-}
-
-fn get_side_cost(c: String, region: &HashSet<(usize, usize)>) -> usize {
-    // directional side value => perpendicular side values
+fn get_costs(region: &HashSet<(usize, usize)>) -> (usize, usize) {
     let mut sides: HashMap<(Direction, i32), Vec<i32>> = HashMap::new();
+    let mut perimeter: usize = 0;
     for pos in region {
         for dir in Direction::iterator() {
             let step = dir.step();
             let check_bound = ((pos.0 as i32 + step.0), (pos.1 as i32 + step.1));
             if !region.contains(&(check_bound.0 as usize, check_bound.1 as usize)) {
+                perimeter += 1;
                 match dir {
                     Direction::Up | Direction::Down => sides
                         .entry((*dir, check_bound.1))
@@ -89,12 +60,23 @@ fn get_side_cost(c: String, region: &HashSet<(usize, usize)>) -> usize {
         }
     }
 
-    let mut side_count = 0;
-    for slice in sides.values() {
-        side_count += count_sides(slice);
-    }
+    let side_count = sides
+        .values()
+        .map(|sides| count_sides(sides))
+        .sum::<usize>();
+    (perimeter * region.len(), side_count * region.len())
+}
 
-    (side_count) * region.len()
+fn count_sides(slice: &Vec<i32>) -> usize {
+    let mut last = i32::MIN;
+    let mut sides: usize = 1;
+    for num in slice.iter().sorted() {
+        if last != i32::MIN && *num != last + 1 && *num != last {
+            sides += 1;
+        }
+        last = *num;
+    }
+    sides
 }
 
 pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
@@ -118,18 +100,15 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
             regions.push((*c, new_exploration));
         }
     }
-    let perimeter_cost: usize = regions
+    let costs: Vec<(usize, usize)> = regions
         .iter()
-        .map(|(_, region)| get_perimeter_cost(region))
-        .sum();
+        .map(|(_, region)| get_costs(region))
+        .collect_vec();
 
-    let side_cost: usize = regions
-        .iter()
-        .map(|(c, region)| get_side_cost(c.to_string(), region))
-        .sum();
-
-    println!("{regions:?}");
-    (Some(perimeter_cost as u64), Some(side_cost as u64))
+    (
+        Some(costs.iter().map(|(p, _)| p).sum::<usize>() as u64),
+        Some(costs.iter().map(|(_, s)| s).sum::<usize>() as u64),
+    )
 }
 
 #[cfg(test)]
