@@ -138,11 +138,12 @@ impl<T: Copy, const W: usize, const H: usize> Grid<T> for [[T; W]; H] {
 }
 
 pub trait PosNumber = Add + Sub + Mul + Div + Clone + Copy + Debug;
-// #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub trait Pos2D<T: PosNumber> {
     fn sub(&self, other: &Self) -> (T, T);
     fn add(&self, other: &Self) -> (T, T);
 }
+
+#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Direction {
     Up,
     Down,
