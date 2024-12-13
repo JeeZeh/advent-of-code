@@ -42,12 +42,12 @@ pub fn get_score(forest: &impl Grid<u32>, head: (usize, usize)) -> Vec<(usize, u
 }
 
 pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
-    let forrest = input
+    let forest = input
         .lines()
         .map(|line| line.chars().map(|c| c.to_digit(10).unwrap()).collect_vec())
         .collect_vec();
 
-    let trailheads = forrest
+    let trailheads = forest
         .iter()
         .enumerate()
         .flat_map(|(y, line)| {
@@ -59,14 +59,15 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
 
     let trail_score = trailheads
         .iter()
-        .map(|head| get_score(&forrest, *head))
+        .map(|head| get_score(&forest, *head))
         .collect_vec();
 
     (
         Some(
             trail_score
                 .iter()
-                .map(|trails| trails.iter().unique().count() as u64)
+                .flat_map(Vec::<_>::iter)
+                .map(|iter| iter.unique().count())
                 .sum(),
         ),
         Some(trail_score.iter().map(|trails| trails.len() as u64).sum()),
