@@ -1,5 +1,5 @@
 #![feature(trait_alias)]
-use std::collections::VecDeque;
+use std::{collections::VecDeque, u64};
 
 use advent_of_code::{Direction, Grid};
 use itertools::Itertools;
@@ -60,9 +60,8 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
         Some(
             trail_score
                 .iter()
-                .flat_map(Vec::<_>::iter)
-                .map(|iter| iter.unique().count())
-                .sum(),
+                .map(|t| t.iter().unique().count())
+                .sum::<usize>() as u64,
         ),
         Some(trail_score.iter().map(|trails| trails.len() as u64).sum()),
     )

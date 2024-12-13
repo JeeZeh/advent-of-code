@@ -38,6 +38,9 @@ fn get_stones(num: u64, blinks_left: u8, cache: &mut HashMap<(u64, u8), u64>) ->
 
 pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
     let initial = input
+        .lines()
+        .next()
+        .unwrap()
         .split(" ")
         .map(|n| n.parse::<u64>().unwrap())
         .collect_vec();
