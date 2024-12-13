@@ -6,7 +6,6 @@ use itertools::Itertools;
 
 advent_of_code::solution!(10);
 
-// trait Pos = Pos2D<usize>;
 fn directions(pos: (usize, usize)) -> impl Iterator<Item = (usize, usize)> {
     Direction::iterator()
         .map(Direction::step)
@@ -21,19 +20,14 @@ pub fn get_score(forest: &impl Grid<u32>, head: (usize, usize)) -> Vec<(usize, u
     directions(head).for_each(|s| queue.push_back((s, 1)));
     while let Some((this, need)) = queue.pop_front() {
         if let Some(num) = forest.getyx(this.1, this.0) {
-            // println!("Looking at {num}@{next:?}");
-            // println!("Looking at {num}@{next:?}");
             if *num != need {
                 continue;
             }
 
-            // println!("Found {num}@{this:?}");
             if *num == 9 {
                 reachable.push(this);
             } else {
                 directions(this).for_each(|next| queue.push_back((next, need + 1)));
-
-                // println!("Next {num}@{next:?}");
             }
         }
     }

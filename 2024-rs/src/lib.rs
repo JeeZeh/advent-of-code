@@ -138,11 +138,12 @@ impl<T: Copy, const W: usize, const H: usize> Grid<T> for [[T; W]; H] {
 }
 
 pub trait PosNumber = Add + Sub + Mul + Div + Clone + Copy + Debug;
-// #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub trait Pos2D<T: PosNumber> {
     fn sub(&self, other: &Self) -> (T, T);
     fn add(&self, other: &Self) -> (T, T);
 }
+
+#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Direction {
     Up,
     Down,
@@ -186,17 +187,6 @@ where
         (self.0 - other.0, self.1 - other.1)
     }
 }
-
-// impl<T: FromStr> From<&str> for dyn Pos<T>
-// where
-//     T: PosNumber,
-//     <T as FromStr>::Err: Debug,
-// {
-//     fn from(s: &str) -> (dyn Pos<T> + 'static) {
-//         let (x, y) = s.split_once(',').unwrap();
-//         (x.parse().unwrap(), y.parse().unwrap())
-//     }
-// }
 
 pub trait Pairs<T> {
     fn pairs<'a>(&self) -> impl Iterator<Item = (T, T)>
