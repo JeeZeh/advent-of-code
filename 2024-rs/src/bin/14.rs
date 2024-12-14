@@ -1,7 +1,6 @@
 #![feature(int_roundings)]
 use std::{num::ParseIntError, str::FromStr};
 
-use advent_of_code::Grid;
 use itertools::Itertools;
 
 advent_of_code::solution!(14);
@@ -83,12 +82,8 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
     let mut states: Vec<(usize, Vec<Robot>)> = Vec::new();
     let mut after_100 = 0;
     for sec in 0..MAX_SEARCH_SECONDS {
-        // let mut grid_display = vec![vec!['.'; wrap_at.0 as usize]; wrap_at.1 as usize];
         for robot in robots.iter_mut() {
             robot.step(wrap_at);
-            // *grid_display
-            //     .getyx_mut(robot.pos.1 as usize, robot.pos.0 as usize)
-            //     .unwrap() = '#';
         }
 
         // Part 1
@@ -99,10 +94,6 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
         // Store when no robots overlap
         if robots.iter().map(|r| r.pos).unique().count() == robots.len() {
             states.push((sec + 1, robots.clone()));
-            // println!("====================");
-            // println!("   Seconds: {sec}   ");
-            // println!("====================");
-            // grid_display.show_display();
         }
     }
 
