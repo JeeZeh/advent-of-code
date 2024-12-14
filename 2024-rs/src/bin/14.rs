@@ -91,13 +91,13 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
             after_100 = get_safety_score(&robots, wrap_at)
         }
 
-        // Store when no robots overlap
+        // Part 2 - Store when no robots overlap.
         if robots.iter().map(|r| r.pos).unique().count() == robots.len() {
             states.push((sec + 1, robots.clone()));
         }
     }
 
-    // Part 2 - Find the lowest safety score.
+    // Part 2 - Find the lowest safety score of non-overlapping states.
     let (tree_at, _) = states
         .iter()
         .sorted_by(|a, b| get_safety_score(&a.1, wrap_at).cmp(&get_safety_score(&b.1, wrap_at)))
