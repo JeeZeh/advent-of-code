@@ -6,7 +6,7 @@ use itertools::Itertools;
 
 advent_of_code::solution!(14);
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 struct Robot {
     vx: i16,
     vy: i16,
@@ -89,8 +89,34 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
     }
     let after_100 = get_safety_score(&robots, wrap_at);
 
-    // println!("{robots:?}");
-    (Some(after_100 as u64), None)
+    let mut tree_at = 0;
+    let mut states: Vec<(usize, Vec<Robot>)> = Vec::new();
+    for sec in 100..10000 {
+        let mut grid_display = vec![vec!['.'; wrap_at.0 as usize]; wrap_at.1 as usize];
+        for robot in robots.iter_mut() {
+            robot.step(wrap_at);
+            *grid_display
+                .getyx_mut(robot.pos.1 as usize, robot.pos.0 as usize)
+                .unwrap() = '#';
+        }
+        if robots.iter().map(|r| r.pos).unique().count() == robots.len() {
+            states.push((sec + 1, robots.clone()));
+            // tree_at = sec + 1;
+            println!("====================");
+            println!("   Seconds: {sec}   ");
+            println!("====================");
+            grid_display.show_display();
+            // break;
+        }
+    }
+
+    let (tree_at, _) = states
+        .iter()
+        .sorted_by(|a, b| get_safety_score(&a.1, wrap_at).cmp(&get_safety_score(&b.1, wrap_at)))
+        .next()
+        .unwrap();
+
+    (Some(after_100 as u64), Some(*tree_at as u64))
 }
 
 #[cfg(test)]
