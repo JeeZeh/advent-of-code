@@ -60,6 +60,13 @@ fn get_safety_score(robots: &[Robot], wrap_at: (i16, i16)) -> usize {
     quadrants.iter().product()
 }
 
+const MAX_SEARCH_SECONDS: usize = 10000;
+
+// HINTS USED: For finding the tree programmatically:
+//  1.  Tree state should be one where no robots overlap since problem space
+//      is *probably* generated from non-overlapping robots to start with.
+//  2.  Tree state *should* also have a low safety score since most robots
+//      will be grouped together in the tree.
 pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
     let mut robots = input
         .lines()
@@ -67,49 +74,39 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
         .map(|l| Robot::from_str(l).unwrap())
         .collect_vec();
 
-    // println!("{robots:?}");
     let wrap_at = if robots.len() == 12 {
         (11, 7)
     } else {
         (101, 103)
     };
 
-    for sec in 0..100 {
-        let mut grid_display = vec![vec!['.'; wrap_at.0 as usize]; wrap_at.1 as usize];
-        for robot in robots.iter_mut() {
-            robot.step(wrap_at);
-            *grid_display
-                .getyx_mut(robot.pos.1 as usize, robot.pos.0 as usize)
-                .unwrap() = '#';
-        }
-        // println!("====================");
-        // println!("   Seconds: {sec}   ");
-        // println!("====================");
-        // grid_display.show_display();
-    }
-    let after_100 = get_safety_score(&robots, wrap_at);
-
-    let mut tree_at = 0;
     let mut states: Vec<(usize, Vec<Robot>)> = Vec::new();
-    for sec in 100..10000 {
-        let mut grid_display = vec![vec!['.'; wrap_at.0 as usize]; wrap_at.1 as usize];
+    let mut after_100 = 0;
+    for sec in 0..MAX_SEARCH_SECONDS {
+        // let mut grid_display = vec![vec!['.'; wrap_at.0 as usize]; wrap_at.1 as usize];
         for robot in robots.iter_mut() {
             robot.step(wrap_at);
-            *grid_display
-                .getyx_mut(robot.pos.1 as usize, robot.pos.0 as usize)
-                .unwrap() = '#';
+            // *grid_display
+            //     .getyx_mut(robot.pos.1 as usize, robot.pos.0 as usize)
+            //     .unwrap() = '#';
         }
+
+        // Part 1
+        if (sec + 1) % 100 == 0 {
+            after_100 = get_safety_score(&robots, wrap_at)
+        }
+
+        // Store when no robots overlap
         if robots.iter().map(|r| r.pos).unique().count() == robots.len() {
             states.push((sec + 1, robots.clone()));
-            // tree_at = sec + 1;
-            println!("====================");
-            println!("   Seconds: {sec}   ");
-            println!("====================");
-            grid_display.show_display();
-            // break;
+            // println!("====================");
+            // println!("   Seconds: {sec}   ");
+            // println!("====================");
+            // grid_display.show_display();
         }
     }
 
+    // Part 2 - Find the lowest safety score.
     let (tree_at, _) = states
         .iter()
         .sorted_by(|a, b| get_safety_score(&a.1, wrap_at).cmp(&get_safety_score(&b.1, wrap_at)))
