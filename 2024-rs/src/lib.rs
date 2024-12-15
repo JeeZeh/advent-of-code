@@ -133,14 +133,18 @@ impl<T: Copy> Grid<T> for Vec<Vec<T>> {
     where
         T: Debug,
     {
-        self.show_map(|x| std::format!("{:?}", x));
+        if cfg!(debug_assertions) {
+            self.show_map(|x| std::format!("{:?}", x));
+        }
     }
 
     fn show_display(&self)
     where
         T: Display,
     {
-        self.show_map(|x| x.to_string());
+        if cfg!(debug_assertions) {
+            self.show_map(|x| x.to_string());
+        }
     }
 
     fn show_map<V: Display>(&self, f: impl Fn(&T) -> V) {
