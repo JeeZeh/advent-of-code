@@ -3,7 +3,7 @@ use std::{
     fmt::{Display, Write},
 };
 
-use advent_of_code::{Direction, Grid, Pos2D};
+use advent_of_code::{Direction, Grid};
 use itertools::Itertools;
 
 advent_of_code::solution!(15);
@@ -50,18 +50,6 @@ impl Tile {
             '.' | '@' => Tile::Space,
             '#' => Tile::Wall,
             'O' => Tile::Box,
-            _ => panic!("Unknown tile: {}", c),
-        }
-    }
-}
-
-impl WideTile {
-    fn from(c: char) -> WideTile {
-        match c {
-            '.' | '@' => WideTile::Space,
-            '#' => WideTile::Wall,
-            '[' => WideTile::BoxLeft,
-            ']' => WideTile::BoxRight,
             _ => panic!("Unknown tile: {}", c),
         }
     }
@@ -184,6 +172,10 @@ fn move_wide_group_vert(
                 to_move.insert((Direction::Right.step_usize(check), WideTile::BoxRight));
                 queue.push_back(Direction::Right.step_usize(next_pos));
             }
+            // We could try to merge BoxLeft and BoxRight logic, but the conditional check for
+            // direction to determine which adjacent positions and tiles need to be tracked
+            // causes runtime to increase by 60x! Assumption is that this is due to poorer
+            // branch prediction and optimization of in-lined values.
             Some(WideTile::BoxRight) => {
                 let next_pos = dir.step_usize(check);
                 to_move.insert((check, WideTile::BoxRight));
@@ -270,7 +262,7 @@ fn walk_robot_wide(
 }
 
 pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
-    let (mut warehouse, mut wide_warehouse, mut robot, moves) = parse_input(input);
+    let (mut warehouse, mut wide_warehouse, robot, moves) = parse_input(input);
 
     walk_robot(&moves, robot, &mut warehouse);
     warehouse.show_display();
