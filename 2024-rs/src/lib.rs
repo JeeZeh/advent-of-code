@@ -21,6 +21,13 @@ where
 
 /// A trait to simplify printing and indexing of 2D data structures.
 pub trait Grid<T> {
+    /// Produces an iterator of positions (x, y) and item T from the Grid in
+    /// reading order (left to right, top to bottom)
+    fn scan<'a>(&'a self) -> impl Iterator<Item = ((usize, usize), &'a T)>
+    where
+        T: 'a;
+    fn getxy_pos_mut(&mut self, pos: (usize, usize)) -> Option<&mut T>;
+    fn getxy_pos(&self, pos: (usize, usize)) -> Option<&T>;
     /// Returns a reference to an element at a given index or `None` if index is
     /// out of bounds.
     fn getyx(&self, y: usize, x: usize) -> Option<&T>;
@@ -90,6 +97,14 @@ impl<T: Copy> Grid<T> for Vec<Vec<T>> {
         self.get_mut(y).and_then(|row| row.get_mut(x))
     }
 
+    fn getxy_pos(&self, pos: (usize, usize)) -> Option<&T> {
+        self.get(pos.1).and_then(|row| row.get(pos.0))
+    }
+
+    fn getxy_pos_mut(&mut self, pos: (usize, usize)) -> Option<&mut T> {
+        self.get_mut(pos.1).and_then(|row| row.get_mut(pos.0))
+    }
+
     fn width(&self) -> usize {
         self.first().map_or(0, |x| x.len())
     }
@@ -113,6 +128,54 @@ impl<T: Copy> Grid<T> for Vec<Vec<T>> {
 
         new_vec
     }
+
+    fn show_debug(&self)
+    where
+        T: Debug,
+    {
+        self.show_map(|x| std::format!("{:?}", x));
+    }
+
+    fn show_display(&self)
+    where
+        T: Display,
+    {
+        self.show_map(|x| x.to_string());
+    }
+
+    fn show_map<V: Display>(&self, f: impl Fn(&T) -> V) {
+        let mut widths: Vec<u8> = Vec::with_capacity(self.width());
+        for x in 0..self.width() {
+            let max_width = (0..self.height())
+                .flat_map(|y| self.getyx(y, x))
+                .map(|x| f(x).to_string().len())
+                .max();
+            widths.push(max_width.unwrap_or(0) as u8);
+        }
+
+        let all1s = widths.iter().all(|x| *x == 1);
+
+        for y in 0..self.height() {
+            for (x, c) in widths.iter().enumerate().take(self.width()) {
+                let width = *c as usize + !all1s as usize;
+                if let Some(value) = self.getyx(y, x) {
+                    std::print!("{:>w$}", format!("{:}", f(value)), w = width);
+                } else {
+                    std::print!("{:>w$}", "X", w = width);
+                }
+            }
+            std::println!();
+        }
+    }
+
+    fn scan<'a>(&'a self) -> impl Iterator<Item = ((usize, usize), &'a T)>
+    where
+        T: 'a,
+    {
+        self.iter()
+            .enumerate()
+            .flat_map(|(y, row)| row.iter().enumerate().map(move |(x, t)| ((x, y), t)))
+    }
 }
 
 impl<T: Copy, const W: usize, const H: usize> Grid<T> for [[T; W]; H] {
@@ -122,6 +185,14 @@ impl<T: Copy, const W: usize, const H: usize> Grid<T> for [[T; W]; H] {
 
     fn getyx_mut(&mut self, y: usize, x: usize) -> Option<&mut T> {
         self.get_mut(y).and_then(|row| row.get_mut(x))
+    }
+
+    fn getxy_pos(&self, pos: (usize, usize)) -> Option<&T> {
+        self.get(pos.1).and_then(|row| row.get(pos.0))
+    }
+
+    fn getxy_pos_mut(&mut self, pos: (usize, usize)) -> Option<&mut T> {
+        self.get_mut(pos.1).and_then(|row| row.get_mut(pos.0))
     }
 
     fn width(&self) -> usize {
@@ -134,6 +205,15 @@ impl<T: Copy, const W: usize, const H: usize> Grid<T> for [[T; W]; H] {
 
     fn rot90(&self) -> Self {
         *self
+    }
+
+    fn scan<'a>(&'a self) -> impl Iterator<Item = ((usize, usize), &'a T)>
+    where
+        T: 'a,
+    {
+        self.iter()
+            .enumerate()
+            .flat_map(|(y, row)| row.iter().enumerate().map(move |(x, t)| ((x, y), t)))
     }
 }
 
@@ -169,6 +249,14 @@ impl Direction {
             Direction::Left => (-1, 0),
             Direction::Right => (1, 0),
         }
+    }
+
+    pub fn step_usize(&self, pos: (usize, usize)) -> (usize, usize) {
+        let step = self.step();
+        (
+            (pos.0 as i32 + step.0) as usize,
+            (pos.1 as i32 + step.1) as usize,
+        )
     }
 }
 
