@@ -12,12 +12,31 @@ enum Tile {
     Wall,
 }
 
+#[derive(Debug, Clone, Copy)]
+enum WideTile {
+    Space,
+    BoxLeft,
+    BoxRight,
+    Wall,
+}
+
 impl Display for Tile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Tile::Space => f.write_char(' '),
             Tile::Wall => f.write_char('#'),
             Tile::Box => f.write_char('O'),
+        }
+    }
+}
+
+impl Display for WideTile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WideTile::Space => f.write_char(' '),
+            WideTile::Wall => f.write_char('#'),
+            WideTile::BoxLeft => f.write_char('['),
+            WideTile::BoxRight => f.write_char(']'),
         }
     }
 }
@@ -33,19 +52,45 @@ impl Tile {
     }
 }
 
-fn parse_input(input: &str) -> (Vec<Vec<Tile>>, (usize, usize), Vec<Direction>) {
+impl WideTile {
+    fn from(c: char) -> WideTile {
+        match c {
+            '.' | '@' => WideTile::Space,
+            '#' => WideTile::Wall,
+            '[' => WideTile::BoxLeft,
+            ']' => WideTile::BoxRight,
+            _ => panic!("Unknown tile: {}", c),
+        }
+    }
+}
+
+fn parse_input(
+    input: &str,
+) -> (
+    Vec<Vec<Tile>>,
+    Vec<Vec<WideTile>>,
+    (usize, usize),
+    Vec<Direction>,
+) {
     let input_vec = input.split("\n\n").collect_vec();
     let mut warehouse = Vec::new();
+    let mut wide_warehouse = Vec::new();
     let mut robot = None;
     for (y, line) in input_vec[0].lines().enumerate() {
         let mut row = Vec::new();
+        let mut wide_row = Vec::new();
         for (x, c) in line.chars().enumerate() {
             if c == '@' {
                 robot = Some((x, y));
             }
-            row.push(Tile::from(c));
+            match Tile::from(c) {
+                Tile::Space => wide_row.extend(vec![WideTile::Space, WideTile::Space]),
+                Tile::Box => wide_row.extend(vec![WideTile::BoxLeft, WideTile::BoxRight]),
+                Tile::Wall => wide_row.extend(vec![WideTile::Wall, WideTile::Wall]),
+            }
         }
         warehouse.push(row);
+        wide_warehouse.push(wide_row);
     }
     let moves: Vec<Direction> = input_vec[1]
         .trim()
@@ -60,10 +105,15 @@ fn parse_input(input: &str) -> (Vec<Vec<Tile>>, (usize, usize), Vec<Direction>) 
         })
         .collect_vec();
 
-    (warehouse, robot.expect("Robot not found!"), moves)
+    (
+        warehouse,
+        wide_warehouse,
+        robot.expect("Robot not found!"),
+        moves,
+    )
 }
 
-fn find_box_destination(
+fn find_wide_box_group(
     warehouse: &impl Grid<Tile>,
     from: (usize, usize),
     dir: Direction,
@@ -83,16 +133,14 @@ fn find_box_destination(
     None
 }
 
-pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
-    let (mut warehouse, mut robot, moves) = parse_input(input);
-
+fn walk_robot(moves: Vec<Direction>, mut robot: (usize, usize), warehouse: &mut Vec<Vec<Tile>>) {
     for m in moves {
         let new_robot: (usize, usize) = m.step_usize(robot);
         match warehouse.getxy_pos(new_robot) {
             Some(Tile::Space) => robot = new_robot,
             Some(Tile::Wall) | None => continue,
             Some(Tile::Box) => {
-                if let Some(box_dest) = find_box_destination(&warehouse, new_robot, m) {
+                if let Some(box_dest) = find_wide_box_group(&*warehouse, new_robot, m) {
                     *warehouse.getxy_pos_mut(new_robot).unwrap() = Tile::Space;
                     *warehouse.getxy_pos_mut(box_dest).unwrap() = Tile::Box;
                     robot = new_robot;
@@ -100,7 +148,34 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
             }
         }
     }
+}
+
+fn walk_robot_wide(
+    moves: Vec<Direction>,
+    mut robot: (usize, usize),
+    wide_warehouse: &mut Vec<Vec<WideTile>>,
+) {
+    for m in moves {
+        let new_robot: (usize, usize) = m.step_usize(robot);
+        match wide_warehouse.getxy_pos(new_robot) {
+            Some(WideTile::Space) => robot = new_robot,
+            Some(WideTile::Wall) | None => continue,
+            Some(WideTile::BoxLeft) | Some(WideTile::BoxRight) => {
+                // Find wide box group
+                // Try move group in direction (return step count)
+                // Insert spaces at original locations
+                // Insert boxes at offset locations
+            }
+        }
+    }
+}
+
+pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
+    let (mut warehouse, mut wide_warehouse, mut robot, moves) = parse_input(input);
+
+    walk_robot(moves, robot, &mut warehouse);
     warehouse.show_display();
+    wide_warehouse.show_display();
 
     let part_one: usize = warehouse
         .scan()
