@@ -55,11 +55,12 @@ impl Display for Tile {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Reindeer {
     position: (usize, usize),
     heading: usize,
     cost: usize,
+    path: Vec<(usize, usize)>,
 }
 
 // The priority queue depends on `Ord`.
@@ -88,24 +89,27 @@ const DIRECTIONS: [Direction; 4] = [
     Direction::Up,
 ];
 
-fn find_shortest_path(
+fn find_cheapest_paths(
     maze: &impl Grid<Tile>,
     start: (usize, usize),
     end: (usize, usize),
-) -> Option<usize> {
+) -> Vec<(usize, Vec<(usize, usize)>)> {
     let mut heap = BinaryHeap::new();
     heap.push(Reindeer {
         position: start,
         heading: 0,
         cost: 0,
+        path: vec![start],
     });
 
-    let mut cheapest_locations = HashMap::new();
+    let mut cheapest_locations: HashMap<((usize, usize), usize), usize> = HashMap::new();
     cheapest_locations.insert((start, 0), 0);
+    let mut paths_to_end = Vec::new();
     while let Some(Reindeer {
         cost,
         position,
         heading,
+        path,
     }) = heap.pop()
     {
         let best_cost = cheapest_locations
@@ -118,38 +122,53 @@ fn find_shortest_path(
             *best_cost = cost;
         }
 
+        if position == end {
+            paths_to_end.push((cost, path));
+            continue;
+        }
+
         for rot in [-1, 0, 1] {
             let new_heading = ((heading as i32 + rot) as usize).rem_euclid(4);
             let step_forward = DIRECTIONS[new_heading].step_usize(position);
             if maze.getxy_pos(step_forward).unwrap() == &Tile::Space {
+                let mut new_path = path.clone();
+                new_path.push(step_forward);
                 heap.push(Reindeer {
                     position: step_forward,
                     heading: new_heading,
                     cost: cost + 1 + if rot != 0 { 1000 } else { 0 },
+                    path: new_path,
                 });
             }
         }
     }
+    let shortest = paths_to_end
+        .iter()
+        .sorted_by(|a, b| b.1.cmp(&a.1))
+        .next()
+        .unwrap()
+        .0;
 
-    Some(
-        *cheapest_locations
-            .iter()
-            .filter(|((pos, _), _)| pos == &end)
-            .sorted_by(|a, b| a.1.cmp(b.1))
-            .next()
-            .unwrap()
-            .1,
-    )
+    paths_to_end
+        .into_iter()
+        .filter(|(cost, _)| *cost == shortest)
+        .collect_vec()
 }
 
 pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
     let (maze, start, end) = parse_maze(input);
 
-    println!("Start = {start:?}, end = {end:?}");
     maze.show_display();
-    let shortest = find_shortest_path(&maze, start, end).unwrap() as u64;
-
-    (Some(shortest), None)
+    let cheapest_paths = find_cheapest_paths(&maze, start, end);
+    let best_seats = cheapest_paths
+        .iter()
+        .flat_map(|(_, path)| path.iter())
+        .unique()
+        .count();
+    (
+        Some(cheapest_paths.first().unwrap().0 as u64),
+        Some(best_seats as u64),
+    )
 }
 
 #[cfg(test)]
@@ -159,6 +178,6 @@ mod tests {
     #[test]
     fn test_solve() {
         let result = solve(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, (Some(11048), None));
+        assert_eq!(result, (Some(11048), Some(64)));
     }
 }
