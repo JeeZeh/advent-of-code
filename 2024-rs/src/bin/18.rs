@@ -95,27 +95,47 @@ pub fn solve(input: &str) -> (Option<String>, Option<String>) {
     let end = if is_example { (6, 6) } else { (70, 70) };
     let bytecount = if is_example { 12 } else { 1024 };
 
+    // Part 1
     let mut memory = vec![vec![false; end.0 + 1]; end.1 + 1];
     for byte in coords[..bytecount].iter() {
         memory[byte.1 as usize][byte.0 as usize] = true;
     }
     let mut shortest = shortest_path(&memory, (0, 0), end).unwrap();
-    let original_shortest = shortest.len();
+    let shortest_path_length = shortest.len();
+
+    // Part 2
     let mut breaking_byte = None;
     for byte in coords[bytecount..].iter() {
         memory[byte.1 as usize][byte.0 as usize] = true;
 
-        if shortest.contains(byte) {
-            if let Some(new_shortest) = shortest_path(&memory, (0, 0), end) {
-                shortest = new_shortest;
+        // Only re-compute the shortest path if a byte lands in our original shortest path.
+        if let Some(path_idx) = shortest.iter().position(|p| p == byte) {
+            // See if we can find a way around the blocking-byte to avoid computing the full path again.
+            if let Some(detour) =
+                shortest_path(&memory, shortest[path_idx - 1], shortest[path_idx + 1])
+            {
+                // Splice the detour into the original shortest path
+                shortest = [
+                    &shortest[..path_idx],
+                    &detour,
+                    &shortest[(path_idx + detour.len()).min(shortest.len() - 1)..],
+                ]
+                .concat();
+            } else if let Some(fresh_path) = shortest_path(&memory, (0, 0), end) {
+                // Re-compute the shortest path if we can't find a detour.
+                shortest = fresh_path;
             } else {
-                breaking_byte = Some(format!("{},{}", byte.0, byte.1));
+                // If no path found, we found the breaking byte.
+                breaking_byte = Some(byte);
                 break;
             }
         }
     }
 
-    (Some(format!("{}", original_shortest - 1)), breaking_byte)
+    (
+        Some(format!("{}", shortest_path_length - 1)),
+        breaking_byte.map(|(x, y)| format!("{x},{y}")),
+    )
 }
 
 #[cfg(test)]
