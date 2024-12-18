@@ -1,9 +1,6 @@
 #![feature(int_roundings)]
 #![feature(let_chains)]
-use std::{
-    collections::VecDeque,
-    ops::{BitXor, Div},
-};
+use std::ops::{BitXor, Div};
 
 use itertools::Itertools;
 
@@ -126,6 +123,14 @@ impl Cpu {
         None
     }
 
+    fn get_full_output_vec(&mut self, program: &[i64]) -> Vec<i64> {
+        let mut output = Vec::new();
+        while let Some(v) = self.get_next_output(program) {
+            output.push(v);
+        }
+        output
+    }
+
     fn tick(&mut self, program: &[i64]) -> Option<i64> {
         if let Some(inst) = Inst::read(&program, self.inst_ptr) {
             // Execute instruction, store output if any.
@@ -185,34 +190,34 @@ pub fn solve(input: &str) -> (Option<String>, Option<String>) {
         .map(|i| i.parse::<i64>().unwrap())
         .collect_vec();
 
-    let part_one =
-        Cpu::init(202366656500266, reg_values[1], reg_values[2]).get_full_output(&program);
-    let a_val = reverse_program(&reg_values, &program, &program);
-    (Some(part_one), Some(format!("{}", a_val)))
+    let part_one = Cpu::init(reg_values[0], reg_values[1], reg_values[2]).get_full_output(&program);
+    let a_val = reverse_program(&program, program.len() - 1, 0);
+    (Some(part_one), Some(format!("{}", a_val.unwrap())))
 }
 
-fn reverse_program(reg_values: &[i64], real_program: &[i64], target_program: &[i64]) -> i64 {
-    let mut a_val = 0;
-    let mut fixed_cpu = Cpu::init(a_val, 0, 0);
-    for (idx, target) in target_program.iter().rev().enumerate() {
-        a_val <<= 3;
-        fixed_cpu.registers = [a_val, 0, 0];
+// HINT USED: Stuck for hours following a different hint that didn't work.
+fn reverse_program(program: &[i64], cursor: usize, so_far: i64) -> Option<i64> {
+    let mut fixed_cpu: Cpu = Cpu::init(0, 0, 0);
+
+    for offset in 0..8 {
+        let test = so_far * 8 + offset;
+        fixed_cpu.registers = [test, 0, 0];
         fixed_cpu.inst_ptr = 0;
-        loop {
-            if fixed_cpu.get_next_output(&real_program).unwrap() != *target {
-                a_val += 1;
-                // fixed_cpu.registers[REG_A] = a_val;
-                fixed_cpu.registers = [a_val, 0, 0];
-                fixed_cpu.inst_ptr = 0;
-            } else {
-                break;
+        fixed_cpu.halted = false;
+
+        if fixed_cpu.get_full_output_vec(&program) == &program[cursor..] {
+            if cursor == 0 {
+                return Some(test);
+            }
+
+            let res = reverse_program(program, cursor - 1, test);
+            if res.is_some() {
+                return res;
             }
         }
-        // let verify: String = Cpu::init(a_val, reg_values[1], reg_values[2]).get_full_output(&real_program);
-        // println!("Needed: {target}, Found: {a_val}");
     }
 
-    a_val
+    None
 }
 
 #[cfg(test)]
@@ -230,10 +235,9 @@ mod tests {
 
     #[test]
     fn test_reverse() {
-        let mut cpu = Cpu::init(0, 0, 9);
         let prog = vec![2, 4, 1, 1, 7, 5, 4, 4, 1, 4, 0, 3, 5, 5, 3, 0];
-        reverse_program(&[0, 0, 0], &prog, &prog);
-        // assert_eq!(cpu.registers[RE], 1);
+        reverse_program(&prog, prog.len(), 0);
+        assert_eq!(reverse_program(&prog, prog.len(), 0), Some(1));
     }
 
     /// If register C contains 9, the program 2,6 would set register B to 1.
