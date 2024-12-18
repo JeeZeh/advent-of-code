@@ -1,3 +1,4 @@
+#![feature(let_chains)]
 use std::{
     cmp::Ordering,
     collections::{BinaryHeap, HashMap, VecDeque},
@@ -9,17 +10,18 @@ use itertools::Itertools;
 
 advent_of_code::solution!(18);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct State {
     pos: (usize, usize),
-    steps: usize,
+    path: Vec<(usize, usize)>,
 }
 
 impl Ord for State {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         other
-            .steps
-            .cmp(&self.steps)
+            .path
+            .len()
+            .cmp(&self.path.len())
             .then(self.pos.0.cmp(&other.pos.0))
             .then(self.pos.1.cmp(&other.pos.1))
     }
@@ -43,36 +45,38 @@ fn shortest_path(
     memory: &impl Grid<bool>,
     start: (usize, usize),
     end: (usize, usize),
-) -> Option<usize> {
+) -> Option<Vec<(usize, usize)>> {
     let mut cheapest_locations = vec![vec![usize::MAX; memory.width()]; memory.height()];
     // cheapest_locations[start.1][start.0] = 0;
     // memory.show_map(|b| if *b { '#' } else { '.' });
     let mut heap: BinaryHeap<State> = BinaryHeap::new();
     heap.push(State {
         pos: start,
-        steps: 0,
+        path: vec![start],
     });
-    while let Some(State { pos, steps }) = heap.pop() {
+    while let Some(State { pos, path }) = heap.pop() {
         let best_cost = &mut cheapest_locations[pos.1][pos.0];
-        if *best_cost <= steps {
+        if *best_cost <= path.len() {
             // Stop searching, we've been here before for less!
             continue;
         } else {
-            *best_cost = steps;
+            *best_cost = path.len();
         }
         // println!("{pos:?}, {steps}");
         if pos == end {
-            return Some(steps);
+            return Some(path);
         }
 
         for dir in DIRECTIONS {
             let new_pos = dir.step_usize(pos);
             if memory.getxy_pos(new_pos) == Some(&false)
-                && cheapest_locations[new_pos.1][new_pos.0] > steps + 1
+                && cheapest_locations[new_pos.1][new_pos.0] > path.len() + 1
             {
+                let mut new_path = path.clone();
+                new_path.push(new_pos);
                 heap.push(State {
                     pos: new_pos,
-                    steps: steps + 1,
+                    path: new_path,
                 });
             }
         }
@@ -84,7 +88,7 @@ pub fn solve(input: &str) -> (Option<String>, Option<String>) {
     let coords = input
         .lines()
         .filter(|l| !l.is_empty())
-        .map(|l| <(_, _) as Pos2D<i32>>::from(l).unwrap())
+        .map(|l| <(_, _) as Pos2D<usize>>::from(l).unwrap())
         .collect_vec();
     let is_example = coords.len() < 30;
 
@@ -95,21 +99,23 @@ pub fn solve(input: &str) -> (Option<String>, Option<String>) {
     for byte in coords[..bytecount].iter() {
         memory[byte.1 as usize][byte.0 as usize] = true;
     }
-    let shortest = shortest_path(&memory, (0, 0), end);
-
+    let mut shortest = shortest_path(&memory, (0, 0), end).unwrap();
+    let original_shortest = shortest.len();
     let mut breaking_byte = None;
-    for (idx, (x, y)) in coords.iter().enumerate().skip(bytecount) {
-        memory[*y as usize][*x as usize] = true;
-        if shortest_path(&memory, (0, 0), end).is_none() {
-            breaking_byte = Some(format!("{x},{y}"));
-            break;
+    for byte in coords[bytecount..].iter() {
+        memory[byte.1 as usize][byte.0 as usize] = true;
+
+        if shortest.contains(byte) {
+            if let Some(new_shortest) = shortest_path(&memory, (0, 0), end) {
+                shortest = new_shortest;
+            } else {
+                breaking_byte = Some(format!("{},{}", byte.0, byte.1));
+                break;
+            }
         }
     }
 
-    (
-        Some(format!("{}", shortest.unwrap())),
-        Some(breaking_byte.unwrap()),
-    )
+    (Some(format!("{}", original_shortest - 1)), breaking_byte)
 }
 
 #[cfg(test)]
