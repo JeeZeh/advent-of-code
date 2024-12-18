@@ -1,15 +1,16 @@
 #![feature(trait_alias)]
 
 use std::{
+    char::ParseCharError,
     fmt::{Debug, Display},
     ops::{Add, Div, Mul, Sub},
+    process::Output,
     slice::Iter,
     str::FromStr,
 };
 
 pub mod template;
 
-// Use this file to add helper functions and additional modules.
 /// A convenience function for splitting and parsing a string.
 pub fn numbers<T>(line: &str, sep: char) -> impl Iterator<Item = T> + '_
 where
@@ -225,6 +226,7 @@ pub trait PosNumber = Add + Sub + Mul + Div + Clone + Copy + Debug;
 pub trait Pos2D<T: PosNumber> {
     fn sub(&self, other: &Self) -> (T, T);
     fn add(&self, other: &Self) -> (T, T);
+    fn from(str: &str) -> Option<(T, T)>;
 }
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
@@ -270,6 +272,7 @@ where
     T: Sub<Output = T>,
     T: Mul<Output = T>,
     T: Div<Output = T>,
+    T: FromStr,
 {
     fn add(&self, other: &Self) -> (T, T) {
         (self.0 + other.0, self.1 + other.1)
@@ -277,6 +280,16 @@ where
 
     fn sub(&self, other: &Self) -> (T, T) {
         (self.0 - other.0, self.1 - other.1)
+    }
+
+    fn from(str: &str) -> Option<(T, T)> {
+        if let Some((a, b)) = str.split_once(",") {
+            return match (a.parse::<T>(), b.parse::<T>()) {
+                (Ok(x), Ok(y)) => Some((x, y)),
+                _ => None,
+            };
+        }
+        None
     }
 }
 
@@ -297,5 +310,66 @@ impl<T> Pairs<T> for Vec<T> {
             .iter()
             .enumerate()
             .flat_map(|(i, a)| self[i + 1..].iter().map(|b| (*a, *b)));
+    }
+}
+
+/// A trait implemented by all integer types `AocInput` accepts.
+pub trait AocNumber {}
+
+#[doc(hidden)]
+macro_rules! impl_aoc_number {
+    ($($ty:ty),*) => {
+        $(impl AocNumber for $ty {})*
+    };
+}
+
+impl_aoc_number!(u8, u16, u32, u64, i8, i16, i32, i64, usize, isize);
+
+/// A trait responsible for pre-parsing input for individual Advent of Code solutions.
+pub trait AocInput {
+    /// Returns the parsed input.
+    fn make(input: String) -> Self
+    where
+        Self: Sized;
+}
+
+impl AocInput for String {
+    fn make(input: String) -> String {
+        input.replace("\r\n", "\n")
+    }
+}
+
+impl<T> AocInput for Vec<T>
+where
+    T: AocNumber,
+    T: FromStr,
+    T::Err: Debug,
+{
+    fn make(input: String) -> Vec<T> {
+        input
+            .lines()
+            .map(|x| x.parse().expect("parse failed"))
+            .collect()
+    }
+}
+
+impl AocInput for Vec<Vec<char>> {
+    fn make(input: String) -> Vec<Vec<char>> {
+        input.lines().map(|x| x.chars().collect()).collect()
+    }
+}
+
+impl AocInput for Vec<Vec<u8>> {
+    fn make(input: String) -> Vec<Vec<u8>> {
+        input
+            .lines()
+            .map(|x| x.chars().map(|c| c.to_digit(10).unwrap() as u8).collect())
+            .collect()
+    }
+}
+
+impl AocInput for Vec<String> {
+    fn make(input: String) -> Vec<String> {
+        input.lines().map(|x| x.to_string()).collect()
     }
 }
