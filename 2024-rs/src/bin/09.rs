@@ -43,6 +43,7 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
     let disk_map = input
         .chars()
         .enumerate()
+        .filter(|(_, c)| c.is_numeric())
         .map(Block::from_disk_map)
         .collect_vec();
 
