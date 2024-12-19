@@ -1,3 +1,4 @@
+#![feature(iter_map_windows)]
 use itertools::Itertools;
 
 advent_of_code::solution!(2);
@@ -6,8 +7,7 @@ fn is_safe(levels: &[i32]) -> bool {
     let sequence = levels
         .iter()
         .filter(|a| **a != 0 && a.abs() <= 3)
-        .windows(2)
-        .map(|a| (a[1] - a[0]).min(-1).max(1))
+        .map_windows(|[a, b]| (*b - *a).min(-1).max(1))
         .collect_vec();
     sequence.len() == levels.len() && sequence.iter().unique().try_len().unwrap() == levels.len()
 }
