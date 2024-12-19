@@ -26,10 +26,6 @@ impl Color {
     }
 }
 
-trait Towel {}
-
-impl Towel for Vec<Color> {}
-
 fn find_configurations<'a>(
     towels: &[Vec<Color>],
     to_make: &'a [Color],
@@ -87,7 +83,7 @@ fn parse_input(input: &str) -> (Vec<Vec<Color>>, Vec<Vec<Color>>) {
         .filter(|l| !l.is_empty())
         .map(|l| l.chars().map(Color::from_char).collect())
         .collect();
-    
+
     if cfg!(debug_assertions) {
         println!("Patterns: {patterns:?}");
     }
