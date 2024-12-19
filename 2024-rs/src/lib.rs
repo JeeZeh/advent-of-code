@@ -1,10 +1,8 @@
 #![feature(trait_alias)]
 
 use std::{
-    char::ParseCharError,
     fmt::{Debug, Display},
     ops::{Add, Div, Mul, Sub},
-    process::Output,
     slice::Iter,
     str::FromStr,
 };
@@ -306,10 +304,10 @@ impl<T> Pairs<T> for Vec<T> {
         T: 'a,
         T: Copy,
     {
-        return self
+        self
             .iter()
             .enumerate()
-            .flat_map(|(i, a)| self[i + 1..].iter().map(|b| (*a, *b)));
+            .flat_map(|(i, a)| self[i + 1..].iter().map(|b| (*a, *b)))
     }
 }
 

@@ -1,8 +1,7 @@
 #![feature(let_chains)]
 use std::{
     cmp::Ordering,
-    collections::{BinaryHeap, HashMap, VecDeque},
-    mem, usize, vec,
+    collections::BinaryHeap, usize, vec,
 };
 
 use advent_of_code::{Direction, Grid, Pos2D};
@@ -98,7 +97,7 @@ pub fn solve(input: &str) -> (Option<String>, Option<String>) {
     // Part 1
     let mut memory = vec![vec![false; end.0 + 1]; end.1 + 1];
     for byte in coords[..bytecount].iter() {
-        memory[byte.1 as usize][byte.0 as usize] = true;
+        memory[byte.1][byte.0] = true;
     }
     let mut shortest = shortest_path(&memory, (0, 0), end).unwrap();
     let shortest_path_length = shortest.len();
@@ -106,7 +105,7 @@ pub fn solve(input: &str) -> (Option<String>, Option<String>) {
     // Part 2
     let mut breaking_byte = None;
     for byte in coords[bytecount..].iter() {
-        memory[byte.1 as usize][byte.0 as usize] = true;
+        memory[byte.1][byte.0] = true;
 
         // Only re-compute the shortest path if a byte lands in our original shortest path.
         if let Some(path_idx) = shortest.iter().position(|p| p == byte) {

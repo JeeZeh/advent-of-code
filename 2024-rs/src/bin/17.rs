@@ -28,7 +28,7 @@ impl Op {
             Op::Literal(v) => *v,
             Op::Combo(v) => {
                 if *v >= 0 && *v <= 3 {
-                    return *v;
+                    *v
                 } else if *v < 7 {
                     return registers[(v - 4) as usize];
                 } else {
@@ -75,27 +75,27 @@ impl Inst {
         match self {
             Inst::Adv(op) => {
                 registers[REG_A] =
-                    registers[REG_A].div(2_i64.pow(op.resolve(&registers).try_into().unwrap()));
+                    registers[REG_A].div(2_i64.pow(op.resolve(registers).try_into().unwrap()));
             }
             Inst::Bxl(op) => {
-                registers[REG_B] = registers[REG_B].bitxor(op.resolve(&registers));
+                registers[REG_B] = registers[REG_B].bitxor(op.resolve(registers));
             }
             Inst::Bst(op) => {
-                registers[REG_B] = op.resolve(&registers).rem_euclid(8);
+                registers[REG_B] = op.resolve(registers).rem_euclid(8);
             }
             Inst::Bxc => {
                 registers[REG_B] = registers[REG_B].bitxor(registers[REG_C]);
             }
             Inst::Out(op) => {
-                return Some(op.resolve(&registers).rem_euclid(8));
+                return Some(op.resolve(registers).rem_euclid(8));
             }
             Inst::Bdv(op) => {
                 registers[REG_B] =
-                    registers[REG_A].div(2_i64.pow(op.resolve(&registers).try_into().unwrap()));
+                    registers[REG_A].div(2_i64.pow(op.resolve(registers).try_into().unwrap()));
             }
             Inst::Cdv(op) => {
                 registers[REG_C] =
-                    registers[REG_A].div(2_i64.pow(op.resolve(&registers).try_into().unwrap()));
+                    registers[REG_A].div(2_i64.pow(op.resolve(registers).try_into().unwrap()));
             }
             // Don't do anything with jumps just yet.
             Inst::Jnz(_) => (),
@@ -132,7 +132,7 @@ impl Cpu {
     }
 
     fn tick(&mut self, program: &[i64]) -> Option<i64> {
-        if let Some(inst) = Inst::read(&program, self.inst_ptr) {
+        if let Some(inst) = Inst::read(program, self.inst_ptr) {
             // Execute instruction, store output if any.
             let output = inst.execute(&mut self.registers);
 
@@ -171,7 +171,7 @@ impl Cpu {
         while let Some(v) = self.get_next_output(program) {
             output.push(v);
         }
-        return output.iter().join(",");
+        output.iter().join(",")
     }
 }
 
@@ -205,7 +205,7 @@ fn reverse_program(program: &[i64], cursor: usize, so_far: i64) -> Option<i64> {
         fixed_cpu.inst_ptr = 0;
         fixed_cpu.halted = false;
 
-        if fixed_cpu.get_full_output_vec(&program) == &program[cursor..] {
+        if fixed_cpu.get_full_output_vec(program) == &program[cursor..] {
             if cursor == 0 {
                 return Some(test);
             }
@@ -245,7 +245,7 @@ mod tests {
     fn test_one() {
         let mut cpu = Cpu::init(0, 0, 9);
 
-        cpu.get_next_output(&vec![2, 6]);
+        cpu.get_next_output(&[2, 6]);
         assert_eq!(cpu.registers[REG_B], 1);
     }
 
@@ -253,7 +253,7 @@ mod tests {
     #[test]
     fn test_two() {
         let mut cpu: Cpu = Cpu::init(10, 0, 0);
-        assert_eq!(cpu.get_full_output(&vec![5, 0, 5, 1, 5, 4]), "0,1,2");
+        assert_eq!(cpu.get_full_output(&[5, 0, 5, 1, 5, 4]), "0,1,2");
     }
 
     /// If register A contains 2024, the program 0,1,5,4,3,0 would output 4,2,5,6,7,7,7,7,3,1,0 and leave 0 in register A.
@@ -261,7 +261,7 @@ mod tests {
     fn test_three() {
         let mut cpu = Cpu::init(2024, 0, 0);
         assert_eq!(
-            cpu.get_full_output(&vec![0, 1, 5, 4, 3, 0]),
+            cpu.get_full_output(&[0, 1, 5, 4, 3, 0]),
             "4,2,5,6,7,7,7,7,3,1,0"
         );
         assert_eq!(cpu.registers[REG_A], 0);
@@ -271,7 +271,7 @@ mod tests {
     #[test]
     fn test_four() {
         let mut cpu = Cpu::init(0, 29, 9);
-        cpu.get_full_output(&vec![1, 7]);
+        cpu.get_full_output(&[1, 7]);
         assert_eq!(cpu.registers[REG_B], 26);
     }
 
@@ -279,7 +279,7 @@ mod tests {
     #[test]
     fn test_five() {
         let mut cpu: Cpu = Cpu::init(0, 2024, 43690);
-        cpu.get_full_output(&vec![4, 0]);
+        cpu.get_full_output(&[4, 0]);
         assert_eq!(cpu.registers[REG_B], 44354);
     }
 }

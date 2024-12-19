@@ -62,7 +62,7 @@ fn get_costs(region: &HashSet<(usize, usize)>) -> (usize, usize) {
 
     let side_count = sides
         .values()
-        .map(|sides| count_sides(sides))
+        .map(count_sides)
         .sum::<usize>();
     (perimeter * region.len(), side_count * region.len())
 }
