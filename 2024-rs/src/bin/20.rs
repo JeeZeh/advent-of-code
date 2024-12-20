@@ -1,8 +1,4 @@
-use std::{
-    cmp::Ordering,
-    collections::{BinaryHeap, HashMap, HashSet},
-    usize,
-};
+use std::{collections::HashMap, usize};
 
 use advent_of_code::{Direction, Grid};
 
@@ -65,74 +61,35 @@ fn build_distances_from_end(
     distances
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct Clipping {
-    pos: (usize, usize),
-    duration: usize,
-}
-
-impl Ord for Clipping {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other.duration.cmp(&self.duration)
-    }
-}
-
-// `PartialOrd` needs to be implemented as well.
-impl PartialOrd for Clipping {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
 fn run_race(distances: &impl Grid<usize>, max_duration: usize) -> HashMap<usize, usize> {
     let mut cheats: HashMap<usize, usize> = HashMap::new();
 
-    for (pos, &start_dist) in distances.scan() {
-        if start_dist == usize::MAX || start_dist == 0 {
+    for (start, &start_dist) in distances.scan() {
+        if start_dist == usize::MAX {
             continue;
         }
 
-        let mut heap: BinaryHeap<Clipping> = BinaryHeap::new();
-        let mut seen: HashSet<((usize, usize), (usize, usize))> = HashSet::new();
-
-        for dir in Direction::iterator() {
-            let new_pos = dir.step_usize(pos);
-            if distances.getxy_pos(new_pos) == Some(&usize::MAX) {
-                heap.push(Clipping {
-                    pos: new_pos,
-                    duration: 1,
-                });
-            }
-
-            while let Some(Clipping { pos, duration }) = heap.pop() {
-                if duration == max_duration {
+        for dy in (start.1 as i32 - max_duration as i32).max(0)
+            ..(start.1 as i32 + max_duration as i32 + 1).min(distances.height() as i32)
+        {
+            for dx in (start.0 as i32 - max_duration as i32).max(0)
+                ..(start.0 as i32 + max_duration as i32 + 1).min(distances.width() as i32)
+            {
+                let check = (dx as usize, dy as usize);
+                let abs_dist = start.0.abs_diff(check.0) + start.1.abs_diff(check.1);
+                if abs_dist > max_duration {
                     continue;
                 }
 
-                for dir in Direction::iterator() {
-                    let new_pos = dir.step_usize(pos);
-                    if seen.contains(&(pos, new_pos)) {
-                        continue;
-                    } else {
-                        seen.insert((pos, new_pos));
-                    }
+                match distances.getxy_pos(check) {
+                    Some(&usize::MAX) | None => continue,
+                    Some(&end_dist) => {
+                        let saved = (start_dist as i32 - end_dist as i32) - abs_dist as i32;
 
-                    match distances.getxy_pos(new_pos) {
-                        Some(&usize::MAX) => heap.push(Clipping {
-                            pos: new_pos,
-                            duration: duration + 1,
-                        }),
-                        Some(&shortcut_dist) => {
-                            let saved = start_dist as i32 - shortcut_dist as i32 - duration as i32;
-                            if saved > 0 {
-                                *cheats.entry(saved as usize).or_default() += 1;
-                            }
-                            heap.push(Clipping {
-                                pos: new_pos,
-                                duration: duration + 1,
-                            });
+                        // println!("{saved:?}");
+                        if saved > 0 {
+                            *cheats.entry(saved as usize).or_default() += 1
                         }
-                        None => continue,
                     }
                 }
             }
@@ -141,10 +98,11 @@ fn run_race(distances: &impl Grid<usize>, max_duration: usize) -> HashMap<usize,
     cheats
 }
 
+// HINT USED: I had lots of trouble with BFS edge cases, found that Manhattan distance can be used
+// instead.
 pub fn solve(input: &str) -> (Option<usize>, Option<usize>) {
     let (track, start, end) = parse_track(input);
     let distances = build_distances_from_end(&track, start, end);
-    // track.show_map(|&c| if c { '#' } else { '.' });
 
     let saving_cmp = if distances.height() < 20 { 12 } else { 100 };
 
@@ -162,7 +120,7 @@ pub fn solve(input: &str) -> (Option<usize>, Option<usize>) {
         Some(
             long_cheats
                 .iter()
-                .filter(|(&k, _)| k >= 74)
+                .filter(|(&k, _)| k >= 100)
                 .map(|(_, v)| v)
                 .sum::<usize>(),
         ),
@@ -176,6 +134,6 @@ mod tests {
     #[test]
     fn test_solve() {
         let result = solve(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, (Some(8), None));
+        assert_eq!(result, (Some(8), Some(41)));
     }
 }
