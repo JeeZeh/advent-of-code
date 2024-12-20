@@ -1,8 +1,5 @@
 #![feature(let_chains)]
-use std::{
-    cmp::Ordering,
-    collections::BinaryHeap, usize, vec,
-};
+use std::{cmp::Ordering, collections::BinaryHeap, usize, vec};
 
 use advent_of_code::{Direction, Grid, Pos2D};
 use itertools::Itertools;

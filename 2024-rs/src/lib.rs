@@ -304,8 +304,7 @@ impl<T> Pairs<T> for Vec<T> {
         T: 'a,
         T: Copy,
     {
-        self
-            .iter()
+        self.iter()
             .enumerate()
             .flat_map(|(i, a)| self[i + 1..].iter().map(|b| (*a, *b)))
     }
