@@ -20,6 +20,16 @@ where
 
 /// A trait to simplify printing and indexing of 2D data structures.
 pub trait Grid<T> {
+    fn find_item(&self, item: T) -> Option<(usize, usize)>
+    where
+        T: PartialEq;
+    fn neighbours_axis<'a>(
+        &'a self,
+        from: (usize, usize),
+    ) -> impl Iterator<Item = ((usize, usize), &'a T)>
+    where
+        T: 'a;
+
     /// Produces an iterator of positions (x, y) and item T from the Grid in
     /// reading order (left to right, top to bottom)
     fn scan<'a>(&'a self) -> impl Iterator<Item = ((usize, usize), &'a T)>
@@ -179,6 +189,25 @@ impl<T: Copy> Grid<T> for Vec<Vec<T>> {
             .enumerate()
             .flat_map(|(y, row)| row.iter().enumerate().map(move |(x, t)| ((x, y), t)))
     }
+
+    fn neighbours_axis<'a>(
+        &'a self,
+        from: (usize, usize),
+    ) -> impl Iterator<Item = ((usize, usize), &'a T)>
+    where
+        T: 'a,
+    {
+        Direction::iterator()
+            .map(move |d| d.step_usize(from))
+            .filter_map(|pos| self.getxy_pos(pos).map(|v| (pos, v)))
+    }
+
+    fn find_item(&self, item: T) -> Option<(usize, usize)>
+    where
+        T: PartialEq,
+    {
+        self.scan().find(|(_, &k)| k == item).map(|(p, _)| p)
+    }
 }
 
 impl<T: Copy, const W: usize, const H: usize> Grid<T> for [[T; W]; H] {
@@ -217,6 +246,25 @@ impl<T: Copy, const W: usize, const H: usize> Grid<T> for [[T; W]; H] {
         self.iter()
             .enumerate()
             .flat_map(|(y, row)| row.iter().enumerate().map(move |(x, t)| ((x, y), t)))
+    }
+
+    fn neighbours_axis<'a>(
+        &'a self,
+        from: (usize, usize),
+    ) -> impl Iterator<Item = ((usize, usize), &'a T)>
+    where
+        T: 'a,
+    {
+        Direction::iterator()
+            .map(move |d| d.step_usize(from))
+            .filter_map(|pos| self.getxy_pos(pos).map(|v| (pos, v)))
+    }
+
+    fn find_item(&self, item: T) -> Option<(usize, usize)>
+    where
+        T: PartialEq,
+    {
+        self.scan().find(|(_, &k)| k == item).map(|(p, _)| p)
     }
 }
 
