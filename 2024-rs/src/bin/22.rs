@@ -1,5 +1,6 @@
 #![feature(int_roundings)]
-use std::{num::ParseIntError, str::FromStr};
+#![feature(iter_map_windows)]
+use std::{collections::HashMap, num::ParseIntError, str::FromStr};
 
 use advent_of_code::lines_no_empty;
 use itertools::Itertools;
@@ -22,23 +23,12 @@ impl FromStr for Buyer {
 }
 
 impl Buyer {
-    fn mix(&mut self, value: u64) {
-        self.secret ^= value;
-    }
+    fn evolve(&mut self) -> &mut Buyer {
+        self.secret = (self.secret ^ (self.secret * 64)) % 16777216;
+        self.secret = (self.secret ^ self.secret.div_floor(32)) % 16777216;
+        self.secret = (self.secret ^ (self.secret * 2048)) % 16777216;
 
-    fn prune(&mut self) {
-        self.secret %= 16777216;
-    }
-
-    fn evolve(&mut self) {
-        self.mix(self.secret * 64);
-        self.prune();
-
-        self.mix(self.secret.div_floor(32));
-        self.prune();
-
-        self.mix(self.secret * 2048);
-        self.prune();
+        self
     }
 }
 
@@ -47,14 +37,21 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
         .map(|l| Buyer::from_str(l).unwrap())
         .collect_vec();
 
+    let mut sequence_map: HashMap<(i8, i8, i8, i8), u64> = HashMap::new();
+
     for buyer in buyers.iter_mut() {
-        for _ in 0..2000 {
-            buyer.evolve();
-        }
+        (0..2000)
+            .map(|_| (Buyer::evolve(buyer).secret % 10) as i8)
+            .map_windows(|[a, b]| (b - a, *b))
+            .map_windows(|[(a, _), (b, _), (c, _), (d, val)]| ((*a, *b, *c, *d), *val))
+            .sorted_by(|a, b| b.1.cmp(&a.1))
+            .unique_by(|a| a.0)
+            .for_each(|(seq, val)| *sequence_map.entry(seq).or_default() += val as u64);
     }
     let sum_2000: u64 = buyers.iter().map(|b| b.secret).sum();
+    let &best_sequence = sequence_map.values().max().unwrap();
 
-    (Some(sum_2000), None)
+    (Some(sum_2000), Some(best_sequence))
 }
 
 #[cfg(test)]
@@ -62,10 +59,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_solve() {
+    fn test_solve_1() {
         let result = solve(&advent_of_code::template::read_file_part(
             "examples", DAY, 1,
         ));
-        assert_eq!(result, (Some(37327623), None));
+        assert_eq!(result, (Some(37327623), Some(24)));
+    }
+
+    #[test]
+    fn test_solve_2() {
+        let result = solve(&advent_of_code::template::read_file_part(
+            "examples", DAY, 2,
+        ));
+        assert_eq!(result, (Some(37990510), Some(23)));
     }
 }
