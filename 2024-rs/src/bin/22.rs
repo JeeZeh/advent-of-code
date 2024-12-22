@@ -41,8 +41,11 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
 
     for buyer in buyers.iter_mut() {
         (0..2000)
-            .map(|_| (Buyer::evolve(buyer).secret % 10) as i8)
-            .map_windows(|[a, b]| (b - a, *b))
+            .map(|_| {
+                let old_one = (buyer.secret % 10) as i8;
+                let new_one = (buyer.evolve().secret % 10) as i8;
+                ((old_one - new_one), new_one)
+            })
             .map_windows(|[(a, _), (b, _), (c, _), (d, val)]| ((*a, *b, *c, *d), *val))
             .unique_by(|a| a.0)
             .for_each(|(seq, val)| *sequence_map.entry(seq).or_default() += val as u64);
