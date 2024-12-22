@@ -44,7 +44,6 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
             .map(|_| (Buyer::evolve(buyer).secret % 10) as i8)
             .map_windows(|[a, b]| (b - a, *b))
             .map_windows(|[(a, _), (b, _), (c, _), (d, val)]| ((*a, *b, *c, *d), *val))
-            .sorted_by(|a, b| b.1.cmp(&a.1))
             .unique_by(|a| a.0)
             .for_each(|(seq, val)| *sequence_map.entry(seq).or_default() += val as u64);
     }
