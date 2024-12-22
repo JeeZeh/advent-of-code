@@ -9,6 +9,10 @@ use std::{
 
 pub mod template;
 
+pub fn lines_no_empty(input: &str) -> impl Iterator<Item = &str> {
+    input.lines().filter(|l| !l.is_empty())
+}
+
 /// A convenience function for splitting and parsing a string.
 pub fn numbers<T>(line: &str, sep: char) -> impl Iterator<Item = T> + '_
 where
