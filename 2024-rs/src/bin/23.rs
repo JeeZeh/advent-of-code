@@ -1,12 +1,13 @@
+use core::net;
 use std::iter::once;
 
-use advent_of_code::lines_no_empty;
+use advent_of_code::{lines_no_empty, Pairs};
 use itertools::Itertools;
 
 advent_of_code::solution!(23);
 
 use std::cmp::Ordering;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -130,6 +131,12 @@ impl<T: Debug + Eq + Hash> FromIterator<T> for UnionFind<T> {
     }
 }
 
+// struct Node<'a> {
+//     val: &'a str,
+//     incoming: Vec<&'a str>,
+//     outgoing: Vec<>
+// }
+
 pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
     let connections = lines_no_empty(input)
         .map(|l| l.split_once("-").unwrap())
@@ -140,42 +147,34 @@ pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
         .unique()
         .collect_vec();
 
-    let mut udfs: UnionFind<&str> = UnionFind::with_capacity(computers.len());
-    computers.iter().for_each(|c| udfs.insert(c));
-    connections.iter().for_each(|(a, b)| {
-        udfs.union(a, b);
+    let mut network: HashMap<&str, Vec<&str>> = HashMap::new();
+    connections.iter().for_each(|(left, right)| {
+        network.entry(left).or_default().push(right);
+        network.entry(right).or_default().push(left);
     });
 
-    let networks_of_three = computers
-        .iter()
-        .permutations(3)
-        .unique()
-        .map(|network| {
-            (
-                udfs.find(network[0]).unwrap(),
-                udfs.find(network[1]).unwrap(),
-                udfs.find(network[2]).unwrap(),
-            )
-        })
-        .filter(|(a, b, c)| a == b && b == c)
-        .collect_vec();
+    let mut combinations_with_t: HashSet<[&str; 3]> = HashSet::new();
+    for &a in &computers {
+        for (b, c) in network.get(a).unwrap().pairs() {
+            // HINT: Check if pairs are connected.
+            if network.get(b).unwrap().contains(&c) && network.get(c).unwrap().contains(&b) {
+                if a.starts_with("t") || c.starts_with("t") || c.starts_with("t") {
+                    let mut group = [a, b, c];
+                    group.sort();
+                    combinations_with_t.insert(group);
+                }
+            }
+        }
+    }
 
     if cfg!(debug_assertions) {
         println!("{connections:?}");
         println!("{computers:?}");
-        println!("{networks_of_three:?}");
+        println!("{network:?}");
+        println!("{:?}", combinations_with_t.len());
     }
 
-    println!(
-        "{:?}",
-        computers
-            .iter()
-            .filter(|c| c.starts_with("t"))
-            .map(|c| udfs.find(c))
-            .collect_vec()
-    );
-
-    (None, None)
+    (Some(combinations_with_t.len() as u64), None)
 }
 
 #[cfg(test)]
