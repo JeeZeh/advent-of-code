@@ -1,6 +1,6 @@
 #![feature(int_roundings)]
 #![feature(iter_map_windows)]
-use std::{collections::HashMap, num::ParseIntError, str::FromStr};
+use std::{num::ParseIntError, str::FromStr};
 
 use advent_of_code::lines_no_empty;
 use itertools::Itertools;
@@ -32,32 +32,44 @@ impl Buyer {
     }
 }
 
-pub fn solve(input: &str) -> (Option<u32>, Option<u32>) {
+pub fn solve(input: &str) -> (Option<u64>, Option<u64>) {
     let mut buyers = lines_no_empty(input)
         .map(|l| Buyer::from_str(l).unwrap())
         .collect_vec();
 
-    let mut hashed = vec![0; 0xFFFFF];
+    // Very simple vectorization: https://www.reddit.com/r/adventofcode/comments/1hjroap/2024_day_22_solutions/m39nlbn/
+    let mut costs = vec![0; 0xFFFFF];
+    let mut seen = vec![0; 0xFFFFF];
 
     for buyer in buyers.iter_mut() {
-        (0..2000)
-            .map(|_| {
-                let old_one = buyer.secret % 10;
-                let new_one = buyer.evolve().secret % 10;
-                ((old_one - new_one), new_one)
-            })
-            .map_windows(|[(a, _), (b, _), (c, _), (d, val)]| (hash(*a, *b, *c, *d), *val))
-            .unique_by(|f| f.0)
-            .for_each(|(seq, val)| hashed[seq as usize] += val as u32);
+        let original = buyer.secret;
+        let mut result = buyer.secret;
+        let mut previous_cost = result % 10;
+        let mut deltas = 0;
+
+        for i in 0..2000 {
+            result = buyer.evolve().secret;
+            let cost = result % 10;
+
+            // offset cost delta by +10 and represent as 5 bit unsigned int (max == 19 == 0b10101)
+            // store sliding window of 4 deltas as a 20 bit unsigned int (max == 0xFFFFF)
+            deltas = ((deltas << 5) & 0xFFFFF) + 10 + cost - previous_cost;
+
+            // start checking prices once deltas window is populated
+            // only counting the first occurance of each unique delta sequence
+            if seen[deltas as usize] != original && i >= 3 {
+                seen[deltas as usize] = original;
+                costs[deltas as usize] += cost;
+            }
+
+            previous_cost = cost;
+        }
     }
-    let sum_2000 = buyers.iter().map(|b| b.secret as u32).sum::<u32>();
-    let &best_sequence = hashed.iter().max().unwrap();
 
-    (Some(sum_2000), Some(best_sequence))
-}
+    let sum_2000 = buyers.iter().map(|b| b.secret as u64).sum::<u64>();
+    let &best_sequence = costs.iter().max().unwrap();
 
-fn hash(a: u32, b: u32, c: u32, d: u32) -> u32 {
-    (((a + 10) << 15) + ((b + 10) << 10) + ((c + 10) << 5) + (d + 10)) & 0xFFFFF
+    (Some(sum_2000), Some(best_sequence as u64))
 }
 
 #[cfg(test)]
