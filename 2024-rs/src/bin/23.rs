@@ -3,21 +3,17 @@ use std::borrow::Borrow;
 use std::iter::once;
 
 use advent_of_code::{lines_no_empty, Pairs};
+use fxhash::{FxHashMap, FxHashSet};
 use itertools::Itertools;
 
 advent_of_code::solution!(23);
 
-use std::cmp::Ordering;
-use std::collections::{HashMap, HashSet};
-use std::fmt::Debug;
-use std::hash::Hash;
-
 fn bron_kerbosch<'a>(
-    r: HashSet<&'a str>,
-    mut p: HashSet<&'a str>,
-    mut x: HashSet<&'a str>,
-    neighbors: &HashMap<&'a str, HashSet<&'a str>>,
-    clique: &mut HashSet<&'a str>,
+    r: FxHashSet<&'a str>,
+    mut p: FxHashSet<&'a str>,
+    mut x: FxHashSet<&'a str>,
+    neighbors: &FxHashMap<&'a str, FxHashSet<&'a str>>,
+    clique: &mut FxHashSet<&'a str>,
 ) {
     if p.is_empty() && x.is_empty() {
         if r.len() > clique.len() {
@@ -50,13 +46,13 @@ pub fn solve(input: &str) -> (Option<String>, Option<String>) {
         .unique()
         .collect_vec();
 
-    let mut network: HashMap<&str, HashSet<&str>> = HashMap::new();
+    let mut network: FxHashMap<&str, FxHashSet<&str>> = FxHashMap::default();
     connections.iter().for_each(|(left, right)| {
         network.entry(left).or_default().insert(right);
         network.entry(right).or_default().insert(left);
     });
 
-    let mut combinations_with_t: HashSet<[&str; 3]> = HashSet::new();
+    let mut combinations_with_t: FxHashSet<[&str; 3]> = FxHashSet::default();
     for &a in &computers {
         for (b, c) in network.get(a).unwrap().iter().collect_vec().pairs() {
             // HINT: Check if pairs are connected.
@@ -71,7 +67,7 @@ pub fn solve(input: &str) -> (Option<String>, Option<String>) {
     }
 
     // HINT: Found Bron-Kerbosch, looked for existing Rust implementations.
-    let mut largest_clique_sink: HashSet<&str> = HashSet::new();
+    let mut largest_clique_sink: FxHashSet<&str> = FxHashSet::default();
     bron_kerbosch(
         Default::default(),
         network.keys().cloned().collect(),

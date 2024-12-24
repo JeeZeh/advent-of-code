@@ -25,6 +25,7 @@ test_lib = []
 chrono = { version = "0.4.31", optional = true }
 counter = "0.6.0"
 dhat = { version = "0.3.2", optional = true }
+fxhash = "0.2.1"
 itertools = "0.13.0"
 pico-args = "0.5.0"
 tinyjson = "2.5.1"
