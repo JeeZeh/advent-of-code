@@ -1,5 +1,3 @@
-use core::net;
-use std::borrow::Borrow;
 use std::iter::once;
 
 use advent_of_code::{lines_no_empty, Pairs};
@@ -56,12 +54,10 @@ pub fn solve(input: &str) -> (Option<String>, Option<String>) {
     for &a in &computers {
         for (b, c) in network.get(a).unwrap().iter().collect_vec().pairs() {
             // HINT: Check if pairs are connected.
-            if network.get(b).unwrap().contains(c) && network.get(c).unwrap().contains(b) {
-                if a.starts_with("t") || c.starts_with("t") || c.starts_with("t") {
-                    let mut group = [a, b, c];
-                    group.sort();
-                    combinations_with_t.insert(group);
-                }
+            if network.get(b).unwrap().contains(c) && network.get(c).unwrap().contains(b) && (a.starts_with("t") || c.starts_with("t") || c.starts_with("t")) {
+                let mut group = [a, b, c];
+                group.sort();
+                combinations_with_t.insert(group);
             }
         }
     }
