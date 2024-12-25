@@ -201,7 +201,7 @@ impl<T: Copy> Grid<T> for Vec<Vec<T>> {
     where
         T: 'a,
     {
-        Direction::iterator()
+        DirectionAxes::iterator()
             .map(move |d| d.step_usize(from))
             .filter_map(|pos| self.getxy_pos(pos).map(|v| (pos, v)))
     }
@@ -259,7 +259,7 @@ impl<T: Copy, const W: usize, const H: usize> Grid<T> for [[T; W]; H] {
     where
         T: 'a,
     {
-        Direction::iterator()
+        DirectionAxes::iterator()
             .map(move |d| d.step_usize(from))
             .filter_map(|pos| self.getxy_pos(pos).map(|v| (pos, v)))
     }
@@ -280,34 +280,91 @@ pub trait Pos2D<T: PosNumber> {
 }
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
-pub enum Direction {
+pub enum DirectionAxes {
     Up,
     Down,
     Left,
     Right,
 }
 
-impl Direction {
-    pub fn iterator() -> Iter<'static, Direction> {
-        static DIRECTIONS: [Direction; 4] = [
-            Direction::Up,
-            Direction::Down,
-            Direction::Left,
-            Direction::Right,
+#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
+pub enum DirectionAll {
+    UpLeft,
+    Up,
+    UpRight,
+    Right,
+    DownRight,
+    Down,
+    DownLeft,
+    Left,
+}
+
+pub trait Direction {
+    fn iterator() -> Iter<'static, Self>
+    where
+        Self: Sized;
+    fn step(&self) -> (i32, i32);
+    fn step_usize(&self, pos: (usize, usize)) -> (usize, usize);
+}
+
+impl Direction for DirectionAxes {
+    fn iterator() -> Iter<'static, DirectionAxes> {
+        static DIRECTIONS: [DirectionAxes; 4] = [
+            DirectionAxes::Up,
+            DirectionAxes::Down,
+            DirectionAxes::Left,
+            DirectionAxes::Right,
         ];
         DIRECTIONS.iter()
     }
 
-    pub fn step(&self) -> (i32, i32) {
+    fn step(&self) -> (i32, i32) {
         match self {
-            Direction::Up => (0, -1),
-            Direction::Down => (0, 1),
-            Direction::Left => (-1, 0),
-            Direction::Right => (1, 0),
+            DirectionAxes::Up => (0, -1),
+            DirectionAxes::Down => (0, 1),
+            DirectionAxes::Left => (-1, 0),
+            DirectionAxes::Right => (1, 0),
         }
     }
 
-    pub fn step_usize(&self, pos: (usize, usize)) -> (usize, usize) {
+    fn step_usize(&self, pos: (usize, usize)) -> (usize, usize) {
+        let step = self.step();
+        (
+            (pos.0 as i32 + step.0) as usize,
+            (pos.1 as i32 + step.1) as usize,
+        )
+    }
+}
+
+impl Direction for DirectionAll {
+    fn iterator() -> Iter<'static, DirectionAll> {
+        static DIRECTIONS: [DirectionAll; 8] = [
+            DirectionAll::UpLeft,
+            DirectionAll::Up,
+            DirectionAll::UpRight,
+            DirectionAll::Right,
+            DirectionAll::DownRight,
+            DirectionAll::Down,
+            DirectionAll::DownLeft,
+            DirectionAll::Left,
+        ];
+        DIRECTIONS.iter()
+    }
+
+    fn step(&self) -> (i32, i32) {
+        match self {
+            DirectionAll::UpLeft => (-1, -1),
+            DirectionAll::Up => (0, -1),
+            DirectionAll::UpRight => (1, -1),
+            DirectionAll::Right => (1, 0),
+            DirectionAll::DownRight => (1, 1),
+            DirectionAll::Down => (0, 1),
+            DirectionAll::DownLeft => (-1, 1),
+            DirectionAll::Left => (-1, 0),
+        }
+    }
+
+    fn step_usize(&self, pos: (usize, usize)) -> (usize, usize) {
         let step = self.step();
         (
             (pos.0 as i32 + step.0) as usize,
