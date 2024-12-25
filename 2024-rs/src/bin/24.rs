@@ -1,4 +1,4 @@
-use std::{ops::Range, usize};
+use std::usize;
 
 use advent_of_code::lines_no_empty;
 use itertools::Itertools;
@@ -34,31 +34,6 @@ impl Gate {
     }
 }
 
-fn find_first_output(
-    gates: &[Gate],
-    wire: usize,
-    lookup: &[&str],
-    output_wires: &[usize],
-) -> Option<usize> {
-    let parents = gates
-        .iter()
-        .filter(|g| g.a == wire || g.b == wire)
-        .collect_vec();
-
-    if let Some(valid_output) = parents.iter().find(|g| output_wires.contains(&g.out)) {
-        return Some(valid_output.out - 1);
-    }
-
-    parents
-        .iter()
-        .filter_map(|p| find_first_output(gates, p.out, lookup, output_wires))
-        .next()
-}
-
-// fn run(wires: &mut [bool], gates: &[Gate]){
-//     gates.iter().sorted_by_key(|g| g.out).rev().
-// }
-
 pub fn solve(input: &str) -> (Option<String>, Option<String>) {
     let (top, bottom) = input.split_once("\n\n").unwrap();
 
@@ -70,18 +45,6 @@ pub fn solve(input: &str) -> (Option<String>, Option<String>) {
         .sorted()
         .collect_vec();
 
-    let x_wires = lookup
-        .iter()
-        .enumerate()
-        .filter(|(_, w)| w.starts_with("x"))
-        .map(|(i, _)| i)
-        .collect_vec();
-    let y_wires = lookup
-        .iter()
-        .enumerate()
-        .filter(|(_, w)| w.starts_with("y"))
-        .map(|(i, _)| i)
-        .collect_vec();
     let z_wires = lookup
         .iter()
         .enumerate()
@@ -89,7 +52,7 @@ pub fn solve(input: &str) -> (Option<String>, Option<String>) {
         .map(|(i, _)| i)
         .collect_vec();
 
-    let mut gates = lines_no_empty(bottom)
+    let gates = lines_no_empty(bottom)
         .map(|l| l.split(" ").collect_vec())
         .map(|parts| Gate {
             a: lookup.iter().position(|&p| p == parts[0]).unwrap(),
@@ -116,6 +79,7 @@ pub fn solve(input: &str) -> (Option<String>, Option<String>) {
         println!("{:?}", &gates);
     }
 
+    // Part 1
     while z_wires.iter().any(|&z| wires[z].is_none()) {
         for gate in &gates {
             if wires[gate.out].is_none() {
@@ -130,96 +94,63 @@ pub fn solve(input: &str) -> (Option<String>, Option<String>) {
         .map(|(idx, &w)| (wires[w].unwrap() as u64) << idx)
         .sum::<u64>();
 
-    // Reset
-    wires = [None; 312];
-    let invalid_end_wires = gates
-        .iter()
-        .filter(|gate| gate.op != Op::XOR && z_wires[..z_wires.len() - 1].contains(&gate.out))
-        .cloned()
-        .collect_vec();
-
-    let invalid_mid_wires = gates
-        .iter()
-        .filter(|gate| {
-            gate.op == Op::XOR
-                && !lookup[gate.a].starts_with("x")
-                && !lookup[gate.a].starts_with("y")
-                && !lookup[gate.b].starts_with("x")
-                && !lookup[gate.b].starts_with("y")
-        })
-        .cloned()
-        .collect_vec();
-
-    let mut switches = Vec::new();
-    invalid_mid_wires.iter().for_each(|mid| {
-        let to_switch = invalid_end_wires.iter().find(|w| {
-            w.out == find_first_output(&gates, mid.out, &lookup, &z_wires).unwrap_or(usize::MAX)
-        });
-        if let Some(switch) = to_switch {
-            switches.push((mid.out, switch.out));
-        }
+    // Part 2: https://www.reddit.com/r/adventofcode/comments/1hl698z/2024_day_24_solutions/m3ljgo9/
+    let mut connections: Vec<Vec<(Op, usize)>> = vec![vec![]; 400];
+    gates.iter().for_each(|g| {
+        connections[g.a].push((g.op, g.out));
+        connections[g.b].push((g.op, g.out));
     });
 
-    println!("{:?}", switches);
-    for gate in gates.iter_mut() {
-        if let Some((_, r)) = switches.iter().find(|(a, _)| *a == gate.out) {
-            gate.out = *r;
-        }
-        if let Some((l, _)) = switches.iter().find(|(_, b)| *b == gate.out) {
-            gate.out = *l;
-        }
-    }
-    while z_wires.iter().any(|&z| wires[z].is_none()) {
-        for gate in &gates {
-            if wires[gate.out].is_none() {
-                gate.evaluate(&mut wires);
+    let mut wrong_outputs = vec![];
+    for &Gate { a, b, out, op } in gates.iter() {
+        // basically we ensure the adder looks like this:
+        // https://en.wikipedia.org/wiki/Adder_(electronics)#/media/File:Fulladder.gif
+        let chained_ops = &connections[out];
+        let chained_ops_contain = |op| chained_ops.iter().any(|a| a.0 == op);
+
+        let lhs = lookup[a];
+        let rhs = lookup[b];
+        let has_chained_xor = chained_ops_contain(Op::XOR);
+        let has_chained_and = chained_ops_contain(Op::AND);
+        let has_chained_or = chained_ops_contain(Op::OR);
+        let takes_first_input = lhs.ends_with("00") && rhs.ends_with("00");
+        let takes_input_bit = (lhs.starts_with('x') && rhs.starts_with('y'))
+            || (rhs.starts_with('x') && lhs.starts_with('y'));
+        let outputs_bit = lookup[out].starts_with('z');
+        let outputs_last_bit = lookup[out] == "z45";
+
+        let valid = match op {
+            Op::XOR => {
+                // XOR only outputs a bit if it doesn't take an input bit
+                (!takes_input_bit && outputs_bit)
+                // XOR only takes an input bit if a XOR follows it
+                    || (takes_input_bit && has_chained_xor)
+                    // unless the input bits are the first bits (no carryover bit exists)
+                    || takes_first_input && outputs_bit
             }
+            Op::OR => {
+                // OR either outputs into z45 or an AND and XOR (carryover bit)
+                outputs_last_bit || (has_chained_and && has_chained_xor)
+            }
+            Op::AND => {
+                // ANDs only lead into ORs
+                has_chained_or
+                // unless the input bits are the first bits (no carryover bit exists)
+                || takes_first_input
+            }
+            _ => {
+                unreachable!()
+            }
+        };
+        if !valid {
+            wrong_outputs.push(out);
         }
     }
 
-    let x_input = x_wires
-        .iter()
-        .enumerate()
-        .map(|(idx, &w)| (wires[w].unwrap_or(false) as u64) << idx)
-        .sum::<u64>();
-    let y_input = y_wires
-        .iter()
-        .enumerate()
-        .map(|(idx, &w)| (wires[w].unwrap_or(false) as u64) << idx)
-        .sum::<u64>();
-    let z_value_swapped = z_wires
-        .iter()
-        .enumerate()
-        .map(|(idx, &w)| (wires[w].unwrap() as u64) << idx)
-        .sum::<u64>();
-
-    let diff = (x_input + y_input) ^ z_value_swapped;
-    let zero_bits = format!(
-        "{:02}",
-        format!("0{:b} ", diff)
-            .chars()
-            .rev()
-            .take_while(|&c| c == '0')
-            .count()
-    );
-
-    println!("{}", zero_bits);
-
-    let invalid_carry_wires = gates
-        .iter()
-        .filter(|g| lookup[g.a].ends_with(&zero_bits) && lookup[g.b].ends_with(&zero_bits))
-        .map(|&g| g.out)
-        .collect_vec();
-
-    let swaps = invalid_end_wires
-        .iter()
-        .map(|g| g.out)
-        .chain(invalid_mid_wires.iter().map(|g| g.out))
-        .chain(invalid_carry_wires)
-        .map(|w| lookup[w])
-        .sorted()
-        .join(",");
-    (Some(format!("{}", z_value_swapped)), Some(swaps))
+    (
+        Some(format!("{}", z_value_initial)),
+        Some(wrong_outputs.iter().sorted().map(|&w| lookup[w]).join(",")),
+    )
 }
 
 #[cfg(test)]
