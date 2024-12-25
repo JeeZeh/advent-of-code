@@ -49,16 +49,6 @@ impl Key {
             Key::Activate => 'A',
         }
     }
-
-    fn step(&self, pos: (usize, usize)) -> (usize, usize) {
-        match self {
-            Key::Up => Direction::Up.step_usize(pos),
-            Key::Down => Direction::Down.step_usize(pos),
-            Key::Left => Direction::Left.step_usize(pos),
-            Key::Right => Direction::Right.step_usize(pos),
-            Key::Activate => panic!("Cannot translate 'Activate' to a step"),
-        }
-    }
 }
 
 impl Display for Key {

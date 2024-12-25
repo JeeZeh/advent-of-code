@@ -138,9 +138,6 @@ pub fn solve(input: &str) -> (Option<String>, Option<String>) {
                 // unless the input bits are the first bits (no carryover bit exists)
                 || takes_first_input
             }
-            _ => {
-                unreachable!()
-            }
         };
         if !valid {
             wrong_outputs.push(out);
