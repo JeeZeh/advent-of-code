@@ -1,6 +1,6 @@
 use std::{collections::HashMap, usize};
 
-use advent_of_code::{Direction, Grid};
+use advent_of_code::{Direction, DirectionAxes, Grid};
 
 advent_of_code::solution!(20);
 
@@ -43,7 +43,7 @@ fn build_distances_from_end(
     let mut current = end;
     let mut steps = 0;
     while current != start {
-        for dir in Direction::iterator() {
+        for dir in DirectionAxes::iterator() {
             let next = dir.step_usize(current);
             if track.getxy_pos(next) == Some(&false)
                 && distances.getxy_pos(next).unwrap() == &usize::MAX

@@ -1,14 +1,14 @@
 #![feature(trait_alias)]
 use std::{collections::VecDeque, u64};
 
-use advent_of_code::{Direction, Grid};
+use advent_of_code::{Direction, DirectionAxes, Grid};
 use itertools::Itertools;
 
 advent_of_code::solution!(10);
 
 fn directions(pos: (usize, usize)) -> impl Iterator<Item = (usize, usize)> {
-    Direction::iterator()
-        .map(Direction::step)
+    DirectionAxes::iterator()
+        .map(DirectionAxes::step)
         .map(move |(dx, dy)| ((pos.0 as i32 + dx) as usize, (pos.1 as i32 + dy) as usize))
 }
 
