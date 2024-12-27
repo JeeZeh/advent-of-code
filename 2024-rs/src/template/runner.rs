@@ -9,13 +9,9 @@ use std::{cmp, env, process};
 use crate::template::ANSI_BOLD;
 use crate::template::{aoc_cli, Day, ANSI_ITALIC, ANSI_RESET};
 
-type Solution<A, B> = (Option<A>, Option<B>);
+pub type Solution<A, B> = (Option<A>, Option<B>);
 
-pub fn run_solution<I: Clone, T: Display>(
-    func: impl Fn(I) -> (Option<T>, Option<T>),
-    input: I,
-    day: Day,
-) {
+pub fn run_solution<I: Clone, A: Display, B: Display>(func: impl Fn(I) -> Solution<A, B>, input: I, day: Day) {
     let (result, duration, samples) = run_timed(func, input, |_result| {});
 
     print_result(&result, &format_duration(&duration, samples));
