@@ -4,7 +4,7 @@ use std::{
     fmt::{Display, Write},
 };
 
-use advent_of_code::{Direction, Grid};
+use advent_of_code::{Direction, DirectionAxes, Grid};
 use itertools::Itertools;
 
 advent_of_code::solution!(16);
@@ -82,11 +82,11 @@ impl PartialOrd for Reindeer {
     }
 }
 
-const DIRECTIONS: [Direction; 4] = [
-    Direction::Right,
-    Direction::Down,
-    Direction::Left,
-    Direction::Up,
+const DIRECTIONS: [DirectionAxes; 4] = [
+    DirectionAxes::Right,
+    DirectionAxes::Down,
+    DirectionAxes::Left,
+    DirectionAxes::Up,
 ];
 
 fn find_cheapest_paths(

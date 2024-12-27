@@ -3,7 +3,7 @@ use std::{
     fmt::{Display, Write},
 };
 
-use advent_of_code::{Direction, Grid};
+use advent_of_code::{Direction, DirectionAxes, Grid};
 use itertools::Itertools;
 
 advent_of_code::solution!(15);
@@ -61,7 +61,7 @@ fn parse_input(
     Vec<Vec<Tile>>,
     Vec<Vec<WideTile>>,
     (usize, usize),
-    Vec<Direction>,
+    Vec<DirectionAxes>,
 ) {
     let input_vec = input.split("\n\n").collect_vec();
     let mut warehouse = Vec::new();
@@ -85,15 +85,15 @@ fn parse_input(
         warehouse.push(row);
         wide_warehouse.push(wide_row);
     }
-    let moves: Vec<Direction> = input_vec[1]
+    let moves: Vec<DirectionAxes> = input_vec[1]
         .trim()
         .lines()
         .flat_map(|l| l.chars())
         .map(|c| match c {
-            '^' => Direction::Up,
-            'v' => Direction::Down,
-            '<' => Direction::Left,
-            '>' => Direction::Right,
+            '^' => DirectionAxes::Up,
+            'v' => DirectionAxes::Down,
+            '<' => DirectionAxes::Left,
+            '>' => DirectionAxes::Right,
             _ => panic!("Unknown move: {}", c),
         })
         .collect_vec();
@@ -109,7 +109,7 @@ fn parse_input(
 fn find_box_destination(
     warehouse: &impl Grid<Tile>,
     from: (usize, usize),
-    dir: Direction,
+    dir: DirectionAxes,
 ) -> Option<(usize, usize)> {
     let mut check = from;
     while let Some(t) = warehouse.getxy_pos(check) {
@@ -129,7 +129,7 @@ fn find_box_destination(
 fn move_wide_group_horiz(
     warehouse: &impl Grid<WideTile>,
     from: (usize, usize),
-    dir: Direction,
+    dir: DirectionAxes,
 ) -> Option<Vec<((usize, usize), WideTile)>> {
     let mut check = from;
     let mut to_move = Vec::new();
@@ -153,7 +153,7 @@ fn move_wide_group_horiz(
 fn move_wide_group_vert(
     warehouse: &impl Grid<WideTile>,
     from: (usize, usize),
-    dir: Direction,
+    dir: DirectionAxes,
 ) -> Option<Vec<((usize, usize), WideTile)>> {
     let mut to_move = HashSet::new();
 
@@ -169,8 +169,8 @@ fn move_wide_group_vert(
                 to_move.insert((check, WideTile::BoxLeft));
                 queue.push_back(next_pos);
 
-                to_move.insert((Direction::Right.step_usize(check), WideTile::BoxRight));
-                queue.push_back(Direction::Right.step_usize(next_pos));
+                to_move.insert((DirectionAxes::Right.step_usize(check), WideTile::BoxRight));
+                queue.push_back(DirectionAxes::Right.step_usize(next_pos));
             }
             // We could try to merge BoxLeft and BoxRight logic, but the conditional check for
             // direction to determine which adjacent positions and tiles need to be tracked
@@ -181,8 +181,8 @@ fn move_wide_group_vert(
                 to_move.insert((check, WideTile::BoxRight));
                 queue.push_back(next_pos);
 
-                to_move.insert((Direction::Left.step_usize(check), WideTile::BoxLeft));
-                queue.push_back(Direction::Left.step_usize(next_pos));
+                to_move.insert((DirectionAxes::Left.step_usize(check), WideTile::BoxLeft));
+                queue.push_back(DirectionAxes::Left.step_usize(next_pos));
             }
             // Group might be able to move, keep checking
             Some(WideTile::Space) => continue,
@@ -195,18 +195,18 @@ fn move_wide_group_vert(
 fn try_move_wide(
     wide_warehouse: &mut Vec<Vec<WideTile>>,
     from: (usize, usize),
-    dir: Direction,
+    dir: DirectionAxes,
 ) -> bool {
     let to_move = match dir {
-        Direction::Up | Direction::Down => move_wide_group_vert(wide_warehouse, from, dir),
-        Direction::Left | Direction::Right => move_wide_group_horiz(wide_warehouse, from, dir),
+        DirectionAxes::Up | DirectionAxes::Down => move_wide_group_vert(wide_warehouse, from, dir),
+        DirectionAxes::Left | DirectionAxes::Right => move_wide_group_horiz(wide_warehouse, from, dir),
     };
 
     if let Some(group) = to_move {
-        if dir == Direction::Left || dir == Direction::Right {
+        if dir == DirectionAxes::Left || dir == DirectionAxes::Right {
             *wide_warehouse.getxy_pos_mut(from).unwrap() = WideTile::Space;
         }
-        if dir == Direction::Up || dir == Direction::Down {
+        if dir == DirectionAxes::Up || dir == DirectionAxes::Down {
             // Empty everything to be moved since it's not a linear group
             group.iter().for_each(|(old_pos, _)| {
                 *wide_warehouse.getxy_pos_mut(*old_pos).unwrap() = WideTile::Space
@@ -223,7 +223,7 @@ fn try_move_wide(
     false
 }
 
-fn walk_robot(moves: &[Direction], mut robot: (usize, usize), warehouse: &mut Vec<Vec<Tile>>) {
+fn walk_robot(moves: &[DirectionAxes], mut robot: (usize, usize), warehouse: &mut Vec<Vec<Tile>>) {
     for m in moves {
         let new_robot: (usize, usize) = m.step_usize(robot);
         match warehouse.getxy_pos(new_robot) {
@@ -241,7 +241,7 @@ fn walk_robot(moves: &[Direction], mut robot: (usize, usize), warehouse: &mut Ve
 }
 
 fn walk_robot_wide(
-    moves: &[Direction],
+    moves: &[DirectionAxes],
     mut robot: (usize, usize),
     wide_warehouse: &mut Vec<Vec<WideTile>>,
 ) {

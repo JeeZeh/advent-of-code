@@ -1,7 +1,7 @@
 #![feature(let_chains)]
 use std::{cmp::Ordering, collections::BinaryHeap, usize, vec};
 
-use advent_of_code::{Direction, Grid, Pos2D};
+use advent_of_code::{Direction, DirectionAxes, Grid, Pos2D};
 use itertools::Itertools;
 
 advent_of_code::solution!(18);
@@ -30,11 +30,11 @@ impl PartialOrd for State {
     }
 }
 
-const DIRECTIONS: [Direction; 4] = [
-    Direction::Down,
-    Direction::Right,
-    Direction::Up,
-    Direction::Left,
+const DIRECTIONS: [DirectionAxes; 4] = [
+    DirectionAxes::Down,
+    DirectionAxes::Right,
+    DirectionAxes::Up,
+    DirectionAxes::Left,
 ];
 
 fn shortest_path(

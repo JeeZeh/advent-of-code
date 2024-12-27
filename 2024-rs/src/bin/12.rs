@@ -4,7 +4,7 @@ use std::{
     i32,
 };
 
-use advent_of_code::{Direction, Grid};
+use advent_of_code::{Direction, DirectionAxes, Grid};
 use itertools::Itertools;
 
 advent_of_code::solution!(12);
@@ -22,7 +22,7 @@ fn explore_region(grid: &impl Grid<char>, from: (usize, usize)) -> HashSet<(usiz
             && c == region
         {
             seen.insert(this);
-            for step in Direction::iterator().map(Direction::step) {
+            for step in DirectionAxes::iterator().map(DirectionAxes::step) {
                 let next = (
                     (this.0 as i32 + step.0) as usize,
                     (this.1 as i32 + step.1) as usize,
@@ -38,20 +38,20 @@ fn explore_region(grid: &impl Grid<char>, from: (usize, usize)) -> HashSet<(usiz
 }
 
 fn get_costs(region: &HashSet<(usize, usize)>) -> (usize, usize) {
-    let mut sides: HashMap<(Direction, i32), Vec<i32>> = HashMap::new();
+    let mut sides: HashMap<(DirectionAxes, i32), Vec<i32>> = HashMap::new();
     let mut perimeter: usize = 0;
     for pos in region {
-        for dir in Direction::iterator() {
+        for dir in DirectionAxes::iterator() {
             let step = dir.step();
             let check_bound = ((pos.0 as i32 + step.0), (pos.1 as i32 + step.1));
             if !region.contains(&(check_bound.0 as usize, check_bound.1 as usize)) {
                 perimeter += 1;
                 match dir {
-                    Direction::Up | Direction::Down => sides
+                    DirectionAxes::Up | DirectionAxes::Down => sides
                         .entry((*dir, check_bound.1))
                         .or_default()
                         .push(check_bound.0),
-                    Direction::Left | Direction::Right => sides
+                    DirectionAxes::Left | DirectionAxes::Right => sides
                         .entry((*dir, check_bound.0))
                         .or_default()
                         .push(check_bound.1),
