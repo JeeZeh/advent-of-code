@@ -40,7 +40,6 @@ fn find_xmas(search: &impl Grid<char>, from: (usize, usize)) -> usize {
 
 fn convolve(grid: &impl Grid<char>, kernel: &impl Grid<Option<char>>) -> i32 {
     let mut matches = 0;
-    kernel.show_debug();
     for y in 0..grid.height() - (kernel.height() - 1) {
         for x in 0..grid.width() - (kernel.width() - 1) {
             if match_kernel_at(grid, kernel, x, y) {
@@ -60,7 +59,6 @@ fn match_kernel_at(
 ) -> bool {
     for (pos, e) in kernel.scan() {
         let check = pos.add(&(x, y));
-        println!("{check:?} {:?} {:?}", grid.getxy_pos(check), e);
         if e.is_some() && grid.getxy_pos(check) != e.as_ref() {
             return false;
         }
