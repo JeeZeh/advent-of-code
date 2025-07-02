@@ -20,20 +20,16 @@ struct Instruction(Op, Args);
 
 struct CPU {
     registers: [i64; 8],
-    buffer: VecDeque<i64>,
     rom: Vec<Instruction>,
     ptr: i64,
-    ipc_mode: bool,
 }
 
 impl CPU {
     fn boot(rom: Vec<Instruction>, ipc_mode: bool) -> CPU {
         CPU {
             registers: [0; 8],
-            buffer: VecDeque::new(),
             rom: rom,
             ptr: 0,
-            ipc_mode,
         }
     }
 
@@ -66,13 +62,6 @@ impl CPU {
 
             let op = instruction.0;
             let args = &instruction.1;
-
-            // println!(
-            //     "Running {:?} with {:?} at pointer {}",
-            //     op,
-            //     args,
-            //     self.ptr
-            // );
 
             let jmp = match op {
                 Op::Set => self.set(args),
@@ -118,72 +107,11 @@ impl CPU {
     }
 }
 
-struct VM {
-    cpu: CPU,
-    running: bool,
-    send_queue: VecDeque<i64>,
-    send_count: usize,
-}
-
-// impl VM {
-//     fn new() -> VM {
-//         VM {
-//             cpu,
-//             running: false,
-//             send_queue: VecDeque::new(),
-//             send_count: 0,
-//         }
-//     }
-
-//     fn next(&mut self, send: Option<i64>) {
-//         if send.is_some() {
-//             self.cpu.send(send.unwrap());
-//         }
-
-//         let (running, sent) = self.cpu.next();
-//         self.running = running;
-
-//         match sent {
-//             Some(v) => {
-//                 self.send_queue.push_back(v);
-//                 self.send_count += 1;
-//             }
-//             _ => (),
-//         }
-//     }
-// }
-
-// struct Hypervisor {
-//     vm_1: VM,
-//     vm_2: VM,
-// }
-
-// impl Hypervisor {
-//     fn new(cpu_1: CPU, cpu_2: CPU) -> Hypervisor {
-//         Hypervisor {
-//             vm_1: VM::new(cpu_1, 0),
-//             vm_2: VM::new(cpu_2, 1),
-//         }
-//     }
-
-//     fn start(&mut self) {
-//         self.vm_1.running = true;
-//         self.vm_2.running = true;
-
-//         while self.vm_1.running || self.vm_2.running {
-//             self.vm_1.next(self.vm_2.send_queue.pop_front());
-//             self.vm_2.next(self.vm_1.send_queue.pop_front());
-//         }
-
-//         println!("VM2 Send Count: {}", self.vm_2.send_count)
-//     }
-// }
-
 fn main() {
     let now = Instant::now();
 
     part_one();
-    // part_two();
+    part_two_jimmy();
 
     println!("{}ms", now.elapsed().as_millis())
 }
@@ -204,19 +132,68 @@ fn part_one() {
     println!("Mul count: {}", mul_count);
 }
 
-// fn part_two() {
-//     let file = fs::read_to_string("./src/input").unwrap();
+fn part_two() {
+    let file = fs::read_to_string("./src/input/real").unwrap();
+    let rom = file.lines().map(parse_instructions).collect();
 
-//     let rom_1 = file.lines().map(parse_instructions).collect();
-//     let rom_2 = file.lines().map(parse_instructions).collect();
+    let mut cpu = CPU::boot(rom, false);
+    cpu.registers[0] = 1; // Set register 'a' to 1 to match the input
 
-//     let cpu_1 = CPU::boot(rom_1, true);
-//     let cpu_2 = CPU::boot(rom_2, true);
+    while cpu.next().is_some() {
+        println!("Pointer: {}", cpu.ptr);
+        println!("Registers: {:?}", cpu.registers);
+        println!("-------------------");
+    }
 
-//     let mut hypervisor = Hypervisor::new(cpu_1, cpu_2);
+    println!("Reg H: {}", cpu.registers[CPU::get_register_index("h")]);
+}
 
-//     hypervisor.start();
-// }
+/// Almost got this right by working through the opcodes,
+/// but never realized that this was a prime counting problem.
+///
+/// ```
+/// b = 109900
+/// c = 126900
+/// while b != c:
+///     f = 1
+///     e = 2
+///     g = 2
+///     d = 2
+///     while d != b:
+///         while e != b:
+///             g = (d * e) - b
+///             if d * e == b:
+///                 f = 0
+///
+///             e += 1;
+///             g = e - b;
+///
+///         d += 1
+///         g = d - b
+///
+///     if f == 0:
+///         h += 1
+///
+///     g = b - c
+///     b += 17
+/// ```
+fn part_two_jimmy() {
+    let c: i32 = 126900;
+    let mut h = 0;
+    for b in (109900..=c).step_by(17) {
+        let mut f = 1;
+        for d in 2..b.isqrt() + 1 {
+            if b % d == 0 {
+                f = 0; // Not prime
+                break;
+            }
+        }
+        if f == 0 {
+            h += 1;
+        }
+    }
+    println!("h: {}", h);
+}
 
 fn parse_instructions(line: &str) -> Instruction {
     let mut parts = line.split(" ");
