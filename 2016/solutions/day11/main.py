@@ -167,6 +167,5 @@ def bfs(initial: Diagram, components: list[Component]) -> int | None:
     return None
 
 
-# P1 is broken with the BFS implementation.
 print("Part 1:", bfs(*parse_input(1)))
 print("Part 2:", bfs(*parse_input(2)))
