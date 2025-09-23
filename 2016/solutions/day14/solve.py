@@ -30,7 +30,6 @@ def generate_key(salt: str, stretch: bool = False):
             if last_round := last_triple_index[quint_char]:
                 for r in last_round:
                     if 0 < round - r <= 1000:
-                        print(r, hash, quint_char)
                         yield r
 
             last_triple_index[match.group(1)].append(round)
